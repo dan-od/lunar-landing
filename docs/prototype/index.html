@@ -1,0 +1,412 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Moon Status: flow prototype</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Fira+Sans:wght@700;900&family=Overpass:wght@400;600;700&family=Fira+Code:wght@400;500&display=swap">
+<style>
+:root{--deep:#07173F;--pane:#050F2C;--line:#23408A;--edge:#2E96F5;--yel:#EAFE07;--mut:#B9C6E4;--off:#1B2F66;--red:#E43700;--elec:#0042A6}
+*{box-sizing:border-box}
+body{margin:0;background:#E9ECF2;color:#111;font-family:Overpass,system-ui,sans-serif;font-size:14px;line-height:1.4}
+button,input,select,textarea{font-family:inherit;font-size:inherit}
+.mono{font-family:'Fira Code',ui-monospace,monospace}
+/* review layer: deliberately light so it never reads as product UI */
+#review{background:#fff;border-bottom:3px solid #111;padding:10px 14px}
+#review h1{font:700 14px Overpass,sans-serif;margin:0 0 8px;letter-spacing:.04em}
+#review .row{display:flex;flex-wrap:wrap;gap:8px 14px;align-items:center}
+#review label{font-size:12px;font-weight:600}
+#review select,#review button,#review textarea{border:1px solid #111;background:#fff;color:#111;min-height:36px;padding:4px 10px;border-radius:0}
+#review button[aria-pressed=true]{background:#111;color:#fff}
+#review details{margin-top:8px;border-top:1px solid #bbb;padding-top:6px}
+#review summary{cursor:pointer;font-weight:700}
+#review table{border-collapse:collapse;font-size:12px;width:100%}
+#review td,#review th{border:1px solid #bbb;padding:4px 6px;text-align:left;vertical-align:top}
+#review ul{margin:6px 0;padding-left:18px}
+#stage{padding:14px;display:flex;justify-content:center}
+#frame{width:100%;background:var(--deep);color:#fff;min-height:820px;display:flex;flex-direction:column;border:1px solid #111;position:relative;overflow:clip}
+#frame.tablet{max-width:820px}#frame.phone{max-width:390px}
+/* product */
+.app a{color:var(--yel)}
+.app button{color:#fff;background:transparent;border:0;cursor:pointer;min-height:44px}
+.app button:focus-visible,.app a:focus-visible,.app input:focus-visible,.app select:focus-visible{outline:2px solid var(--yel);outline-offset:-2px}
+.app button:disabled{opacity:.45;cursor:not-allowed}
+.hd{display:flex;flex-wrap:wrap;align-items:stretch;background:var(--pane);border-bottom:1px solid var(--edge)}
+.brand{display:flex;align-items:center;gap:10px;padding:0 14px;min-height:52px;border-right:1px solid var(--line);font:900 15px 'Fira Sans',sans-serif;letter-spacing:.12em}
+.tabs{display:flex;flex-wrap:wrap}
+.tabs a{display:flex;align-items:center;padding:0 16px;min-height:52px;color:#fff;text-decoration:none;font-weight:600;font-size:13px;letter-spacing:.06em;border-right:1px solid var(--line)}
+.tabs a[aria-current=page]{background:var(--yel);color:var(--deep)}
+.hd .right{flex:1 1 240px;display:flex;justify-content:flex-end;align-items:stretch}
+.hd .right button{padding:0 14px;border-left:1px solid var(--line);font-size:12px;font-weight:700;letter-spacing:.06em}
+.hd .right button[aria-pressed=true]{background:var(--elec);box-shadow:inset 0 -3px 0 var(--yel)}
+.scn{display:flex;flex-wrap:wrap;align-items:center;gap:6px 16px;padding:8px 14px;background:var(--pane);border-bottom:1px solid var(--line);font-size:12px}
+.scn b{color:var(--yel);font-weight:500}
+.scn .sp{margin-left:auto;display:flex;align-items:stretch}
+.scn .sp button{min-width:44px;border:1px solid var(--line);margin-left:-1px;padding:0 10px}
+.body{flex:1;display:flex;flex-wrap:wrap;min-height:0}
+.side{flex:1 1 250px;max-width:300px;background:var(--pane);border-right:1px solid var(--line);display:flex;flex-direction:column;min-width:0}
+.main{flex:999 1 480px;min-width:0;display:flex;flex-direction:column}
+.insp{flex:1 1 300px;max-width:360px;background:var(--pane);border-left:1px solid var(--line);display:flex;flex-direction:column;min-width:0}
+.narrow .side,.narrow .insp{max-width:none;flex-basis:100%;border:0;border-top:1px solid var(--line)}
+.narrow .main{flex-basis:100%}
+.narrow .hd{flex-wrap:nowrap}
+.narrow .brand{border-right:0;font-size:14px;padding:0 12px;white-space:nowrap}
+.narrow .hd .right{flex:1 1 auto}
+.narrow .hd .right button{padding:0 12px;min-width:48px}
+.tabbar{display:grid;grid-template-columns:repeat(5,1fr);position:sticky;bottom:0;z-index:3;background:var(--pane);border-top:1px solid var(--edge)}
+.tabbar a{justify-content:center;padding:0;min-height:56px;font-size:11px;letter-spacing:.04em}
+.tabbar a:last-child{border-right:0}
+.narrow .scn{gap:8px 12px;padding:10px 12px}
+.narrow .scn .lead,.narrow .scn .xtra{display:none}
+.narrow .scn .sp{margin-left:0;flex:1 1 100%;display:grid;grid-template-columns:repeat(3,1fr)}
+.narrow .scn .sp button{margin-left:0;border-right-width:0}
+.narrow .scn .sp button:last-child{border-right-width:1px}
+.lbl{padding:10px 14px;font:400 11px 'Fira Code',monospace;letter-spacing:.12em;color:var(--mut);border-bottom:1px solid var(--line)}
+.exp{padding:8px 14px;font-size:13px;background:#0A1F52;border-bottom:1px solid var(--line)}
+.row{display:flex;align-items:center;gap:10px;width:100%;min-height:56px;padding:8px 14px;text-align:left;border-bottom:1px solid var(--line)!important}
+.row[aria-pressed=true]{background:var(--elec);box-shadow:inset 3px 0 0 var(--yel)}
+.row small{display:block;font:400 11px 'Fira Code',monospace;opacity:.8}
+.tag{display:inline-block;padding:2px 8px;font:400 11px 'Fira Code',monospace;letter-spacing:.08em;border:1px solid var(--red);white-space:nowrap}
+.tag.ok{background:var(--yel);color:var(--deep);border-color:var(--yel)}
+.tag.wait{border-color:var(--mut);color:var(--mut)}
+.pad{padding:14px}
+.fld{display:block;margin-bottom:10px}
+.fld span{display:block;font:400 10px 'Fira Code',monospace;letter-spacing:.12em;color:var(--mut);margin-bottom:3px}
+.fld input,.fld select{width:100%;height:44px;background:var(--deep);color:#fff;border:1px solid var(--edge);padding:0 10px;border-radius:0}
+.fld input[aria-invalid=true]{border-color:var(--red)}
+.err{color:#fff;border-left:3px solid var(--red);padding:4px 8px;margin:0 0 10px;font-size:13px;background:#2a0d0d}
+.btn{background:var(--yel)!important;color:var(--deep)!important;font-weight:700;font-size:12px;letter-spacing:.06em;padding:0 14px}
+.btn2{border:1px solid var(--line)!important;font-weight:700;font-size:12px;letter-spacing:.06em;padding:0 14px}
+.sim{border:1px dashed #fff!important;font-size:11px;padding:0 8px;min-height:36px!important;opacity:.85}
+.grid2{display:grid;grid-template-columns:1fr 1fr}
+.grid3{display:grid;grid-template-columns:1fr 1fr 1fr}
+.ro{padding:12px 14px;border-right:1px solid var(--line);border-bottom:1px solid var(--line)}
+.ro i{display:block;font:400 10px 'Fira Code',monospace;letter-spacing:.1em;color:var(--mut);font-style:normal}
+.ro b{font:400 22px 'Fira Code',monospace}
+.mapwrap{position:relative;flex:1 1 auto;min-height:400px;background:linear-gradient(135deg,var(--elec),var(--deep));display:flex;align-items:center;justify-content:center;overflow:hidden;padding:30px 10px 10px}
+.cap{position:absolute;left:14px;top:10px;font:400 11px 'Fira Code',monospace;letter-spacing:.12em}
+.disc{position:relative;width:360px;height:360px;flex:0 0 auto}
+.disc .rim{position:absolute;inset:30px;border-radius:50%;border:1px solid #fff;background:var(--deep)}
+.disc .ring{position:absolute;border-radius:50%;border:1px dashed var(--edge)}
+.pin{position:absolute;width:44px;height:44px;display:flex;align-items:center;justify-content:center;padding:0}
+.pin span{width:12px;height:12px;transform:rotate(45deg);border:2px solid var(--red);background:var(--deep)}
+.pin.ok span{background:var(--yel);border-color:var(--yel)}
+.pin[aria-pressed=true] span{outline:1px solid #fff;outline-offset:5px}
+.pl{position:absolute;font:400 11px 'Fira Code',monospace;white-space:nowrap;pointer-events:none;padding:0 3px}
+.tl{background:var(--pane);border-top:1px solid var(--edge);padding-bottom:8px}
+.trk{display:flex;align-items:center;padding:4px 14px;gap:0}
+.trk.sel{background:#0A1F52}
+.trk .n{flex:0 0 92px;font-size:12px;font-weight:700;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.trk .b{flex:1;min-width:0;position:relative}
+.cells{display:flex;gap:1px;margin:1px 0}
+.cells span{flex:1;height:8px}
+.ph{position:absolute;top:-2px;bottom:-2px;width:2px;background:#fff;pointer-events:none}
+.scrub{display:flex;align-items:center;gap:10px;padding:6px 14px}
+.scrub input{flex:1;accent-color:var(--yel);min-height:44px}
+.sk{background:var(--off);height:18px;margin:10px 14px;opacity:.8}
+.ban{padding:10px 14px;background:#2a0d0d;border-bottom:1px solid var(--red);display:flex;flex-wrap:wrap;gap:10px;align-items:center}
+.empty{padding:40px 20px;text-align:center;max-width:520px;margin:auto}
+.empty h2,.h2{font:900 24px 'Fira Sans',sans-serif;letter-spacing:.03em;text-transform:uppercase;margin:0 0 8px;line-height:1.15}
+.drawer{position:absolute;top:0;right:0;bottom:0;width:320px;max-width:100%;background:var(--pane);border-left:1px solid var(--edge);z-index:5;display:flex;flex-direction:column;transition:transform .18s ease-out}
+.scrim{position:absolute;inset:0;background:rgba(0,0,0,.55);z-index:4}
+.modal{position:absolute;left:50%;top:30%;transform:translateX(-50%);width:360px;max-width:92%;background:var(--pane);border:1px solid var(--edge);z-index:6}
+.toast{position:absolute;left:50%;bottom:16px;transform:translateX(-50%);background:#fff;color:var(--deep);padding:10px 16px;font-weight:700;z-index:7;max-width:92%;border-left:4px solid var(--yel);transition:opacity .15s}
+.terr{position:relative;max-width:100%;border-radius:50%;overflow:hidden;border:2px solid #fff;flex:0 0 auto}
+.terr button{position:absolute;inset:0;width:100%;height:100%;border-radius:50%;cursor:crosshair;padding:0}
+.rg{position:absolute;border-radius:50%;pointer-events:none;box-shadow:0 0 0 1px var(--deep),inset 0 0 0 1px var(--deep)}
+.bar{height:8px;background:var(--off);margin-top:6px}.bar div{height:8px;background:var(--yel)}
+table.t{width:100%;border-collapse:collapse}
+table.t td,table.t th{padding:10px 14px;border-bottom:1px solid var(--line);text-align:left;vertical-align:top}
+table.t th{font:400 10px 'Fira Code',monospace;letter-spacing:.12em;color:var(--mut)}
+pre{margin:0;padding:14px;background:var(--pane);font:400 12px/1.6 'Fira Code',monospace;white-space:pre-wrap;word-break:break-word}
+.ft{display:flex;flex-wrap:wrap;gap:4px 20px;padding:6px 14px;background:var(--pane);border-top:1px solid var(--edge);font:400 11px 'Fira Code',monospace;color:var(--mut)}
+.reduced *{transition:none!important;animation:none!important}
+.sr{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0)}
+</style>
+</head>
+<body>
+<section id="review" aria-label="Prototype review controls"></section>
+<div id="stage"><div id="frame" class="app"></div></div>
+<div id="live" class="sr" aria-live="polite"></div>
+<script>
+'use strict';
+/* ---------- deterministic mock model (no network, no real sends) ---------- */
+const DAY0 = Date.UTC(2025,0,1), RAD = Math.PI/180;
+const BASE = [
+ {id:'im2',name:'IM-2 target, Mons Mouton',short:'IM-2',lat:-84.78,lon:29.13,sa:3.2,sb:.4,sp:-.5,ea:6.5,eb:2,ep:-3.9,terrain:true},
+ {id:'im1',name:'IM-1, Malapert A',short:'IM-1',lat:-80.13,lon:1.44,sa:9.9,sb:0,sp:6,ea:6.5,eb:6,ep:-2},
+ {id:'shk',name:'Shackleton ridge',short:'Shackleton',lat:-89.4,lon:220,note:'coordinates to confirm',sa:1.5,sb:.7,sp:14,ea:6.5,eb:0,ep:9},
+ {id:'ch3',name:'Chandrayaan-3',short:'Ch-3',lat:-69.37,lon:32.35,sa:20.6,sb:0,sp:-1,ea:6.5,eb:20,ep:0},
+ {id:'ap11',name:'Apollo 11',short:'Apollo 11',lat:.67,lon:23.47,sa:88,sb:0,sp:1,ea:6.5,eb:60,ep:0}
+];
+const S = {
+ tab:'console', first:true, force:'normal', viewport:'desktop', reduced:false, explain:false,
+ sites:[], site:'im2', date:'2025-03-06', hour:0, margin:2, accuracy:250, scrub:0, playing:false,
+ add:{open:false,name:'',lat:'',lon:'',err:''}, fetching:null, retries:0,
+ drawer:false, modal:null, toast:'',
+ cmp:{a:{site:'im2',date:'2025-03-06',hour:0},b:{site:'im2',date:'2025-03-16',hour:0},setup:'date'},
+ aim:{x:0,y:0},
+ watches:[], log:[], wf:{site:'im2',rule:'power',to:'',err:''}, wid:1,
+ api:{ep:0,count:0,limited:false,resp:''},
+ decision:{v:'',notes:''}
+};
+const $ = (q,r=document)=>r.querySelector(q);
+const esc = s=>String(s).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+const tOf=(d,h)=>(Date.parse(d+'T00:00:00Z')-DAY0)/864e5+h/24;
+const addDays=(d,n)=>new Date(Date.parse(d+'T00:00:00Z')+n*864e5).toISOString().slice(0,10);
+const site=id=>S.sites.find(s=>s.id===id)||S.sites[0];
+const els=(s,t)=>({sun:s.sa*Math.sin(2*Math.PI*(t+s.sp)/29.53)+s.sb,earth:s.ea*Math.sin(2*Math.PI*(t+s.ep)/27.32)+s.eb});
+function series(s,t0){const a=[];for(let i=0;i<=60;i++){const e=els(s,t0+i*.5);a.push({sun:e.sun,earth:e.earth,p:e.sun>S.margin,l:e.earth>S.margin});}return a;}
+function stats(a){const pct=k=>Math.round(100*a.filter(x=>x[k]).length/a.length);
+ const gap=k=>{let m=0,c=0;a.forEach(x=>{c=x[k]?0:c+1;if(c>m)m=c;});return m/2;};
+ const nxt=k=>{for(let j=1;j<a.length;j++)if(a[j][k]!==a[0][k])return j/2;return null;};
+ return {pp:pct('p'),lp:pct('l'),pg:gap('p'),lg:gap('l'),pn:nxt('p'),ln:nxt('l')};}
+const word=e=>e.p&&e.l?['READY','ok','●']:(!e.p&&!e.l?['DARK, NO LINK','','✕']:(!e.p?['NO POWER','','▲']:['NO LINK','','■']));
+const deg=v=>(v>=0?'+':'')+v.toFixed(1)+'°';
+const fmtD=v=>v===null?'none in 30 d':(v>=1?v.toFixed(1)+' d':(v*24)+' h');
+/* terrain placeholder (invented pattern until LOLA data is prepared) */
+const CR=[[200,-130,150],[-330,260,110],[420,430,90]];
+function level(x,y){let d=1e9;CR.forEach(c=>{d=Math.min(d,Math.hypot(x-c[0],y-c[1])-c[2]);});return d<0?0:(d<50?1:(d<110?2:3));}
+const PTS=[];for(let r=0;r<41;r++)for(let c=0;c<41;c++){const x=(c-20)*30,y=(20-r)*30;PTS.push({x,y,ok:level(x,y)>=3});}
+function odds(cx,cy,R){let n=0,k=0;for(const p of PTS){const dx=p.x-cx,dy=p.y-cy;if(dx*dx+dy*dy<=R*R){n++;if(p.ok)k++;}}return n?k/n:0;}
+function best(){let b={x:0,y:0,v:odds(0,0,250)};for(let x=-300;x<=300;x+=50)for(let y=-300;y<=300;y+=50){const v=odds(x,y,250);if(v>b.v+1e-9)b={x,y,v};}return b;}
+const where=(x,y)=>x===0&&y===0?'on the original target':[x?Math.abs(x)+' m '+(x>0?'east':'west'):'',y?Math.abs(y)+' m '+(y>0?'north':'south'):''].filter(Boolean).join(' and ')+' of the original target';
+function customParams(lat,lon){return {sa:Math.max(1.5,90-Math.abs(lat)+1.5),sb:0,sp:-lon/12.19,ea:6.5,eb:60*Math.cos(lon*RAD)*Math.cos(lat*RAD),ep:0};}
+/* ---------- actions ---------- */
+function say(m){S.toast=m;$('#live').textContent=m;clearTimeout(say.t);say.t=setTimeout(()=>{S.toast='';render();},3200);}
+function logEv(level,msg){S.log.unshift({t:S.date+' '+String(S.hour).padStart(2,'0')+':00',level,msg});}
+const RULES={power:'The site has no power at landing',link3:'Earth contact is lost for more than 3 days',slip14:'The site stops being ready at any slip up to 14 days',odds70:'Fewer than 7 in 10 landings would work'};
+function holds(w){const s=site(w.site),t=tOf(S.date,S.hour),a=series(s,t),st=stats(a);
+ if(w.rule==='power')return a[0].p; if(w.rule==='link3')return st.lg<=3;
+ if(w.rule==='slip14'){for(let d=0;d<=14;d++){const e=els(s,t+d);if(!(e.sun>S.margin&&e.earth>S.margin))return false;}return true;}
+ return odds(S.aim.x,S.aim.y,S.accuracy)>=.7;}
+function checkWatches(why){S.watches.forEach(w=>{if(w.status!=='active'&&w.status!=='tripped')return;const h=holds(w);
+ if(!h&&w.status==='active'){w.status='tripped';logEv('▲ ALERT',site(w.site).short+': '+RULES[w.rule].toLowerCase()+' ('+why+'). Alert sent to '+w.to+' (mock, nothing was sent).');say('Watch tripped: '+site(w.site).short);}
+ else if(h&&w.status==='tripped'){w.status='active';logEv('● CLEAR',site(w.site).short+': rule holds again ('+why+').');}});}
+function badHook(u){let url;try{url=new URL(u);}catch(e){return 'That is not a complete web address.';}
+ if(url.protocol!=='https:')return 'The address must start with https://';
+ const h=url.hostname;if(h==='localhost'||/\.local$/.test(h)||/^(127\.|10\.|192\.168\.|169\.254\.|172\.(1[6-9]|2\d|3[01])\.)/.test(h)||/^\d+\.\d+\.\d+\.\d+$/.test(h)||h.startsWith('['))return 'Internal and numeric addresses are not allowed. Use a public https address.';
+ return '';}
+const ACT={
+ demo(){S.first=false;S.site='im2';S.date='2025-03-06';S.hour=0;S.scrub=0;say('Loaded the 2025 landing case');},
+ pick(){S.first=false;},
+ site(id){S.site=id;S.scrub=0;},
+ slip(n){S.date=addDays(S.date,+n);S.scrub=0;checkWatches('landing date changed to '+S.date);},
+ explain(){S.explain=!S.explain;},
+ drawer(){S.drawer=!S.drawer;S._focus=S.drawer?'dr-close':'gear';},
+ margin(v){S.margin=+v;checkWatches('terrain margin changed');},
+ acc(v){S.accuracy=+v;checkWatches('landing accuracy changed');},
+ scrub(v){S.scrub=+v;},
+ play(){S.playing=!S.playing;if(S.playing)tick();},
+ addOpen(){S.add={open:true,name:'',lat:'',lon:'',err:''};S._focus='a-lat';},
+ addCancel(){S.add.open=false;S._focus='add-open';},
+ addSave(){const lat=parseFloat(S.add.lat),lon=parseFloat(S.add.lon);
+  if(isNaN(lat)||lat<-90||lat>90){S.add.err='Latitude must be a number from -90 to 90.';S._focus='a-lat';return;}
+  if(isNaN(lon)||lon<-180||lon>360){S.add.err='Longitude must be a number from -180 to 360.';S._focus='a-lon';return;}
+  const id='c'+Date.now();S.sites.push(Object.assign({id,name:S.add.name.trim()||'Custom site',short:(S.add.name.trim()||'Custom').slice(0,10),lat,lon,custom:true},customParams(lat,lon)));
+  S.add.open=false;S.site=id;S.fetching=id;S._focus='add-open';setTimeout(()=>{S.fetching=null;say('Positions loaded for the new site (simulated)');render();},900);},
+ retry(){S.retries++;say(S.retries>=3?'Retry limit reached. It will try again every 5 minutes (simulated).':'Still unavailable (simulated). Showing saved results.');},
+ starter(){S.sites=BASE.map(s=>Object.assign({},s));S.site='im2';},
+ go(tab){location.hash=tab;},
+ setup(k){const c=S.cmp;c.setup=k;c.a={site:S.site,date:S.date,hour:S.hour};
+  if(k==='date')c.b={site:S.site,date:addDays(S.date,10),hour:S.hour};
+  if(k==='time')c.b={site:S.site,date:S.date,hour:(S.hour+12)%24};
+  if(k==='site')c.b={site:S.sites.find(s=>s.id!==S.site).id,date:S.date,hour:S.hour};
+  if(k==='aim'){c.a.site='im2';c.b={site:ensureAim(),date:S.date,hour:S.hour};}},
+ copy(){const t=reportLines().map(l=>l[1]).join('\n');try{navigator.clipboard.writeText(t).then(()=>{say('Report copied');render();},()=>{say('Copy is not available here');render();});}catch(e){say('Copy is not available here');}},
+ safest(){const b=best();S.aim={x:b.x,y:b.y};checkWatches('aim moved');},
+ aimReset(){S.aim={x:0,y:0};checkWatches('aim moved');},
+ nudge(v){const [dx,dy]=v.split(',').map(Number);moveAim(S.aim.x+dx,S.aim.y+dy);},
+ take(to){const id=ensureAim();if(to==='console'){S.site=id;}if(to==='compare'){ACT.setup('aim');}if(to==='watch'){S.wf.site=id;S.wf.rule='odds70';}location.hash=to;say('Aim carried to '+to);},
+ wStart(){const to=S.wf.to.trim();let err='';
+  if(!to)err='Enter an email address or a web address to notify.';
+  else if(to.includes('@')){if(!/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(to))err='That email address does not look complete.';}
+  else err=badHook(to);
+  if(err){S.wf.err=err;S._focus='w-to';return;}
+  S.watches.push({id:S.wid++,site:S.wf.site,rule:S.wf.rule,to,status:'pending',email:to.includes('@')});
+  logEv('→ NEW','Watch created for '+site(S.wf.site).short+'. Waiting for confirmation from '+to+'.');S.wf.to='';S.wf.err='';say('Confirmation requested (mock, nothing was sent)');},
+ wConfirm(id){const w=S.watches.find(x=>x.id==id);w.status='active';logEv('● OK','Watch confirmed by '+w.to+'.');say('Watch is active');checkWatches('first check');},
+ wExpire(id){const w=S.watches.find(x=>x.id==id);w.status='expired';logEv('= INFO','Confirmation link for '+w.to+' expired after 24 h.');},
+ wResend(id){const w=S.watches.find(x=>x.id==id);w.status='pending';say('New confirmation requested (mock)');},
+ wTest(){say('Test alert shown here only. Nothing was sent (mock).');},
+ wAsk(id){S.modal={id:+id};S._focus='m-cancel';S._back='w-del-'+id;},
+ mCancel(){S.modal=null;S._focus=S._back;},
+ mDelete(){S.watches=S.watches.filter(w=>w.id!==S.modal.id);S.modal=null;logEv('= INFO','Watch deleted.');say('Watch deleted');},
+ ep(i){S.api.ep=+i;S.api.resp='';},
+ send(){const a=S.api;if(a.limited)return;a.count++;if(a.count>5){a.limited=true;a.resp='';return;}a.resp=apiResp();},
+ wait(){S.api.limited=false;S.api.count=0;say('30 seconds passed (simulated)');}
+};
+function ensureAim(){const {x,y}=S.aim,id='aim';const lv=level(x,y);const b=BASE[0];
+ const o=Object.assign({},b,{id,name:'IM-2 aim, '+(x||y?where(x,y).replace(' of the original target','').replace(' and ',', '):'on target'),short:'IM-2 aim',custom:true,aim:true,sb:lv>=3?b.sb+.6:(lv===2?b.sb-1.6:-10)});
+ const i=S.sites.findIndex(s=>s.id===id);if(i>=0)S.sites[i]=o;else S.sites.push(o);return id;}
+function moveAim(x,y){let nx=Math.round(x/10)*10,ny=Math.round(y/10)*10;const d=Math.hypot(nx,ny);if(d>480){nx=Math.round(nx*480/d/10)*10;ny=Math.round(ny*480/d/10)*10;}S.aim={x:nx,y:ny};checkWatches('aim moved');}
+function tick(){if(!S.playing)return;S.scrub=S.scrub>=30?0:Math.min(30,S.scrub+(S.reduced?5:.5));render();setTimeout(tick,S.reduced?700:120);}
+/* ---------- views ---------- */
+const L=(tech,plain)=>S.explain?plain:tech;
+function header(narrow){const tabs=[['console','CONSOLE'],['compare','COMPARE'],['miss','MISS'],['watch','WATCH'],['api','API']];
+ const nav=`<nav class="tabs ${narrow?'tabbar':''}" aria-label="Sections">${tabs.map(t=>`<a href="#${t[0]}" ${S.tab===t[0]?'aria-current="page"':''}>${t[1]}</a>`).join('')}</nav>`;S._nav=narrow?nav:'';
+ return `<header class="hd"><div class="brand"><svg aria-hidden="true" width="22" height="22" viewBox="0 0 32 32"><circle cx="16" cy="16" r="13" fill="none" stroke="#fff" stroke-width="2"/><path d="M16 3A13 13 0 0 1 16 29A7 13 0 0 0 16 3Z" fill="#EAFE07"/></svg>MOON STATUS</div>
+ ${narrow?'':nav}
+ <div class="right"><button data-act="explain" data-k="explain" aria-pressed="${S.explain}">EXPLAIN</button><button data-act="drawer" data-k="gear" aria-label="Settings">⚙${narrow?'':' SETTINGS'}</button></div></header>
+ <div class="scn mono"><span class="lead">SCENARIO</span><span><span class="lead">PLACE </span><b>${esc(site(S.site)?site(S.site).short:'none yet')}</b></span><span><span class="lead">LANDING </span><b>${S.date} ${String(S.hour).padStart(2,'0')}:00 UTC</b></span><span class="xtra">${L('MARGIN','SHADOW ALLOWANCE')} <b>${S.margin.toFixed(1)}°</b></span><span class="xtra">${L('ACCURACY','CAN MISS BY')} <b>±${S.accuracy} m</b></span>
+ <span class="sp"><button data-act="slip" data-arg="-1" data-k="s-1" aria-label="Landing one day earlier">−1 d</button><button data-act="slip" data-arg="1" data-k="s1" aria-label="Landing one day later">+1 d</button><button data-act="slip" data-arg="10" data-k="s10" aria-label="Landing ten days later">+10 d</button></span></div>`;}
+function consoleView(){
+ if(S.first)return `<div class="main"><div class="empty"><h2>Will a Moon lander have power and a line home?</h2><p>Pick a landing site and a date. Moon Status shows when the Sun is up for power and when Earth is in view for contact.</p><p><button class="btn" data-act="demo" data-k="demo">START WITH THE 2025 LANDING</button> <button class="btn2" data-act="pick" data-k="pick">CHOOSE MY OWN SITE</button></p><p class="mono" style="font-size:11px;color:var(--mut)">ALL NUMBERS IN THIS PROTOTYPE ARE SAMPLE VALUES</p></div></div>`;
+ if(!S.sites.length)return `<div class="main"><div class="empty"><h2>No sites yet</h2><p>Add coordinates of your own, or load the starter list of past and planned landing sites.</p><p><button class="btn" data-act="starter" data-k="starter">LOAD STARTER LIST</button> <button class="btn2" data-act="addOpen" data-k="add-open">ADD COORDINATES</button></p></div>${addForm()}</div>`;
+ const t0=tOf(S.date,S.hour),cur=site(S.site),down=S.force==='down',loading=S.force==='loading';
+ const rows=S.sites.map(s=>{const a=series(s,t0),w=word(a[0]),f=S.fetching===s.id;return {s,a,w,f,st:stats(a)};});
+ const ready=rows.filter(r=>r.w[1]).length;
+ const side=`<aside class="side"><div class="lbl">01 / SITES · ${ready} OF ${rows.length} READY</div>${S.explain?'<div class="exp">Each row is a place a lander could touch down. The mark shows whether it would work on landing day.</div>':''}
+ ${rows.map(r=>`<button class="row" data-act="site" data-arg="${r.s.id}" data-k="site-${r.s.id}" aria-pressed="${r.s.id===S.site}"><span aria-hidden="true" style="flex:0 0 14px;color:${r.w[1]?'var(--yel)':'#fff'}">${r.f?'…':r.w[2]}</span><span style="flex:1;min-width:0"><b>${esc(r.s.name)}</b><small>${r.s.lat.toFixed(2)}, ${r.s.lon.toFixed(2)}${r.s.note?' · '+r.s.note:''}${r.s.custom?' · yours':''}</small></span><span class="mono" style="font-size:10px">${r.f?'FETCHING':r.w[0]}</span></button>`).join('')}
+ ${S.add.open?addForm():`<button class="row" data-act="addOpen" data-k="add-open" ${down?'disabled':''}>＋ ADD COORDINATES${down?' (unavailable while NASA’s service is down)':''}</button>`}</aside>`;
+ if(loading)return side+`<div class="main" aria-busy="true"><div class="lbl">ASKING NASA HORIZONS FOR SUN AND EARTH POSITIONS (SIMULATED)</div>${'<div class="sk"></div>'.repeat(9)}</div><aside class="insp" aria-busy="true"><div class="lbl">04 / INSPECTOR</div>${'<div class="sk"></div>'.repeat(6)}</aside>`;
+ const idx=Math.round(S.scrub*2),me=rows.find(r=>r.s.id===cur.id),e=me.a[idx],w=word(e);
+ const sunLon=(40-12.19*(t0+S.scrub))*RAD,sx=180+164*Math.sin(sunLon),sy=180-164*Math.cos(sunLon);
+ const pins=rows.filter(r=>r.s.lat<=-65).map(r=>{const rr=(90+r.s.lat)/25*150,x=180+rr*Math.sin(r.s.lon*RAD),y=180-rr*Math.cos(r.s.lon*RAD),ww=word(r.a[idx]);
+  return `<button class="pin ${ww[1]}" style="left:${x-22}px;top:${y-22}px" data-act="site" data-arg="${r.s.id}" data-k="pin-${r.s.id}" aria-pressed="${r.s.id===S.site}" aria-label="${esc(r.s.name)}, ${ww[0].toLowerCase()}"><span></span></button><div class="pl" style="left:${x+14}px;top:${y-8}px;${r.s.id===S.site?'background:var(--yel);color:var(--deep)':''}">${esc(r.s.short)}</div>`;}).join('');
+ const main=`<div class="main">${down?`<div class="ban" role="status"><span><b>NASA’s position service is not answering.</b> Showing results saved earlier. New coordinates cannot be added until it is back.</span><button class="btn2" data-act="retry" data-k="retry" ${S.retries>=3?'disabled':''}>RETRY</button></div>`:''}
+ <section class="mapwrap"><div class="cap">02 / SOUTH POLE · ${L('POLAR VIEW','LOOKING DOWN ON THE POLE')} · SAMPLE DATA</div>
+ <div class="disc" role="group" aria-label="South pole map. Earth is toward the top."><div class="rim"></div><div class="ring" style="inset:80px"></div><div class="ring" style="inset:120px"></div><div class="ring" style="inset:150px"></div>
+ <div class="pl" style="left:0;right:0;top:4px;text-align:center;color:var(--edge)">▲ EARTH</div>
+ <div style="position:absolute;left:${sx-9}px;top:${sy-9}px;width:18px;height:18px;border-radius:50%;background:var(--yel)"></div><div class="pl" style="left:${sx-12}px;top:${sy+10}px;color:var(--yel)">SUN</div>${pins}</div></section>
+ <section class="tl"><div class="lbl" style="border-top:0">03 / ${L('TIMELINE · 30 D','THE NEXT 30 DAYS')} · <span style="color:var(--yel)">■</span> ${L('SUN','SUNLIGHT')} <span style="color:var(--edge)">■</span> ${L('EARTH','EARTH IN VIEW')} <span style="color:#3a4f8a">■</span> ${L('OUT','NOT AVAILABLE')}</div>
+ ${S.explain?'<div class="exp">Drag the slider to move through time. The white line shows the moment you are looking at.</div>':''}
+ <div class="scrub"><button class="btn2" data-act="play" data-k="play" aria-pressed="${S.playing}">${S.playing?'❚❚ PAUSE':'▶ PLAY'}</button><label class="sr" for="scrub">Days after landing</label><input id="scrub" type="range" min="0" max="30" step="0.5" value="${S.scrub}" data-bind="scrub" data-k="scrub"><span class="mono" style="flex:0 0 78px;text-align:right">T+${S.scrub.toFixed(1)} d</span></div>
+ ${rows.map(r=>`<div class="trk ${r.s.id===S.site?'sel':''}"><span class="n">${esc(r.s.short)}</span><span class="b" role="img" aria-label="${esc(r.s.short)}: sunlight ${r.st.pp} percent of the time, Earth in view ${r.st.lp} percent"><span class="cells">${r.a.slice(0,60).map(x=>`<span style="background:${x.p?'var(--yel)':'var(--off)'}"></span>`).join('')}</span><span class="cells">${r.a.slice(0,60).map(x=>`<span style="background:${x.l?'var(--edge)':'var(--off)'}"></span>`).join('')}</span><span class="ph" style="left:${S.scrub/30*100}%"></span></span><span class="mono" style="flex:0 0 76px;text-align:right;font-size:11px">${r.st.pp}% / ${r.st.lp}%</span></div>`).join('')}</section></div>`;
+ const insp=`<aside class="insp"><div class="lbl">04 / INSPECTOR · T+${S.scrub.toFixed(1)} d</div>
+ <div class="pad" style="border-bottom:1px solid var(--line)"><div class="h2" style="font-size:20px">${esc(cur.name)}</div><span class="tag ${w[1]}">${w[2]} ${w[0]}</span></div>
+ <div class="grid2"><div class="ro"><i>${L('SUN ELEV','SUN HEIGHT')}</i><b style="color:var(--yel)">${deg(e.sun)}</b></div><div class="ro"><i>${L('EARTH ELEV','EARTH HEIGHT')}</i><b style="color:var(--edge)">${deg(e.earth)}</b></div>
+ <div class="ro"><i>${L('POWER UP','TIME WITH SUNLIGHT')}</i><b>${me.st.pp}%</b></div><div class="ro"><i>${L('LINK UP','TIME WITH EARTH CONTACT')}</i><b>${me.st.lp}%</b></div></div>
+ ${S.explain?'<div class="exp">Height is how far above the horizon it sits. Below zero means it is hidden behind the Moon’s edge. The shadow allowance treats anything lower than '+S.margin.toFixed(1)+'° as blocked by hills.</div>':''}
+ <div class="pad" style="border-bottom:1px solid var(--line)"><div class="mono" style="font-size:10px;color:var(--mut);letter-spacing:.1em">NEXT CHANGE FROM LANDING</div>
+ <div>${me.a[0].p?'Sunset':'Sunrise'}: <span class="mono" style="color:var(--yel)">${me.st.pn===null?'none in 30 d':'T+'+fmtD(me.st.pn)}</span></div><div>${me.a[0].l?'Earthset':'Earthrise'}: <span class="mono" style="color:var(--yel)">${me.st.ln===null?'none in 30 d':'T+'+fmtD(me.st.ln)}</span></div></div>
+ <div class="grid3" style="border-bottom:1px solid var(--line)"><button data-act="go" data-arg="compare" data-k="to-cmp">COMPARE</button><button data-act="go" data-arg="miss" data-k="to-miss" style="border-left:1px solid var(--line)">MISS</button><button data-act="go" data-arg="watch" data-k="to-watch" style="border-left:1px solid var(--line)">WATCH</button></div>
+ <div class="pad" style="font-size:12px;color:var(--mut)">Smooth-Moon model. Hills and crater rims are only counted on the Miss tab, where terrain is prepared.</div></aside>`;
+ return side+main+insp;}
+function addForm(){const a=S.add;if(!a.open)return '';return `<form class="pad" data-form="addSave" style="border-bottom:1px solid var(--line)" novalidate>
+ ${a.err?`<p class="err" role="alert">${esc(a.err)}</p>`:''}
+ <label class="fld"><span>NAME (OPTIONAL)</span><input id="a-name" data-k="a-name" data-bind="add.name" value="${esc(a.name)}"></label>
+ <label class="fld"><span>LATITUDE, −90 TO 90 (SOUTH IS NEGATIVE)</span><input id="a-lat" data-k="a-lat" data-bind="add.lat" inputmode="decimal" value="${esc(a.lat)}" ${a.err.startsWith('Lat')?'aria-invalid="true"':''}></label>
+ <label class="fld"><span>LONGITUDE, EAST POSITIVE</span><input id="a-lon" data-k="a-lon" data-bind="add.lon" inputmode="decimal" value="${esc(a.lon)}" ${a.err.startsWith('Lon')?'aria-invalid="true"':''}></label>
+ <button class="btn" type="submit" data-k="a-save">ADD SITE</button> <button class="btn2" type="button" data-act="addCancel" data-k="a-cancel">CANCEL</button></form>`;}
+function cmpSide(k){const c=S.cmp[k],s=site(c.site),a=series(s,tOf(c.date,c.hour)),st=stats(a),w=word(a[0]);
+ return {a,st,html:`<section class="main" style="flex:1 1 320px;border-right:1px solid var(--line)"><div class="lbl">SIDE ${k.toUpperCase()} <span class="tag ${w[1]}" style="float:right">${w[2]} ${w[0]}</span></div>
+ <div class="pad" style="border-bottom:1px solid var(--line)"><label class="fld"><span>PLACE</span><select data-bind="cmp.${k}.site" data-k="c${k}s">${S.sites.map(x=>`<option value="${x.id}" ${x.id===c.site?'selected':''}>${esc(x.name)}</option>`).join('')}</select></label>
+ <div class="grid2" style="gap:10px"><label class="fld"><span>DATE (UTC)</span><input type="date" data-bind="cmp.${k}.date" data-k="c${k}d" value="${c.date}"></label><label class="fld"><span>HOUR (UTC)</span><select data-bind="cmp.${k}.hour" data-k="c${k}h">${[0,3,6,9,12,15,18,21].map(h=>`<option value="${h}" ${h===c.hour?'selected':''}>${String(h).padStart(2,'0')}:00</option>`).join('')}</select></label></div></div>
+ <div class="grid3"><div class="ro"><i>${L('SUN ELEV','SUN HEIGHT')}</i><b style="color:var(--yel)">${deg(a[0].sun)}</b></div><div class="ro"><i>${L('EARTH ELEV','EARTH HEIGHT')}</i><b style="color:var(--edge)">${deg(a[0].earth)}</b></div><div class="ro"><i>${L('POWER UP','SUNLIGHT')}</i><b>${st.pp}%</b></div>
+ <div class="ro"><i>${L('LINK UP','EARTH CONTACT')}</i><b>${st.lp}%</b></div><div class="ro"><i>LONGEST DARK</i><b>${st.pg} d</b></div><div class="ro"><i>LONGEST GAP</i><b>${st.lg} d</b></div></div>
+ <div class="pad"><div class="cells" role="img" aria-label="Sunlight over 30 days">${a.slice(0,60).map(x=>`<span style="height:14px;background:${x.p?'var(--yel)':'var(--off)'}"></span>`).join('')}</div><div class="cells" role="img" aria-label="Earth contact over 30 days">${a.slice(0,60).map(x=>`<span style="height:14px;background:${x.l?'var(--edge)':'var(--off)'}"></span>`).join('')}</div></div></section>`};}
+function reportLines(){const A=cmpSide('a'),B=cmpSide('b'),o=[];const add=(d,t)=>o.push([d>0?'▲':(d<0?'▼':'='),t]);
+ const ds=B.st.pp-A.st.pp,de=B.st.lp-A.st.lp;
+ add(Math.sign(ds),ds?`Time in sunlight goes from ${A.st.pp}% to ${B.st.pp}%.`:`Time in sunlight is unchanged at ${A.st.pp}%.`);
+ add(Math.sign(de),de?`Earth contact goes from ${A.st.lp}% to ${B.st.lp}%.`:`Earth contact is unchanged at ${A.st.lp}%.`);
+ const pa=A.a[0].p,pb=B.a[0].p;add(pb-pa,pa===pb?`Power at landing is the same on both sides (${pa?'Sun up':'Sun down'}).`:`Power at landing: ${pa?'Sun up':'Sun down'} in A, ${pb?'Sun up':'Sun down'} in B.`);
+ add(Math.sign(A.st.pg-B.st.pg),`Longest dark stretch: ${A.st.pg} days in A, ${B.st.pg} days in B.`);
+ add(Math.sign(A.st.lg-B.st.lg),`Longest gap in Earth contact: ${A.st.lg} days in A, ${B.st.lg} days in B.`);return o;}
+function compareView(){const A=cmpSide('a'),B=cmpSide('b'),ls=reportLines(),sc=ls.reduce((t,l)=>t+(l[0]==='▲'?1:(l[0]==='▼'?-1:0)),0),same=ls.every(l=>l[0]==='=');
+ const setups=[['date','SAME PLACE, 10 DAYS LATER'],['time','SAME DAY, 12 HOURS LATER'],['site','TWO SITES'],['aim','TARGET VS MY AIM']];
+ return `<div style="flex:1 1 100%;display:flex;flex-wrap:wrap;background:var(--pane);border-bottom:1px solid var(--line)"><div class="lbl" style="border:0">01 / QUICK SETUPS</div>${setups.map(s=>`<button data-act="setup" data-arg="${s[0]}" data-k="su-${s[0]}" aria-pressed="${S.cmp.setup===s[0]}" style="padding:0 14px;border-left:1px solid var(--line);font-size:12px;font-weight:700;${S.cmp.setup===s[0]?'background:var(--elec);box-shadow:inset 0 -3px 0 var(--yel)':''}">${s[1]}</button>`).join('')}</div>
+ ${A.html}${B.html}<aside class="insp"><div class="lbl">02 / CHANGE REPORT</div><div class="pad" style="border-bottom:1px solid var(--line)"><div class="h2" style="font-size:20px">${same?'No meaningful change':(sc>0?'B is the better case':(sc<0?'B is the worse case':'No clear winner'))}</div>${same?'<div style="font-size:13px">The Moon turns slowly, so a few hours often changes nothing.</div>':''}</div>
+ ${ls.map(l=>`<div style="display:flex;gap:10px;padding:10px 14px;border-bottom:1px solid var(--line)"><span class="mono" aria-hidden="true" style="color:${l[0]==='▲'?'var(--yel)':'#fff'}">${l[0]}</span><span>${l[1]}</span></div>`).join('')}
+ <div class="grid2" style="margin-top:auto;border-top:1px solid var(--line)"><button class="btn" data-act="copy" data-k="copy">COPY REPORT</button><button data-act="go" data-arg="watch" data-k="cw">WATCH THIS</button></div></aside>`;}
+function missView(){const s=site(S.site);
+ if(S.force==='noterrain'||!(s.terrain||s.aim))return `<div class="main"><div class="empty"><h2>No terrain prepared for this site yet</h2><p>The Miss view needs an elevation map around the target so hills and crater shadows can be counted. It is ready for the IM-2 target only.</p><p><button class="btn" data-act="site" data-arg="im2" data-k="to-im2">SWITCH TO IM-2 TARGET</button> <button class="btn2" data-act="go" data-arg="console" data-k="back-c">BACK TO CONSOLE</button></p></div></div>`;
+ const fw=$('#frame').clientWidth||1280,T=fw<900?Math.max(280,Math.min(640,fw-32)):Math.max(480,Math.min(720,fw-360-80));
+ const K=T/1250,H=T/2,{x,y}=S.aim,px=H+x*K,py=H-y*K,b=best(),cur=odds(x,y,250);
+ const cr=c=>`radial-gradient(circle at ${H+c[0]*K}px ${H-c[1]*K}px,#050F2C 0,#050F2C ${c[2]*.9*K}px,#0A2A6E ${(c[2]+40)*K}px,#0042A6 ${(c[2]+95)*K}px,rgba(0,66,166,0) ${(c[2]+125)*K}px)`;
+ const rg=(R,st)=>`<div class="rg" style="left:${px-R*K}px;top:${py-R*K}px;width:${2*R*K}px;height:${2*R*K}px;border:${st}"></div>`;
+ const kinds=[['A very accurate lander',100],['A lander like the 2025 one',250],['A less accurate lander',320]];
+ const rows=kinds.map(r=>{const v=odds(x,y,r[1]),n=Math.round(v*10),me=r[1]===S.accuracy;return `<div class="pad" style="border-bottom:1px solid var(--line);${me?'background:#0A1F52':''}"><div style="font-weight:700;font-size:15px">${r[0]}</div><div style="font-size:13px;color:var(--mut)">Lands within ${r[1]} m of where it aims${me?' · chosen in Settings':''}</div><div style="margin-top:4px"><span style="font:900 36px 'Fira Sans',sans-serif;color:var(--yel)">${n}</span> <span style="font-size:15px">out of 10 landings would work</span></div><div class="bar" role="img" aria-label="${n} out of 10"><div style="width:${Math.round(v*100)}%"></div></div></div>`;}).join('');
+ const aimText=x===0&&y===0?'You are aiming at the original target.':'You are aiming '+where(x,y)+'.';
+ const tip=b.v>cur+.04?`There is a safer place to aim: ${where(b.x,b.y)}. There, ${Math.round(b.v*10)} out of 10 landings would work.`:'This is the safest place to aim within 300 m of the original target.';
+ return `<div class="main"><section class="mapwrap" style="flex-direction:column"><div class="cap">WHERE SHOULD WE AIM? · PLACEHOLDER TERRAIN</div>
+ <div style="text-align:center;max-width:560px;margin-bottom:12px"><div class="h2" style="font-size:24px">Landers never hit the exact spot</div><div style="font-size:16px">Light ground works. Dark ground is in shadow. <span style="color:var(--yel)">Click the map to move the aim.</span></div></div>
+ <div class="terr" style="width:${T}px;height:${T}px"><button data-map="1" data-k="map" aria-label="Terrain map. Click to move the aiming point. The arrow buttons do the same from the keyboard." style="background:${CR.map(cr).join(',')},#2E96F5"></button>${rg(320,'1px dashed var(--yel)')}${rg(250,'2px solid var(--yel)')}${rg(100,'1px dashed #fff')}
+ <div style="position:absolute;left:${px-12}px;top:${py}px;width:24px;border-top:2px solid var(--yel);pointer-events:none"></div><div style="position:absolute;left:${px}px;top:${py-12}px;height:24px;border-left:2px solid var(--yel);pointer-events:none"></div>
+ <div class="pl" style="left:${px+8}px;top:${py-20}px;background:var(--yel);color:var(--deep)">AIM</div><div class="pl" style="left:${H+8}px;top:${H-8}px;background:#fff;color:var(--deep)">◆ ORIGINAL TARGET</div><div class="pl" style="left:${H+200*K-78}px;top:${H+130*K+10}px;background:#fff;color:var(--deep)">2025 LANDER [TO CONFIRM]</div></div>
+ <div class="mono" style="margin-top:10px;font-size:11px;letter-spacing:.08em">THE VIEW IS 1.25 KM ACROSS · NORTH IS UP · THE YELLOW RING IS YOUR LANDING ACCURACY</div></section></div>
+ <aside class="insp"><div class="lbl">IF WE AIM HERE</div><div class="pad" style="border-bottom:1px solid var(--line);font-size:15px">${aimText}</div>${rows}
+ <div class="pad" style="border-bottom:1px solid var(--line);font-size:15px">${tip}</div>
+ <div class="grid2" style="border-bottom:1px solid var(--line)"><button class="btn" data-act="safest" data-k="safest">MOVE TO THE SAFEST SPOT</button><button data-act="aimReset" data-k="areset" style="font-size:12px;font-weight:700">BACK TO THE TARGET</button></div>
+ <div class="lbl">NUDGE THE AIM · 50 M PER TAP</div><div style="display:grid;grid-template-columns:repeat(4,1fr);border-bottom:1px solid var(--line)">${[['-50,0','◀','west'],['0,50','▲','north'],['0,-50','▼','south'],['50,0','▶','east']].map(n=>`<button data-act="nudge" data-arg="${n[0]}" data-k="n${n[2]}" aria-label="Move aim 50 metres ${n[2]}">${n[1]}</button>`).join('')}</div>
+ <div class="lbl">USE THIS AIM IN ANOTHER TAB</div>${[['console','SEE ITS NEXT 30 DAYS','Console'],['compare','COMPARE IT WITH THE TARGET','Compare'],['watch','ALERT ME IF IT STOPS WORKING','Watch']].map(t=>`<button class="row" data-act="take" data-arg="${t[0]}" data-k="take-${t[0]}"><span style="flex:1;font-size:12px;font-weight:700;letter-spacing:.06em">${t[1]}</span><span class="mono" style="font-size:11px;color:var(--mut)">${t[2]} →</span></button>`).join('')}</aside>`;}
+function watchView(){const st={pending:['… WAITING','wait'],active:['● HOLDING','ok'],tripped:['▲ TRIPPED',''],expired:['✕ LINK EXPIRED','']};
+ return `<aside class="side" style="max-width:340px;flex-basis:300px"><div class="lbl">01 / WATCHES · ${S.watches.filter(w=>w.status==='active'||w.status==='tripped').length} ACTIVE</div>
+ ${S.watches.length?S.watches.map(w=>`<div class="pad" style="border-bottom:1px solid var(--line)"><div style="display:flex;justify-content:space-between;gap:8px"><b>${esc(site(w.site).short)}</b><span class="tag ${st[w.status][1]}">${st[w.status][0]}</span></div><div style="font-size:13px">Tell me when: ${RULES[w.rule].toLowerCase()}</div><div class="mono" style="font-size:11px;color:var(--mut);word-break:break-all">${esc(w.to)}</div>
+ ${w.status==='pending'?`<div style="font-size:12px;margin:6px 0">${w.email?'Open the link in the confirmation email to start this watch.':'Waiting for the address to answer a test message.'}</div><button class="sim" data-act="wConfirm" data-arg="${w.id}" data-k="wc${w.id}">SIMULATE: CONFIRMED</button> <button class="sim" data-act="wExpire" data-arg="${w.id}" data-k="we${w.id}">SIMULATE: 24 H PASS</button>`:''}
+ ${w.status==='expired'?`<div style="font-size:12px;margin:6px 0">The confirmation link was not used in time, so no alerts will be sent.</div><button class="btn2" data-act="wResend" data-arg="${w.id}" data-k="wr${w.id}">SEND A NEW LINK</button>`:''}
+ <div><button data-act="wAsk" data-arg="${w.id}" data-k="w-del-${w.id}" style="font-size:12px;text-decoration:underline">Delete watch</button></div></div>`).join(''):'<div class="pad" style="color:var(--mut)">No watches yet. Start one on the right, then change the landing date in the bar above to see it react.</div>'}</aside>
+ <div class="main"><div class="lbl">02 / EVENT LOG</div>${S.log.length?`<div style="overflow-x:auto"><table class="t"><thead><tr><th>SCENARIO TIME</th><th>LEVEL</th><th>WHAT HAPPENED</th></tr></thead><tbody>${S.log.map(l=>`<tr><td class="mono" style="white-space:nowrap;font-size:12px">${l.t}</td><td class="mono" style="white-space:nowrap;font-size:12px">${l.level}</td><td>${esc(l.msg)}</td></tr>`).join('')}</tbody></table></div>`:'<div class="pad" style="color:var(--mut)">Nothing has happened yet.</div>'}</div>
+ <aside class="insp"><div class="lbl">03 / NEW WATCH</div><form class="pad" data-form="wStart" novalidate>${S.wf.err?`<p class="err" role="alert">${esc(S.wf.err)}</p>`:''}
+ <label class="fld"><span>PLACE</span><select data-bind="wf.site" data-k="w-site">${S.sites.map(x=>`<option value="${x.id}" ${x.id===S.wf.site?'selected':''}>${esc(x.name)}</option>`).join('')}</select></label>
+ <label class="fld"><span>TELL ME WHEN</span><select data-bind="wf.rule" data-k="w-rule">${Object.keys(RULES).map(r=>`<option value="${r}" ${r===S.wf.rule?'selected':''}>${RULES[r]}</option>`).join('')}</select></label>
+ <label class="fld"><span>SEND TO (EMAIL OR HTTPS ADDRESS)</span><input id="w-to" data-k="w-to" data-bind="wf.to" value="${esc(S.wf.to)}" ${S.wf.err?'aria-invalid="true"':''} placeholder="name@example.org"></label>
+ <button class="btn" type="submit" data-k="w-start">START WATCH</button> <button class="btn2" type="button" data-act="wTest" data-k="w-test">SEND A TEST</button>
+ <p style="font-size:12px;color:var(--mut)">A watch only starts after the owner of the address confirms it, so nobody can sign someone else up.</p></form></aside>`;}
+const EPS=[['GET','/v1/sites','Curated and custom sites'],['GET','/v1/sky','Sun and Earth height at one place and time'],['GET','/v1/windows','Power and contact windows over 30 days'],['GET','/v1/report','Plain-language change report'],['GET','/v1/miss','Odds of a working landing around an aim'],['POST','/v1/watches','Start a watch']];
+function apiResp(){const s=site(S.site),a=series(s,tOf(S.date,S.hour)),st=stats(a),i=S.api.ep;
+ const o=[{sites:S.sites.map(x=>({id:x.id,name:x.name,lat:x.lat,lon:x.lon}))},{site:s.id,time:S.date,sun_elev_deg:+a[0].sun.toFixed(2),earth_elev_deg:+a[0].earth.toFixed(2)},{site:s.id,start:S.date,days:30,terrain_margin_deg:S.margin,power:{uptime_pct:st.pp,longest_gap_d:st.pg},link:{uptime_pct:st.lp,longest_gap_d:st.lg}},{verdict:'see lines',lines:reportLines().map(l=>l[1])},{aim_m:S.aim,accuracy_m:S.accuracy,working_share:+odds(S.aim.x,S.aim.y,S.accuracy).toFixed(2)},{status:'pending_confirmation'}][i];
+ return 'HTTP 200 (mock)\nX-RateLimit-Remaining: '+(5-S.api.count)+'\n\n'+JSON.stringify(Object.assign(o,{model:'sample numbers',source:'JPL Horizons (mocked)'}),null,2);}
+function apiView(){const a=S.api,e=EPS[a.ep];
+ return `<aside class="side"><div class="lbl">01 / ENDPOINTS · PROPOSED</div>${EPS.map((x,i)=>`<button class="row" data-act="ep" data-arg="${i}" data-k="ep${i}" aria-pressed="${i===a.ep}"><span style="flex:1;min-width:0"><b class="mono" style="font-weight:500">${x[0]} ${x[1]}</b><small style="font-family:Overpass,sans-serif">${x[2]}</small></span></button>`).join('')}</aside>
+ <div class="main"><div class="lbl">02 / TRY IT · USES THE CURRENT SCENARIO · NO REAL REQUEST IS MADE</div><div class="pad" style="display:flex;flex-wrap:wrap;gap:10px;align-items:center;border-bottom:1px solid var(--line)"><span class="mono" style="flex:1;min-width:200px">${e[0]} ${e[1]}?site=${S.site}&date=${S.date}</span><button class="btn" data-act="send" data-k="send" ${a.limited?'disabled':''}>SEND</button><span class="mono" style="font-size:11px;color:var(--mut)">${Math.max(0,5-a.count)} OF 5 LEFT THIS MINUTE</span></div>
+ ${a.limited?`<div class="ban" role="alert"><span><b>HTTP 429. Too many requests.</b> The limit is 5 a minute for each visitor. Try again in 30 seconds.</span><button class="sim" data-act="wait" data-k="wait">SIMULATE: 30 S PASS</button></div>`:''}
+ <pre aria-live="polite">${a.resp?esc(a.resp):'Press SEND to see a sample reply.'}</pre>
+ <div class="pad" style="font-size:13px;color:var(--mut)">Behind this, the server asks NASA for positions one request at a time and saves every answer, which is what NASA’s fair-use rules require.</div></div>
+ <aside class="insp"><div class="lbl">03 / ASSISTANT CONNECTOR (MCP)</div><div class="pad mono" style="font-size:12px;border-bottom:1px solid var(--line)">list_sites<br>get_windows<br>compare_sites<br>slip_impact<br>miss_tolerance<br>change_report</div>
+ <div class="lbl">04 / WAYS OUT</div><div class="pad" style="font-size:13px">Spreadsheet file · calendar file · share link · status badge · alerts. Downloads are not wired in this prototype.</div></aside>`;}
+function overlays(){let h='';
+ if(S.drawer)h+=`<div class="scrim" data-act="drawer"></div><aside class="drawer" role="dialog" aria-label="Settings"><div class="lbl" style="display:flex;justify-content:space-between;align-items:center">SETTINGS<button data-act="drawer" data-k="dr-close" aria-label="Close settings">✕</button></div><div class="pad">
+ <label class="fld"><span>${L('TERRAIN MARGIN','SHADOW ALLOWANCE')}: ${S.margin.toFixed(1)}°</span><input type="range" min="0" max="5" step="0.5" value="${S.margin}" data-bind="margin" data-k="mg" style="accent-color:var(--yel)"></label><p style="font-size:12px;color:var(--mut)">The Sun or Earth must be this far above the horizon to count. It stands in for hills the smooth-Moon model cannot see.</p>
+ <label class="fld"><span>LANDING ACCURACY</span><select data-bind="accuracy" data-k="ac">${[100,250,320].map(v=>`<option value="${v}" ${v===S.accuracy?'selected':''}>Can miss by up to ${v} m</option>`).join('')}</select></label><p style="font-size:12px;color:var(--mut)">Times are always shown in UTC.</p></div></aside>`;
+ if(S.modal)h+=`<div class="scrim"></div><div class="modal" role="alertdialog" aria-modal="true" aria-labelledby="mt"><div class="pad"><div id="mt" class="h2" style="font-size:18px">Delete this watch?</div><p>Alerts for it will stop. This cannot be undone.</p></div><div class="grid2" style="border-top:1px solid var(--line)"><button data-act="mCancel" data-k="m-cancel">KEEP IT</button><button data-act="mDelete" data-k="m-del" style="border-left:1px solid var(--line);color:#fff;background:#5a1600">DELETE</button></div></div>`;
+ if(S.toast)h+=`<div class="toast" role="status">${esc(S.toast)}</div>`;return h;}
+/* ---------- review layer ---------- */
+const NOTES={console:['Container: page with three panes. The site list, map and inspector stay visible together so selection never loses context.','Add coordinates: inline form in the list, not a modal, because the user needs to see existing sites while typing. Errors appear above the field and focus returns to it.','Settings: right drawer. It is secondary, reversible and benefits from seeing the timeline change behind it. Esc or the scrim closes it; focus returns to the gear.','Motion: drawer slides 180 ms ease-out; playhead steps every 120 ms. Reduced motion: no slide, playhead jumps in 5-day steps.','Haptics: none on desktop web. On a phone build: selection on site change, warning on validation error. Unverified until tested on hardware.'],
+ compare:['Container: page, two equal panes plus a report. Pickers are inline on each side so any pairing is possible.','Quick setups are a segmented control; they rewrite both sides from the current scenario.','“No meaningful change” is a designed state, not an error.','Copy uses the clipboard only from a click and reports failure honestly.'],
+ miss:['Container: page. The map is one large control; arrow buttons give the same action to keyboard users.','“Take this aim to” creates a site called IM-2 aim and carries it to the chosen tab. This is the shared-scenario hand-off.','No-terrain state explains what is missing and offers two exits.','Terrain shading is an invented placeholder.'],
+ watch:['Container: page with list, log and form. Delete uses a modal because it is a short, blocking, irreversible decision; focus starts on the safe choice.','Confirmation is a pending state with expiry after 24 h. The dashed buttons are simulation controls, not product UI.','Address check rejects non-https, localhost, private ranges and raw numeric addresses.','Nothing is ever sent. Every send is a labelled mock.','Haptics on a phone build: success on confirmed, warning on tripped. Unverified.'],
+ api:['Container: page, reference list plus a try-it pane.','Rate limit: the sixth send in a minute returns a 429 state with a clear wait. Time is advanced manually for review.','No request leaves the page.']};
+const PATHS=[['First open',()=>{reset();}],['2025 demo loaded',()=>{reset();ACT.demo();}],['Add coordinates: validation error',()=>{reset();ACT.demo();S.add={open:true,name:'Test',lat:'95',lon:'10',err:''};ACT.addSave();}],['NASA service down',()=>{reset();ACT.demo();S.force='down';}],['Loading',()=>{reset();ACT.demo();S.force='loading';}],['Empty site list',()=>{reset();S.first=false;S.sites=[];}],['Time scrubbed to day 12',()=>{reset();ACT.demo();S.scrub=12;}],['Explain mode on',()=>{reset();ACT.demo();S.explain=true;}],['Settings drawer open',()=>{reset();ACT.demo();S.drawer=true;}],['Miss: no terrain',()=>{reset();ACT.demo();S.site='im1';S.tab='miss';}],['Miss: safest aim, then Compare',()=>{reset();ACT.demo();ACT.safest();ensureAim();ACT.setup('aim');S.tab='compare';}],['Compare: same day, later hour',()=>{reset();ACT.demo();ACT.setup('time');S.tab='compare';}],['Watch: waiting for confirmation',()=>{reset();ACT.demo();S.wf.to='planner@example.org';ACT.wStart();S.tab='watch';}],['Watch: link expired',()=>{reset();ACT.demo();S.wf.to='planner@example.org';ACT.wStart();ACT.wExpire(1);S.tab='watch';}],['Watch: internal address rejected',()=>{reset();ACT.demo();S.wf.to='http://192.168.1.10/hook';ACT.wStart();S.tab='watch';}],['Watch: tripped after a 10-day slip',()=>{reset();ACT.demo();S.wf.to='planner@example.org';ACT.wStart();ACT.wConfirm(1);ACT.slip(10);S.tab='watch';}],['Watch: delete confirmation',()=>{reset();ACT.demo();S.wf.to='planner@example.org';ACT.wStart();S.modal={id:1};S.tab='watch';}],['API: rate limited',()=>{reset();ACT.demo();S.api.count=6;S.api.limited=true;S.tab='api';}],['Phone layout',()=>{reset();ACT.demo();S.viewport='phone';}]];
+function reset(){Object.assign(S,{tab:'console',first:true,force:'normal',explain:false,sites:BASE.map(s=>Object.assign({},s)),site:'im2',date:'2025-03-06',hour:0,margin:2,accuracy:250,scrub:0,playing:false,add:{open:false,name:'',lat:'',lon:'',err:''},fetching:null,retries:0,drawer:false,modal:null,toast:'',aim:{x:0,y:0},watches:[],log:[],wf:{site:'im2',rule:'power',to:'',err:''},wid:1,api:{ep:0,count:0,limited:false,resp:''}});S.cmp={a:{site:'im2',date:'2025-03-06',hour:0},b:{site:'im2',date:'2025-03-16',hour:0},setup:'date'};}
+function review(){const open=k=>($('#rv-'+k)&&$('#rv-'+k).open)?'open':'';
+ $('#review').innerHTML=`<h1>PROTOTYPE REVIEW CONTROLS · NOT PART OF THE PRODUCT · THROWAWAY · EVERYTHING BELOW THE BLACK LINE IS THE PROPOSED UI</h1>
+ <div class="row"><label>Jump to a pathway <select id="rv-path"><option value="">Choose…</option>${PATHS.map((p,i)=>`<option value="${i}">${i+1}. ${p[0]}</option>`).join('')}</select></label>
+ <label>Force a state <select id="rv-force">${[['normal','Normal'],['loading','Loading'],['down','NASA service down'],['noterrain','No terrain (Miss tab)']].map(o=>`<option value="${o[0]}" ${S.force===o[0]?'selected':''}>${o[1]}</option>`).join('')}</select></label>
+ <span>${['desktop','tablet','phone'].map(v=>`<button data-rv="vp" data-arg="${v}" aria-pressed="${S.viewport===v}">${v}</button>`).join('')}</span>
+ <button data-rv="rm" aria-pressed="${S.reduced}">Reduced motion</button><button data-rv="reset">Reset all</button></div>
+ <details id="rv-notes" ${open('notes')}><summary>Why this screen behaves as it does (${S.tab})</summary><ul>${NOTES[S.tab].map(n=>`<li>${n}</li>`).join('')}</ul></details>
+ <details id="rv-cov" ${open('cov')}><summary>State coverage map</summary><table><tr><th>State</th><th>Where</th></tr>
+ ${[['Entry, first use','Pathway 1; two choices, no modal'],['Happy path','Pathways 2, 7, 11'],['Loading','Pathway 5; also 0.9 s after adding a site'],['Empty','Pathway 6 (no sites); Watch with no watches; log with no events'],['Validation','Pathways 3 and 15; add-site and watch forms'],['Unavailable, stale data','Pathway 4: banner, saved results, add disabled, retry exhausts after 3'],['Error and retry','Pathway 4 retry; Pathway 18 rate limit with wait'],['Cancellation','Cancel add-site, close drawer, Keep it in delete dialog'],['Destructive confirmation','Pathway 17'],['Expiry','Pathway 14: confirmation link expires, resend offered'],['Interruption','Switch tabs mid-form: scenario and unsent watch draft are kept'],['Success and exits','Watch confirmed; aim carried to another tab; report copied'],['Platform variants','Viewport buttons: tablet and phone stack the panes'],['Permission','N/A: no device permission is needed'],['Offline','N/A as a separate state: covered by “service down” with saved results'],['Roles','N/A: one role, no accounts'],['Payment','N/A']].map(r=>`<tr><td>${r[0]}</td><td>${r[1]}</td></tr>`).join('')}</table>
+ <p><b>Mocked:</b> all numbers, the terrain pattern, NASA requests, email and web alerts, the API. <b>Unverified:</b> haptics, real phone behaviour, screen-reader output, backend timing.</p></details>
+ <details id="rv-dec" ${open('dec')}><summary>Decision</summary><div class="row">${['approve','revise','reject'].map(v=>`<button data-rv="dec" data-arg="${v}" aria-pressed="${S.decision.v===v}">${v}</button>`).join('')}<label style="flex:1 1 300px">Notes <textarea id="rv-notes-t" rows="2" style="width:100%">${esc(S.decision.notes)}</textarea></label></div><p>${S.decision.v?'Recorded in this browser only: '+S.decision.v+'. Tell Claude your decision in the chat.':'Nothing recorded yet.'}</p></details>`;}
+/* ---------- render and events ---------- */
+function render(){const f=$('#frame'),ae=document.activeElement,key=S._focus||(ae&&f.contains(ae)&&ae.dataset.k)||null;S._focus=null;
+ f.className='app '+(S.viewport==='desktop'?'':S.viewport)+(S.reduced?' reduced':'');
+ const narrow=f.clientWidth<900;f.classList.toggle('narrow',narrow);
+ const v={console:consoleView,compare:compareView,miss:missView,watch:watchView,api:apiView}[S.tab]();
+ f.innerHTML=header(narrow)+`<div class="body">${S.first&&S.tab!=='console'?consoleView():v}</div><footer class="ft"><span>● SOURCE JPL HORIZONS (MOCKED)</span><span>SMOOTH-MOON MODEL</span><span>PROTOTYPE: NOTHING IS SENT OR SAVED</span></footer>`+S._nav+overlays();
+ if(key){const el=f.querySelector('[data-k="'+key+'"]');if(el)el.focus({preventScroll:true});}
+ review();}
+function setPath(path,val){const p=path.split('.');let o=S;for(let i=0;i<p.length-1;i++)o=o[p[i]];o[p[p.length-1]]=val;}
+document.addEventListener('click',e=>{const r=e.target.closest('[data-rv]');
+ if(r){const a=r.dataset.rv,g=r.dataset.arg;if(a==='vp')S.viewport=g;if(a==='rm')S.reduced=!S.reduced;if(a==='reset'){reset();S.viewport='desktop';location.hash='console';}
+  if(a==='dec'){S.decision.v=g;S.decision.notes=$('#rv-notes-t').value;try{localStorage.setItem('moon-decision',JSON.stringify(S.decision));}catch(x){}}render();return;}
+ const m=e.target.closest('[data-map]');if(m){if(e.detail===0)return;const b=m.getBoundingClientRect();moveAim(((e.clientX-b.left)/b.width-.5)*1250,(.5-(e.clientY-b.top)/b.height)*1250);render();return;}
+ const t=e.target.closest('[data-act]');if(!t||t.disabled)return;ACT[t.dataset.act](t.dataset.arg);render();});
+document.addEventListener('submit',e=>{const f=e.target.closest('[data-form]');if(!f)return;e.preventDefault();ACT[f.dataset.form]();render();});
+document.addEventListener('input',e=>{const b=e.target.dataset&&e.target.dataset.bind;if(!b)return;
+ if(b==='scrub'){ACT.scrub(e.target.value);render();}else if(b==='margin'){ACT.margin(e.target.value);render();}else if(e.target.tagName==='INPUT'&&e.target.type!=='date')setPath(b,e.target.value);});
+document.addEventListener('change',e=>{const id=e.target.id,b=e.target.dataset&&e.target.dataset.bind;
+ if(id==='rv-path'&&e.target.value!==''){PATHS[+e.target.value][1]();const tab=S.tab;if(location.hash.slice(1)!==tab)location.hash=tab;render();return;}
+ if(id==='rv-force'){S.force=e.target.value;render();return;}
+ if(!b||b==='scrub'||b==='margin')return;
+ if(b==='accuracy'){ACT.acc(e.target.value);}else if(/hour$/.test(b)){setPath(b,+e.target.value);S.cmp.setup='';}else if(e.target.tagName==='SELECT'||e.target.type==='date'){if(e.target.value)setPath(b,e.target.value);if(b.startsWith('cmp'))S.cmp.setup='';}else return;render();});
+document.addEventListener('keydown',e=>{if(e.key!=='Escape')return;if(S.modal){ACT.mCancel();render();}else if(S.drawer){ACT.drawer();render();}else if(S.add.open){ACT.addCancel();render();}});
+function route(){const h=location.hash.slice(1);S.tab=['console','compare','miss','watch','api'].includes(h)?h:'console';render();}
+window.addEventListener('hashchange',route);window.addEventListener('resize',render);
+reset();try{const d=JSON.parse(localStorage.getItem('moon-decision')||'null');if(d)S.decision=d;}catch(x){}
+route();
+</script>
+</body>
+</html>

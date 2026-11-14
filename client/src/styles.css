@@ -1,0 +1,102 @@
+/* Space Apps brand tokens (see docs/PRD.md design rules). Corner radius 0 everywhere. */
+:root {
+  --deep: #07173f; /* page background */
+  --pane: #050f2c; /* side panes, header, status bar */
+  --elec: #0042a6; /* selected rows, gradient start */
+  --edge: #2e96f5; /* Earth, contact bars, pane edges */
+  --yel: #eafe07; /* Sun, power bars, primary buttons, active tab */
+  --red: #e43700; /* border on not-ready tags */
+  --white: #ffffff;
+  --mut: #b9c6e4; /* secondary text */
+  --line: #23408a; /* dividers */
+  --off: #1b2f66; /* outage cells */
+}
+
+* {
+  box-sizing: border-box;
+  border-radius: 0;
+}
+
+body {
+  margin: 0;
+  background: var(--deep);
+  color: var(--white);
+  font-family: Overpass, system-ui, sans-serif;
+  font-size: 14px;
+  line-height: 1.4;
+}
+
+a {
+  color: var(--yel);
+}
+
+.hd {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: stretch;
+  background: var(--pane);
+  border-bottom: 1px solid var(--edge);
+}
+
+.brand {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 0 14px;
+  min-height: 52px;
+  border-right: 1px solid var(--line);
+  font: 900 15px 'Fira Sans', sans-serif;
+  letter-spacing: 0.12em;
+}
+
+.tabs {
+  display: flex;
+  flex-wrap: wrap;
+}
+
+.tabs a {
+  display: flex;
+  align-items: center;
+  padding: 0 16px;
+  min-height: 52px; /* >= 44px target */
+  color: var(--white);
+  text-decoration: none;
+  font-weight: 600;
+  font-size: 13px;
+  letter-spacing: 0.06em;
+  border-right: 1px solid var(--line);
+}
+
+.tabs a[aria-current='page'] {
+  background: var(--yel);
+  color: var(--deep);
+}
+
+a:focus-visible,
+button:focus-visible {
+  outline: 2px solid var(--yel);
+  outline-offset: -2px;
+}
+
+.main {
+  padding: 24px;
+}
+
+.h2 {
+  font: 900 24px 'Fira Sans', sans-serif;
+  letter-spacing: 0.03em;
+  text-transform: uppercase;
+  margin: 0 0 8px;
+}
+
+.skip {
+  position: absolute;
+  left: -9999px;
+}
+.skip:focus {
+  position: static;
+  display: inline-block;
+  padding: 8px 14px;
+  background: var(--yel);
+  color: var(--deep);
+}
