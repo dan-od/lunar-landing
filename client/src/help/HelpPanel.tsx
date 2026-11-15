@@ -82,9 +82,20 @@ export function HelpPanel() {
               ))}
             </dl>
           </section>
-          <div className="pad">
+          <div className="pad help-actions">
             <button type="button" className="btn2" onClick={startTour}>
               SHOW THE CONSOLE TOUR
+            </button>
+            <button
+              type="button"
+              className="btn2"
+              onClick={() => {
+                setHelpOpen(false);
+                navigate({ pathname: '/api', search, hash: '#right' });
+                window.setTimeout(() => document.getElementById('right')?.focus(), 300);
+              }}
+            >
+              HOW WE KNOW IT&apos;S RIGHT
             </button>
           </div>
         </div>

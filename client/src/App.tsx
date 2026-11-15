@@ -66,6 +66,9 @@ function Shell() {
         <span>● SOURCE JPL HORIZONS</span>
         <span>SMOOTH-MOON MODEL · TERRAIN ON THE MISS TAB AND AIM POINTS</span>
         <span>TIMES IN UTC</span>
+        <Link className="ft-link" to={{ pathname: '/api', search, hash: '#right' }}>
+          HOW WE KNOW IT&apos;S RIGHT
+        </Link>
       </footer>
       <BottomTabs />
       <SettingsDrawer />

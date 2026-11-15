@@ -32,8 +32,9 @@ change turns a good site bad.
 - **LOLA south pole elevation map** — `LDEM_80S_80MPP_ADJ.TIF` (181 MB, 80 m/px),
   used to prepare terrain horizon profiles for the demo site. Not committed to the
   repository (it lives under `data/`, which is git-ignored).
-- **Space Apps brand assets** — colours and fonts only; the Space Apps logo is used
-  unaltered. No NASA insignia.
+- **Space Apps brand** — colours and fonts only. The Space Apps logo and orbit
+  pattern are not shown, because the original brand-kit files are not in the
+  repository. No NASA insignia.
 
 ### Horizons step size (verified)
 
@@ -44,8 +45,9 @@ local horizon, matching the convention used for terrain profiles.
 
 ## How we know it's right
 
-Three independent checks stand behind the numbers. Each says what it proves and
-what it does not.
+Four checks stand behind the numbers. Each says what it proves and what it does
+not. The same summary is in the app, on the API tab under "How we know it's
+right" (also linked from Help and the status bar).
 
 ### 1. Positions equal NASA's own output
 
@@ -114,6 +116,25 @@ What this does and does not show, plainly:
   to the reported touchdown time), all 441 points work in this model.
 - The actual touchdown point is not drawn on the map, because this repository
   has no cited position for it.
+
+### 4. Apollo 11's actual landing
+
+Apollo 11's lunar module touched down at Tranquility Base on 1969-07-20 at
+20:17:39 UTC. The Apollo 11 site is in the starter list (0.67416 N, 23.47314 E,
+from NASA NSSDC), so the same calculator can be asked about that moment.
+
+| | Sun height at touchdown | Source |
+| --- | --- | --- |
+| Moon Status | **10.7°** (10.55° at 20:00, 11.06° at 21:00, read 17 minutes into the hour); Sun toward 88.8° from north | `GET /v1/sky?site=ap11&date=1969-07-20&hour=20` and `hour=21`, from NASA JPL Horizons positions, smooth-Moon model |
+| NASA | **10.8°** | [Apollo by the Numbers (NASA SP-2000-4029), table "LM Lunar Landing", row "Sun Angle"](https://www.nasa.gov/wp-content/uploads/static/history/SP-4029/Apollo_18-27_LM_Lunar_Landing.htm) |
+
+The two agree to 0.1°. One caution: the same book lists 10.8° as the *targeted*
+Sun elevation in its launch-windows table, so NASA's figure may be the planned
+angle rather than a measurement at touchdown. Horizons positions are hourly, so
+our value between the hours is a straight-line reading, not a separate request.
+
+What this does not prove: anything about terrain. Apollo 11 landed on the open
+mare, where a flat horizon is a fair model.
 
 ## Layout
 

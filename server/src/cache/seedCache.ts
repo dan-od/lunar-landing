@@ -25,6 +25,8 @@ function addDays(date: string, n: number): string {
 export function seedSpans(nowMs: number = Date.now()): HorizonsSpan[] {
   const today = new Date(nowMs).toISOString().slice(0, 10);
   const spans: HorizonsSpan[] = [{ start: `${START} 00:00`, stop: `${addDays(START, DAYS)} 00:00`, step: '1h' }];
+  // Apollo 11's landing day, for the "How we know it's right" check.
+  spans.push({ start: '1969-07-20 00:00', stop: '1969-07-21 00:00', step: '1h' });
   if (TODAY_DAYS > 0) {
     spans.push({ start: `${today} 00:00`, stop: `${addDays(today, TODAY_DAYS)} 00:00`, step: '1h' });
   }

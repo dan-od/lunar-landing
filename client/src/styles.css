@@ -1314,6 +1314,21 @@ a.as-button {
   font-weight: 700;
 }
 
+.help-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+.ft-link {
+  display: inline-flex;
+  align-items: center;
+  min-height: 44px;
+  margin: -12px 0;
+}
+.right-panel dd {
+  font-size: 13px;
+}
+
 /* ---------- API tab ---------- */
 .api-path {
   font-weight: 500;

@@ -1,6 +1,7 @@
 // Flow 7 on screen: the public endpoints, and a place to send each one for the
 // current scenario. Requests are real and count against the visitor's limit.
 import { useEffect, useState } from 'react';
+import { HowWeKnow } from './HowWeKnow';
 import { Link } from 'react-router-dom';
 import { useApp } from '../state';
 import { tabFor } from '../tabs';
@@ -197,6 +198,7 @@ export function ApiPage() {
             shows what a request returns.
           </li>
         </ul>
+        <HowWeKnow />
       </aside>
     </main>
   );
