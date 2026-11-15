@@ -14,15 +14,40 @@ asset is added or removed.
 
 ### Site coordinates
 
-| Site | Source | Link |
-| --- | --- | --- |
-| IM-2 target, Mons Mouton | LROC (Arizona State University / NASA) | https://www.lroc.asu.edu/images/1401 |
-| IM-1 Odysseus, near Malapert A | NASA | https://www.nasa.gov/?p=620655 |
-| Shackleton–de Gerlache ridge | LROC (Arizona State University / NASA) | https://www.lroc.asu.edu/images/1247 |
-| Chandrayaan-3, Statio Shiv Shakti | IAU-approved name; coordinates as listed on Wikipedia (text CC BY-SA 4.0) | https://en.wikipedia.org/wiki/Statio_Shiv_Shakti |
-| Apollo 11 lunar module | NASA NSSDC | https://nssdc.gsfc.nasa.gov/planetary/lunar/lunar_sites.html |
+| Site | Group | Source | Link |
+| --- | --- | --- | --- |
+| IM-2 target, Mons Mouton | South pole | LROC (Arizona State University / NASA) | https://www.lroc.asu.edu/images/1401 |
+| IM-1 Odysseus, near Malapert A | South pole | NASA | https://www.nasa.gov/?p=620655 |
+| Shackleton–de Gerlache ridge | South pole | LROC (Arizona State University / NASA) | https://www.lroc.asu.edu/images/1247 |
+| Chandrayaan-3, Statio Shiv Shakti | South pole | IAU-approved name; coordinates as listed on Wikipedia (text CC BY-SA 4.0) | https://en.wikipedia.org/wiki/Statio_Shiv_Shakti |
+| Apollo 11 lunar module | Apollo | NASA NSSDC | https://nssdc.gsfc.nasa.gov/planetary/lunar/lunar_sites.html |
+| Apollo 12 lunar module | Apollo | NASA NSSDC (positions from LRO images, Wagner et al. 2017) | https://nssdc.gsfc.nasa.gov/planetary/lunar/lunar_sites.html |
+| Apollo 14 lunar module | Apollo | NASA NSSDC (positions from LRO images, Wagner et al. 2017) | https://nssdc.gsfc.nasa.gov/planetary/lunar/lunar_sites.html |
+| Apollo 15 lunar module | Apollo | NASA NSSDC (positions from LRO images, Wagner et al. 2017) | https://nssdc.gsfc.nasa.gov/planetary/lunar/lunar_sites.html |
+| Apollo 16 lunar module | Apollo | NASA NSSDC (positions from LRO images, Wagner et al. 2017) | https://nssdc.gsfc.nasa.gov/planetary/lunar/lunar_sites.html |
+| Apollo 17 lunar module | Apollo | NASA NSSDC (positions from LRO images, Wagner et al. 2017) | https://nssdc.gsfc.nasa.gov/planetary/lunar/lunar_sites.html |
+| Chang'e 3 lander | Other landers | LROC (Arizona State University for NASA) | https://www.lroc.asu.edu/images/751 |
+| Chang'e 4 lander | Other landers | LROC (Arizona State University for NASA) | https://www.lroc.asu.edu/images/1100 |
+| Chang'e 5 lander | Other landers | LROC (Arizona State University for NASA) | https://www.lroc.asu.edu/posts/1172 |
+| Chang'e 6 lander | Other landers | LROC (Arizona State University for NASA) | https://www.lroc.asu.edu/images/1374 |
+| SLIM (JAXA) | Other landers | LROC (Arizona State University for NASA) | https://www.lroc.asu.edu/images/1358 |
+| Blue Ghost Mission 1 | Other landers | LROC (Arizona State University for NASA) | https://www.lroc.asu.edu/images/1407 |
+| Luna 25 (crash site, "likely" per LROC) | Other landers | LROC (Arizona State University for NASA) | https://www.lroc.asu.edu/images/1311 |
+| Chandrayaan-2 Vikram (crash site) | South pole | LROC (Arizona State University for NASA) | https://www.lroc.asu.edu/images/1131 |
+| Beresheet (crash site) | Other landers | LROC (Arizona State University for NASA) | https://www.lroc.asu.edu/images/1101 |
+| ispace Hakuto-R M1 (crash site) | Other landers | LROC (Arizona State University for NASA) | https://www.lroc.asu.edu/images/1302 |
+| IM-2 Athena, where it came to rest | South pole | LROC (Arizona State University for NASA) | https://www.lroc.asu.edu/images/1408 |
 
 Only the coordinates (facts) are used from these pages; no text or images are copied.
+LROC pages now open at lroc.im-ldi.com; the lroc.asu.edu links redirect there.
+Where LROC gives longitude from 0 to 360° east, it was converted to −180..180
+(Chang'e 3, 5 and 6), and the app's note for that site says so.
+
+**Left out:** NASA's nine Artemis III candidate regions (2024 list). NASA's
+release (https://www.nasa.gov/news-release/nasa-provides-update-on-artemis-iii-moon-landing-regions/)
+names them but gives no coordinates, and no NASA, LROC or peer-reviewed page with
+a centre point for each region could be found and quoted, so none is listed.
+ispace Resilience (2025) is also left out: no published impact coordinates.
 
 ## Brand assets
 

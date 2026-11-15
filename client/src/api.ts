@@ -12,6 +12,10 @@ export interface ApiSite {
   aim?: { base: string; east: number; north: number };
   /** True for coordinates the visitor added themselves. */
   custom?: boolean;
+  /** List group: Artemis III candidates, South pole, Apollo or Other landers. */
+  group?: string;
+  /** Anything to know about the coordinates (crash site, converted longitude). */
+  note?: string;
 }
 
 export interface SeriesPoint {

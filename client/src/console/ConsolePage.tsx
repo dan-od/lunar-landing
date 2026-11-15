@@ -13,6 +13,7 @@ import { Inspector } from './Inspector';
 import { AddCoordinates } from './AddCoordinates';
 import { Tour } from '../help/Tour';
 import { Incidents } from './IncidentList';
+import { groupSites, SEARCH_FROM } from './siteGroups';
 import { NO_DATA, type SiteRow } from './types';
 
 const TAB = TABS[0]!;
@@ -37,6 +38,7 @@ export function ConsolePage() {
     force,
   );
   const [playing, setPlaying] = useState(false);
+  const [query, setQuery] = useState('');
   const listRef = useRef<HTMLElement>(null);
   const focusList = useRef(false);
 
@@ -147,6 +149,7 @@ export function ConsolePage() {
   }
 
   const selected = rows.find((r) => r.site.id === scenario.site) ?? rows[0];
+  const groups = groupSites(rows, query);
   const ready = rows.filter((r) => r.landing?.word === 'READY').length;
   const busy = sitesLoading || loading;
   const overhead = selected?.now ? overheadLongitudes(selected.site.lat, selected.site.lon, selected.now) : undefined;
@@ -156,36 +159,60 @@ export function ConsolePage() {
       <h2 className="lbl" id="sites-title">
         01 / SITES · {busy ? '…' : `${ready} OF ${rows.length} READY`}
       </h2>
-      {rows.map((r) => {
-        const isFetching = !busy && fetching.has(r.site.id);
-        const refused = failures[r.site.id];
-        const word = busy ? 'LOADING' : isFetching ? 'FETCHING' : (r.landing?.word ?? NO_DATA.word);
-        const symbol = busy || isFetching ? '…' : (r.landing?.symbol ?? NO_DATA.symbol);
-        return (
-          <button
-            key={r.site.id}
-            type="button"
-            className="row"
-            aria-pressed={r.site.id === scenario.site}
-            onClick={() => update({ site: r.site.id, t: 0 })}
-          >
-            <span aria-hidden="true" className={`sym ${r.landing?.word === 'READY' && !busy ? 'ok' : ''}`}>
-              {symbol}
-            </span>
-            <span className="grow">
-              <b>{r.site.name}</b>
-              <small>
-                {r.site.lat.toFixed(2)}, {r.site.lon.toFixed(2)} · {sourceLabel(r.site.source)}
-                {r.site.custom ? ' · yours' : ''}
-              </small>
-              {refused && !r.series && (refused.kind === 'rate' || refused.kind === 'bad') && (
-                <small className="row-err">▲ {refused.message}</small>
-              )}
-            </span>
-            <span className="mono word">{word}</span>
-          </button>
-        );
-      })}
+      {rows.length > SEARCH_FROM && (
+        <div className="pad line site-search">
+          <label className="fld">
+            <span>FIND A SITE</span>
+            <input
+              type="search"
+              value={query}
+              autoComplete="off"
+              aria-describedby="site-count"
+              onChange={(e) => setQuery(e.target.value)}
+            />
+          </label>
+          <span className="hint" id="site-count" aria-live="polite">
+            {query.trim() ? `${groups.reduce((n, g) => n + g.rows.length, 0)} of ${rows.length} sites match` : `${rows.length} sites`}
+          </span>
+        </div>
+      )}
+      {groups.length === 0 && <p className="pad hint">No site matches “{query}”.</p>}
+      {groups.map((g) => (
+        <section key={g.title} className="site-group" aria-label={g.title}>
+          <h3 className="lbl site-group-title">{g.title.toUpperCase()}</h3>
+          {g.note && g.rows.length === 0 && <p className="pad hint line">{g.note}</p>}
+          {g.rows.map((r) => {
+            const isFetching = !busy && fetching.has(r.site.id);
+            const refused = failures[r.site.id];
+            const word = busy ? 'LOADING' : isFetching ? 'FETCHING' : (r.landing?.word ?? NO_DATA.word);
+            const symbol = busy || isFetching ? '…' : (r.landing?.symbol ?? NO_DATA.symbol);
+            return (
+              <button
+                key={r.site.id}
+                type="button"
+                className="row"
+                aria-pressed={r.site.id === scenario.site}
+                onClick={() => update({ site: r.site.id, t: 0 })}
+              >
+                <span aria-hidden="true" className={`sym ${r.landing?.word === 'READY' && !busy ? 'ok' : ''}`}>
+                  {symbol}
+                </span>
+                <span className="grow">
+                  <b>{r.site.name}</b>
+                  <small>
+                    {r.site.lat.toFixed(2)}, {r.site.lon.toFixed(2)} · {sourceLabel(r.site.source)}
+                    {r.site.custom ? ' · yours' : ''}
+                  </small>
+                  {refused && !r.series && (refused.kind === 'rate' || refused.kind === 'bad') && (
+                    <small className="row-err">▲ {refused.message}</small>
+                  )}
+                </span>
+                <span className="mono word">{word}</span>
+              </button>
+            );
+          })}
+        </section>
+      ))}
       {!busy && <AddCoordinates disabledReason={down ? addBlocked : null} onAdd={add} />}
     </aside>
   );

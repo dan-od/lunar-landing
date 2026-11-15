@@ -5,6 +5,9 @@
 export type Body = 'sun' | 'earth';
 
 /** A curated or custom landing site. Longitude is degrees EAST, as Horizons expects. */
+/** Groups in the site list. */
+export type SiteGroup = 'Artemis III candidates' | 'South pole' | 'Apollo' | 'Other landers';
+
 export interface Site {
   id: string;
   name: string;
@@ -21,6 +24,10 @@ export interface Site {
   hasTerrain: boolean;
   /** Set for user-added sites; curated sites leave it undefined. */
   custom?: boolean;
+  /** Where the site sits in the list (curated sites only). */
+  group?: SiteGroup;
+  /** Anything a reader should know about the coordinates (crash site, converted longitude). */
+  note?: string;
 }
 
 /**

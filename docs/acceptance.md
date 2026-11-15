@@ -26,7 +26,7 @@ or from the command line.
 | F-2 | Pass | Test: ten simultaneous loads, never two NASA requests at once. |
 | F-3 | Pass | Test; hand: re-running the seed made no NASA requests for saved spans. |
 | F-4 | Pass | Test on a saved reply at 0, 2 and 5 degrees. |
-| F-5 | Pass | Hand: five sites, each row shows its source (`GET /v1/sites` lists 5). |
+| F-5 | Pass | 21 sites in four groups, each with a cited link stored with it and shown in the Inspector (test: every site has a group and an https source; `GET /v1/sites` returns group and note). Artemis III regions left out: no published centre points. |
 | F-6 | Pass | `tools/terrain/report.md`: worst direction error 0.0038°, F-6 pairing passes. |
 | F-7 | Pass | Test: Miss odds, the `odds70` watch rule and `/v1/miss` agree for one aim. |
 | 1-1 | Pass | Hand: first open offers the 2025 case or a site choice; one click loads it. |
@@ -41,7 +41,8 @@ or from the command line.
 | 1-10 | Not built | No explain mode. The Help panel and the "?" beside each term give plain definitions instead. |
 | 1-11 | Pass | Test (positions match readouts); hand: the Sun and Earth labels no longer overlap (layout test). |
 | 1-12 | Pass | Test: entries across all sites, soonest first, and the first equals the earliest next change in the site list. Hand: on the 2025 case the first entry is sunrise at IM-2, T+7 h, the same as its Inspector; choosing it selects the site and moves the marker. |
-| 1-13 | Pass | Test: a 2150 date opens the default date and says why, with the range 1960-01-01 to 2100-12-31 (range widened by the owner). |
+| 1-13 | Pass | The date can be typed or picked from our own calendar popup (month and year dropdowns, arrows, day grid; arrows, Page Up/Down, Home/End, Enter, Escape; today and the selected day marked with a symbol). Step buttons −1/+1 day, +10 days, −1/+1 month, −1/+1 year (tested month-end handling). Out-of-range or unreal dates name the allowed range. |
+| 1-13 (range) | Pass | Test: a 2150 date opens the default date and says why, with the range 1960-01-01 to 2100-12-31 (range widened by the owner). |
 | 2-1 | Pass | Hand: a new point (−85.5, 31.2) showed "fetching", then loaded real positions (Sun +2.3°) and could be selected. |
 | 2-2 | Pass | Test; hand: 95 for latitude is refused with the message above the field and focus back on it. |
 | 2-3 | Pass | Test: the request over the hourly limit gets a wait time. |

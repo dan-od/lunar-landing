@@ -67,6 +67,8 @@ export function createV1Router(deps: V1Deps): Router {
           lon: s.lon,
           source: s.source,
           has_terrain: s.hasTerrain,
+          ...(s.group ? { group: s.group } : {}),
+          ...(s.note ? { note: s.note } : {}),
         })),
       });
     } catch (err) {

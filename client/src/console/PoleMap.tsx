@@ -126,7 +126,9 @@ export function PoleMap({ rows, selectedId, onSelect, overhead }: Props) {
       </div>
       {offMap.length > 0 && (
         <p className="mapnote mono">
-          NOT ON THIS MAP (NORTH OF 65° S): {offMap.map((r) => r.short).join(', ')}. USE THE SITE LIST.
+          {offMap.length <= 3
+            ? `NOT ON THIS MAP (NORTH OF 65° S): ${offMap.map((r) => r.short).join(', ')}. USE THE SITE LIST.`
+            : `${offMap.length} SITES ARE NORTH OF 65° S AND NOT ON THIS MAP. USE THE SITE LIST.`}
         </p>
       )}
     </section>

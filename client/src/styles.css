@@ -329,6 +329,19 @@ p {
   white-space: nowrap;
 }
 
+/* ---------- grouped site list ---------- */
+.site-group-title {
+  margin: 0;
+  background: var(--deep);
+  font-size: 10px;
+}
+.site-search .fld {
+  margin-bottom: 4px;
+}
+.site-note {
+  margin-top: 6px;
+}
+
 /* ---------- state tag: symbol and word, never colour alone ---------- */
 .tag {
   display: inline-block;

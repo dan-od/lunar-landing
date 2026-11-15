@@ -55,10 +55,14 @@ Every source is listed with its link and licence in [CREDITS.md](CREDITS.md).
   [PGDA, "A New View of the Lunar South Pole from LOLA"](https://pgda.gsfc.nasa.gov/products/90)
   (NASA Goddard Planetary Geodesy Data Archive). Cite: Barker et al., 2023,
   *Planet. Sci. J.* 4, 183, [doi:10.3847/PSJ/acf3e1](https://doi.org/10.3847/PSJ/acf3e1).
-- **Site coordinates** — NASA NSSDC
+- **Site coordinates** — 21 sites in four groups (South pole, Apollo, Other
+  landers, and Artemis III candidates, which is empty until NASA publishes centre
+  points for its nine regions). Sources: NASA NSSDC
   ([lunar landing sites](https://nssdc.gsfc.nasa.gov/planetary/lunar/lunar_sites.html)),
   NASA ([IM-1](https://www.nasa.gov/?p=620655)) and LROC (Arizona State
-  University for NASA); each site's source is shown in the app.
+  University for NASA). Each site's link is stored with it and shown in the
+  Inspector; [CREDITS.md](CREDITS.md) lists them all. Sites whose coordinates
+  could not be cited were left out, never estimated.
 - **Apollo 11 Sun angle** — [Apollo by the Numbers, NASA SP-2000-4029](https://www.nasa.gov/wp-content/uploads/static/history/SP-4029/Apollo_18-27_LM_Lunar_Landing.htm),
   used only for the check below.
 - **Space Apps brand** — colours and fonts only. The Space Apps logo and orbit
@@ -220,7 +224,8 @@ repeat; it replaces that site's profiles with the committed file):
 npm run load:terrain --workspace server
 ```
 
-The cache seed fetches, for the five curated sites, 60 days hourly from
+The cache seed fetches, for every curated site (21, one NASA request at a time,
+about two minutes the first time), 60 days hourly from
 2025-02-04 (the 2025 case), Apollo 11's landing day, and the 60 days starting
 today (UTC), so the Now button opens on saved positions. It asks NASA only for
 hours not already saved, so running it twice is safe (the second run makes no

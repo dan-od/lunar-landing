@@ -12,6 +12,7 @@ import { useApp } from '../state';
 import { AIM_SITE_ID, type CompareSide } from '../scenario';
 import { WhenFields, hh } from '../components/WhenFields';
 import { Term } from '../help/Term';
+import { groupSites } from '../console/siteGroups';
 import { fmtDeg, resultFor, type SiteSeries } from '../siteData';
 import { Track } from '../console/Timeline';
 import { NO_DATA } from '../console/types';
@@ -52,11 +53,17 @@ function SidePane({ letter, side, sites, data, result, onChange }: PaneProps) {
         <label className="fld">
           <span>PLACE</span>
           <Select width="place" value={side.site} onChange={(e) => onChange({ ...side, site: e.target.value })}>
-            {sites.map((s) => (
-              <option key={s.id} value={s.id}>
-                {s.name}
-              </option>
-            ))}
+            {groupSites(sites.map((s) => ({ site: s, short: s.name })), '')
+              .filter((g) => g.rows.length > 0)
+              .map((g) => (
+                <optgroup key={g.title} label={g.title}>
+                  {g.rows.map(({ site: s }) => (
+                    <option key={s.id} value={s.id}>
+                      {s.name}
+                    </option>
+                  ))}
+                </optgroup>
+              ))}
           </Select>
         </label>
         <WhenFields

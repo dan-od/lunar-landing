@@ -2,7 +2,7 @@
 // in-memory versions and the routes never touch a database or the network directly.
 import type { Body, PositionRow, Site, TerrainPoint } from '@moon/core';
 import type pg from 'pg';
-import { CURATED_SITES } from '@moon/core';
+import { CURATED_SITES, getCuratedSite } from '@moon/core';
 import type { HorizonsSpan } from '../horizons/client.js';
 import { fetchHorizons } from '../horizons/client.js';
 import { RequestQueue } from '../horizons/queue.js';
@@ -115,6 +115,9 @@ export function dbSitesRepo(pool: pg.Pool): SitesRepo {
     source: String(r.source),
     hasTerrain: Boolean(r.has_terrain),
     custom: r.owner_session != null,
+    // Group and note are fixed facts about a curated site, kept with the list in core.
+    group: getCuratedSite(String(r.id))?.group,
+    note: getCuratedSite(String(r.id))?.note,
   });
   return {
     async list() {

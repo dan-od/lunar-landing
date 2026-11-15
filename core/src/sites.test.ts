@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { CURATED_SITES, getCuratedSite } from './sites.js';
+import { CURATED_SITES, SITE_GROUPS, getCuratedSite } from './sites.js';
 
 describe('curated site list (F-5)', () => {
   it('ships at least five sites', () => {
@@ -32,5 +32,25 @@ describe('curated site list (F-5)', () => {
   it('looks up by id', () => {
     expect(getCuratedSite('ap11')?.short).toBe('Apollo 11');
     expect(getCuratedSite('nope')).toBeUndefined();
+  });
+});
+
+describe('grown site list (grouped, every site cited)', () => {
+  it('puts every site in one of the four groups', () => {
+    for (const s of CURATED_SITES) {
+      expect(SITE_GROUPS).toContain(s.group);
+    }
+  });
+
+  it('includes the other Apollo landings and recent landers, each with its own link', () => {
+    for (const id of ['a12', 'a14', 'a15', 'a16', 'a17', 'ce3', 'ce4', 'ce5', 'ce6', 'slim', 'bg1', 'luna25', 'vikram', 'beresheet', 'hakuto1', 'im2a']) {
+      const s = getCuratedSite(id);
+      expect(s, id).toBeDefined();
+      expect(s!.source).toMatch(/^[^,]+, https:\/\//);
+    }
+  });
+
+  it('keeps terrain for the IM-2 target only', () => {
+    expect(getCuratedSite('im2a')?.hasTerrain).toBe(false);
   });
 });

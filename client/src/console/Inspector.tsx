@@ -52,6 +52,7 @@ export function Inspector({ row, fetching, t, marginDeg, search, csvHref }: Prop
             <span className="sr"> (opens in a new tab)</span>
           </a>
         )}
+        {row.site.note && <p className="hint site-note">{row.site.note}</p>}
       </div>
 
       <div className="grid2">

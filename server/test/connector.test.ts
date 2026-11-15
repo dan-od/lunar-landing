@@ -1,5 +1,6 @@
 // 8-1: six read-only tools, each returning the API's own values. 7-6: the
 // slip_impact tool reads /v1/slip. Real terrain file and saved NASA reply.
+import { CURATED_SITES } from '@moon/core';
 import { describe, it, expect, beforeAll } from 'vitest';
 import express from 'express';
 import request from 'supertest';
@@ -148,8 +149,8 @@ describe('slip_impact reads /v1/slip (7-6)', () => {
   it('with no site, asks the slip endpoint for every site', async () => {
     paths.length = 0;
     const tool = (await run('slip_impact', { date: '2025-03-06', hour: 12, slip_days: 1 })).value;
-    expect(tool.sites.length).toBe(5);
-    expect(paths.filter((p) => p.startsWith('/v1/slip')).length).toBe(5);
+    expect(tool.sites.length).toBe(CURATED_SITES.length);
+    expect(paths.filter((p) => p.startsWith('/v1/slip')).length).toBe(CURATED_SITES.length);
     expect(tool.scenario).toEqual({ date: '2025-03-06', hour: 12, slip_days: 1, margin: 2 });
   });
 
