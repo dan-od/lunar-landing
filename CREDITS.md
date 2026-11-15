@@ -34,7 +34,13 @@ are not in the repository yet, so neither is shown; they will be added from the
 original brand kit files only.
 
 The small Moon mark beside the words "Moon Status" in the header is an original
-drawing made for this project. It is not a NASA or Space Apps asset.
+drawing made for this project. It is not a NASA or Space Apps asset. The same
+mark is the page icon (`client/public/favicon.svg`).
+
+The link preview image (`client/public/og.png`, 1200 × 630) is also original: it
+shows only the name Moon Status, that mark, a headline and the four state tags,
+in the brand colours and fonts. It contains no NASA or Space Apps logo, pattern
+or name. Its source is `docs/og-card.html`.
 
 ## Fonts
 
@@ -67,6 +73,7 @@ Loaded from Google Fonts (https://fonts.google.com/).
 | ESLint, `@eslint/js` | https://eslint.org/ | MIT |
 | typescript-eslint | https://typescript-eslint.io/ | MIT |
 | SuperTest | https://github.com/ladjs/supertest | MIT |
+| axe-core (accessibility scanner, used to check each tab) | https://github.com/dequelabs/axe-core | MPL-2.0 |
 | Type definitions (`@types/express`, `@types/node`, `@types/pg`, `@types/react`, `@types/react-dom`, `@types/supertest`) | https://github.com/DefinitelyTyped/DefinitelyTyped | MIT |
 
 ## Runtime and hosting software

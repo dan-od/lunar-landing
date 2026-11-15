@@ -7,6 +7,7 @@ import { ACCURACIES } from '../scenario';
 export function SettingsDrawer() {
   const { scenario, update, drawerOpen, setDrawerOpen } = useApp();
   const closeRef = useRef<HTMLButtonElement>(null);
+  const drawerRef = useRef<HTMLDivElement>(null);
   const wasOpen = useRef(false);
 
   useEffect(() => {
@@ -22,6 +23,19 @@ export function SettingsDrawer() {
     if (!drawerOpen) return;
     const onKey = (e: KeyboardEvent) => {
       if (e.key === 'Escape') setDrawerOpen(false);
+      if (e.key !== 'Tab') return;
+      // Keep Tab inside the drawer while it is open.
+      const items = drawerRef.current?.querySelectorAll<HTMLElement>('button, input, select, a[href]');
+      if (!items || items.length === 0) return;
+      const first = items[0]!;
+      const last = items[items.length - 1]!;
+      if (e.shiftKey && document.activeElement === first) {
+        e.preventDefault();
+        last.focus();
+      } else if (!e.shiftKey && document.activeElement === last) {
+        e.preventDefault();
+        first.focus();
+      }
     };
     document.addEventListener('keydown', onKey);
     return () => document.removeEventListener('keydown', onKey);
@@ -32,7 +46,7 @@ export function SettingsDrawer() {
   return (
     <>
       <div className="scrim" onClick={() => setDrawerOpen(false)} />
-      <aside className="drawer" role="dialog" aria-modal="true" aria-labelledby="settings-title">
+      <div ref={drawerRef} className="drawer" role="dialog" aria-modal="true" aria-labelledby="settings-title">
         <div className="lbl drawer-head">
           <h2 id="settings-title">SETTINGS</h2>
           <button ref={closeRef} type="button" aria-label="Close settings" onClick={() => setDrawerOpen(false)}>
@@ -67,7 +81,7 @@ export function SettingsDrawer() {
           </label>
           <p className="hint">Times are always shown in UTC.</p>
         </div>
-      </aside>
+      </div>
     </>
   );
 }

@@ -1,5 +1,6 @@
 // 30-day power and contact timeline for every site. Bars are drawn straight from
 // the calculator's windows (1-3); the white line is the time marker (1-4).
+import { useState } from 'react';
 import type { Window } from '@moon/core';
 import { DISPLAY_DAYS, DISPLAY_HOURS } from '../siteData';
 import type { SiteRow } from './types';
@@ -25,13 +26,29 @@ export function Track({ windows, landingMs, kind }: { windows: Window[]; landing
   );
 }
 
+const sheetTime = (iso: string) => iso.slice(0, 16).replace('T', ' ');
+
 export function Timeline({ rows, selectedId, t, playing, onScrub, onPlay }: Props) {
+  const [asTable, setAsTable] = useState(false);
+  const selected = rows.find((r) => r.site.id === selectedId);
+  const windows = selected?.result
+    ? [
+        ...selected.result.power.windows.map((w) => ({ kind: 'Sunlight (power)', ...w })),
+        ...selected.result.contact.windows.map((w) => ({ kind: 'Earth in view (contact)', ...w })),
+      ]
+    : [];
+
   return (
     <section className="tl" aria-labelledby="tl-title">
-      <h2 className="lbl" id="tl-title">
-        03 / TIMELINE · 30 D · <span className="key sun">■</span> SUN <span className="key earth">■</span> EARTH{' '}
-        <span className="key out">■</span> OUT
-      </h2>
+      <div className="lbl tl-head">
+        <h2 id="tl-title">03 / TIMELINE · 30 D</h2>
+        <span className="tl-keys" aria-hidden="true">
+          <span className="key sun" /> SUN <span className="key earth" /> EARTH <span className="key out" /> OUT
+        </span>
+        <button type="button" className="tl-toggle" aria-pressed={asTable} onClick={() => setAsTable((v) => !v)}>
+          SHOW AS TABLE
+        </button>
+      </div>
       <div className="scrub">
         <button type="button" className="btn2" aria-pressed={playing} onClick={onPlay}>
           {playing ? '❚❚ PAUSE' : '▶ PLAY'}
@@ -76,6 +93,40 @@ export function Timeline({ rows, selectedId, t, playing, onScrub, onPlay }: Prop
           </div>
         );
       })}
+      {asTable && selected && (
+        <div className="tl-table">
+          <table className="t">
+            <caption>
+              {selected.site.name}: windows in the 30 days after landing (
+              {selected.result?.model === 'terrain' ? 'terrain model' : 'smooth-Moon model'}, times in UTC)
+            </caption>
+            <thead>
+              <tr>
+                <th scope="col">KIND</th>
+                <th scope="col">START</th>
+                <th scope="col">END</th>
+                <th scope="col">LENGTH</th>
+              </tr>
+            </thead>
+            <tbody>
+              {windows.length === 0 ? (
+                <tr>
+                  <td colSpan={4}>No windows: neither the Sun nor Earth is up in these 30 days, or no positions are saved.</td>
+                </tr>
+              ) : (
+                windows.map((w) => (
+                  <tr key={`${w.kind}${w.start}`}>
+                    <td>{w.kind}</td>
+                    <td className="mono">{sheetTime(w.start)}</td>
+                    <td className="mono">{sheetTime(w.end)}</td>
+                    <td className="mono">{w.hours} h</td>
+                  </tr>
+                ))
+              )}
+            </tbody>
+          </table>
+        </div>
+      )}
     </section>
   );
 }

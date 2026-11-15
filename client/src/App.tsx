@@ -43,16 +43,29 @@ function Shell() {
           <Route
             key={t.path}
             path={t.path}
-            element={<Page title={t.title} heading={HEADINGS[t.path] ?? t.label} />}
+            element={
+              <Page title={t.title} description={t.description} path={t.path} heading={HEADINGS[t.path] ?? t.label} />
+            }
           />
         ))}
         <Route
           path="*"
           element={
-            <Page title="Moon Status: page not found" heading="Page not found">
-              <p>
-                That address does not exist. <Link to={{ pathname: '/', search }}>Back to the console.</Link>
-              </p>
+            <Page
+              title="Moon Status: page not found"
+              description="That address does not exist on Moon Status."
+              path="/"
+              heading="Page not found"
+            >
+              <p>That address does not exist. These do:</p>
+              <ul className="plain-links">
+                {TABS.map((t) => (
+                  <li key={t.path}>
+                    <Link to={{ pathname: t.path, search }}>{t.label.charAt(0) + t.label.slice(1).toLowerCase()}</Link>:{' '}
+                    {t.description}
+                  </li>
+                ))}
+              </ul>
             </Page>
           }
         />

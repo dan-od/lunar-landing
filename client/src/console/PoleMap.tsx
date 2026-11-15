@@ -4,10 +4,13 @@
 import type { SiteRow } from './types';
 import { NO_DATA } from './types';
 
-const SIZE = 360;
-const C = SIZE / 2;
-const RIM = 150; // radius of the 65° S circle
+// Positions are percentages of the disc, so the disc can be drawn at any size.
+// On a wide screen it is large enough that the pins near the pole do not overlap.
+const C = 50;
+const RIM = 41.7; // radius of the 65° S circle, percent of the disc
+const BODY = 45.6; // where the Sun and Earth sit, just outside the rim
 const RAD = Math.PI / 180;
+const pct = (v: number) => `${v.toFixed(3)}%`;
 /** Sites further from the pole than this are off the map. */
 const EDGE_LAT = -65;
 
@@ -28,8 +31,8 @@ export function PoleMap({ rows, selectedId, onSelect, overhead }: Props) {
   // that pin; it is listed and charted as its own row.
   const onMap = rows.filter((r) => r.site.lat <= EDGE_LAT && !r.site.aim);
   const offMap = rows.filter((r) => r.site.lat > EDGE_LAT && !r.site.aim);
-  const sun = overhead ? polar(overhead.sun, RIM + 14) : null;
-  const earth = overhead ? polar(overhead.earth, RIM + 14) : null;
+  const sun = overhead ? polar(overhead.sun, BODY) : null;
+  const earth = overhead ? polar(overhead.earth, BODY) : null;
 
   return (
     <section className="mapwrap" aria-labelledby="map-title">
@@ -42,21 +45,29 @@ export function PoleMap({ rows, selectedId, onSelect, overhead }: Props) {
         aria-label="South pole map, from 65 degrees south to the pole. Zero longitude is at the top."
       >
         <div className="rim" />
-        <div className="ring" style={{ inset: 80 }} />
-        <div className="ring" style={{ inset: 120 }} />
-        <div className="ring" style={{ inset: 150 }} />
+        <div className="ring" style={{ inset: '22.2%' }} />
+        <div className="ring" style={{ inset: '33.3%' }} />
+        <div className="ring" style={{ inset: '41.7%' }} />
         {earth && (
           <>
-            <div className="body-dot earth" style={{ left: earth.x - 7, top: earth.y - 7 }} aria-hidden="true" />
-            <div className="pl" style={{ left: earth.x - 18, top: earth.y + 9, color: 'var(--edge)' }}>
+            <div
+              className="body-dot earth"
+              style={{ left: `calc(${pct(earth.x)} - 7px)`, top: `calc(${pct(earth.y)} - 7px)` }}
+              aria-hidden="true"
+            />
+            <div className="pl" style={{ left: `calc(${pct(earth.x)} - 18px)`, top: `calc(${pct(earth.y)} + 9px)` }}>
               EARTH
             </div>
           </>
         )}
         {sun && (
           <>
-            <div className="body-dot sun" style={{ left: sun.x - 7, top: sun.y - 7 }} aria-hidden="true" />
-            <div className="pl" style={{ left: sun.x - 12, top: sun.y + 9, color: 'var(--yel)' }}>
+            <div
+              className="body-dot sun"
+              style={{ left: `calc(${pct(sun.x)} - 7px)`, top: `calc(${pct(sun.y)} - 7px)` }}
+              aria-hidden="true"
+            />
+            <div className="pl" style={{ left: `calc(${pct(sun.x)} - 12px)`, top: `calc(${pct(sun.y)} + 9px)` }}>
               SUN
             </div>
           </>
@@ -73,14 +84,17 @@ export function PoleMap({ rows, selectedId, onSelect, overhead }: Props) {
               <button
                 type="button"
                 className={`pin ${ready ? 'ok' : ''} ${state ? '' : 'nodata'}`}
-                style={{ left: x - 22, top: y - 22 }}
+                style={{ left: `calc(${pct(x)} - 22px)`, top: `calc(${pct(y)} - 22px)` }}
                 aria-pressed={selected}
                 aria-label={`${r.site.name}, ${word.toLowerCase()}`}
                 onClick={() => onSelect(r.site.id)}
               >
                 <span />
               </button>
-              <div className={`pl ${selected ? 'sel' : ''}`} style={{ left: x + 14, top: y - 8 }}>
+              <div
+                className={`pl ${selected ? 'sel' : ''}`}
+                style={{ left: `calc(${pct(x)} + 14px)`, top: `calc(${pct(y)} - 8px)` }}
+              >
                 {r.short}
               </div>
             </span>

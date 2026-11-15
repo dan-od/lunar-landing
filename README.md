@@ -42,6 +42,79 @@ the reply reported `Step-size: 60 minutes`). `12h` is also honoured; `3d` is
 ignored. Azimuth is reported clockwise from north and elevation as height above the
 local horizon, matching the convention used for terrain profiles.
 
+## How we know it's right
+
+Three independent checks stand behind the numbers. Each says what it proves and
+what it does not.
+
+### 1. Positions equal NASA's own output
+
+- **Saved replies.** `server/test/fixtures/` holds two raw NASA Horizons replies
+  (Sun and Earth from the IM-2 target, 2025-03-06 to 2025-03-08, hourly). The
+  tests parse them and require the parsed rows to equal NASA's printed values, for
+  example Sun azimuth 74.592006° and height 1.726383° at 2025-03-06 00:00 UTC.
+  Tests never call NASA.
+- **The calculator on a saved reply.** On that reply the Sun is above the horizon
+  100% of the time at a 0° shadow allowance, 86% at 2° and 0% at 5°, and Earth is
+  up throughout. The tests require exactly those numbers.
+- **Live spot check.** On 2026-11-15 the values the app had stored for the IM-2
+  target were compared with a fresh Horizons request at three times (2025-03-06,
+  03-18 and 03-31, 00:00 UTC). All six azimuths and heights matched to the sixth
+  decimal place.
+- **One request at a time.** A test starts ten page loads at once and requires
+  that no two NASA requests overlap and that saved hours are not fetched again.
+
+What this does not prove: that Horizons itself is right, or that the site
+coordinates are (they are cited in [CREDITS.md](CREDITS.md), not re-measured).
+
+### 2. Directions mean the same thing everywhere
+
+A direction error would give shadows that look plausible and are wrong, so the
+convention (degrees clockwise from north) is checked three ways.
+
+- **NASA says so.** The Horizons reply header states that azimuth is measured
+  clockwise from north.
+- **The sites agree with each other.** From each of the five sites, the Sun's
+  direction and height give the longitude where the Sun is overhead. At three
+  different times all five sites, up to 84° of latitude apart, give the same
+  longitude to within 0.01°. They could not agree if the directions were mirrored
+  or rotated.
+- **The terrain agrees with NASA (requirement F-6).** The terrain tools step
+  across the elevation map along each direction and compare it with the true
+  compass bearing on the Moon's sphere: the worst difference around the full
+  circle is 0.0038°. See `tools/terrain/report.md`.
+
+What this does not prove: the absolute height datum of the elevation map, which
+was not checked against a second source.
+
+### 3. The 2025 landing case
+
+In March 2025 the IM-2 lander came down about 250 m from its target near Mons
+Mouton, in a crater, got no sunlight on its panels, and its mission ended within
+a day. The app opens on that target and date (2025-03-06 00:00 UTC). With real
+positions and real terrain it shows:
+
+- **The Sun is barely up.** At 00:00 UTC the Sun is 1.7° above a smooth horizon
+  and Earth is 10.9° up. Under the default 2° shadow allowance the site reads
+  "no power" until the Sun clears 2° seven hours later.
+- **The target sits on the edge of a shadow.** Of the 441 prepared terrain points
+  within 400 m of the target, 209 work and 232 do not. A lander that can miss by
+  100 m works in 8 landings out of 10; by 250 m, 6 out of 10; by 320 m, 5 out
+  of 10.
+- **A safer aim exists.** Aiming 160 m west and 120 m north of the target, 10 out
+  of 10 landings work at 250 m accuracy.
+
+What this does and does not show, plainly:
+
+- It shows that a few hundred metres decide the outcome at this site, which is
+  the point of the Miss tab.
+- It does **not** reproduce the real failure. The elevation map is 80 m per
+  pixel, so a crater smaller than that is invisible to it, and the real lander
+  also came to rest on its side. For a landing at 17:00 UTC the same day (close
+  to the reported touchdown time), all 441 points work in this model.
+- The actual touchdown point is not drawn on the map, because this repository
+  has no cited position for it.
+
 ## Layout
 
 ```

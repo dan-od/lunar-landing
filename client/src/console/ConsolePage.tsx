@@ -2,6 +2,7 @@
 // inspector. Behaviour follows the flow prototype.
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { TABS } from '../tabs';
+import { usePageMeta } from '../meta';
 import { shortName, useApp } from '../state';
 import { MAX_RETRIES, useSiteData } from '../useSiteData';
 import { windowsCsvUrl } from '../api';
@@ -11,7 +12,7 @@ import { Timeline } from './Timeline';
 import { Inspector } from './Inspector';
 import { NO_DATA, type SiteRow } from './types';
 
-const TITLE = TABS[0]!.title;
+const TAB = TABS[0]!;
 
 function prefersReducedMotion(): boolean {
   return typeof window.matchMedia === 'function' && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
@@ -36,9 +37,7 @@ export function ConsolePage() {
   const listRef = useRef<HTMLElement>(null);
   const focusList = useRef(false);
 
-  useEffect(() => {
-    document.title = TITLE;
-  }, []);
+  usePageMeta(TAB.title, TAB.description, TAB.path);
 
   // Play: step the marker; with reduced motion, jump in 5-day steps instead.
   useEffect(() => {
@@ -83,7 +82,7 @@ export function ConsolePage() {
   // First open: two choices on the page itself (1-1). A shared link skips this.
   if (!started) {
     return (
-      <main id="content" className="body">
+      <main id="content" tabIndex={-1} className="body">
         <div className="main">
           <div className="empty">
             <h1 className="h2">Will a Moon lander have power and a line home?</h1>
@@ -118,7 +117,7 @@ export function ConsolePage() {
   // Empty list (1-7).
   if (!sitesLoading && sites.length === 0) {
     return (
-      <main id="content" className="body">
+      <main id="content" tabIndex={-1} className="body">
         <div className="main">
           {down && <DownBanner message={down.message} retries={retries} onRetry={() => { retry(); reloadSites(); }} />}
           <div className="empty">
@@ -175,7 +174,7 @@ export function ConsolePage() {
   // Loading (1-7): placeholder bars while positions are fetched.
   if (busy) {
     return (
-      <main id="content" className="body">
+      <main id="content" tabIndex={-1} className="body">
         <h1 className="sr">Console</h1>
         {side}
         <div className="main" aria-busy="true">
@@ -197,7 +196,7 @@ export function ConsolePage() {
   }
 
   return (
-    <main id="content" className="body">
+    <main id="content" tabIndex={-1} className="body">
       <h1 className="sr">Console</h1>
       {side}
       <div className="main">

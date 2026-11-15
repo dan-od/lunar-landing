@@ -16,8 +16,10 @@ import {
 import { ApiFailure, getMiss } from '../api';
 import { AIM_SITE_ID, shortName, useApp } from '../state';
 import { MissMap } from './MissMap';
+import { tabFor } from '../tabs';
+import { usePageMeta } from '../meta';
 
-const TITLE = 'Moon Status: what if the landing misses?';
+const TAB = tabFor('/miss')!;
 
 const KINDS: Array<{ radius: number; name: string }> = [
   { radius: 100, name: 'A very accurate lander' },
@@ -40,9 +42,7 @@ export function MissPage() {
   const [announce, setAnnounce] = useState('');
   const moved = useRef(false);
 
-  useEffect(() => {
-    document.title = TITLE;
-  }, []);
+  usePageMeta(TAB.title, TAB.description, TAB.path);
   useEffect(() => {
     if (!started) start();
   }, [started, start]);
@@ -112,7 +112,7 @@ export function MissPage() {
 
   if (sitesStatus === 'loading' || !started) {
     return (
-      <main id="content" className="body" aria-busy="true">
+      <main id="content" tabIndex={-1} className="body" aria-busy="true">
         <h1 className="sr">What if we miss?</h1>
         <div className="main">
           <div className="lbl" role="status">
@@ -126,7 +126,7 @@ export function MissPage() {
   // No terrain for this site (4-7): say what is missing and offer two exits.
   if (!site || !hasTerrain || error?.kind === 'no-terrain') {
     return (
-      <main id="content" className="body">
+      <main id="content" tabIndex={-1} className="body">
         <div className="main">
           <div className="empty">
             <h1 className="h2">No terrain prepared for this site yet</h1>
@@ -160,7 +160,7 @@ export function MissPage() {
 
   if (error) {
     return (
-      <main id="content" className="body">
+      <main id="content" tabIndex={-1} className="body">
         <h1 className="sr">What if we miss?</h1>
         <div className="main">
           <div className="ban" role="status">
@@ -175,7 +175,7 @@ export function MissPage() {
 
   if (!current || !chosen || !best) {
     return (
-      <main id="content" className="body" aria-busy="true">
+      <main id="content" tabIndex={-1} className="body" aria-busy="true">
         <h1 className="sr">What if we miss?</h1>
         <div className="main">
           <div className="lbl" role="status">
@@ -212,7 +212,7 @@ export function MissPage() {
   };
 
   return (
-    <main id="content" className="body">
+    <main id="content" tabIndex={-1} className="body">
       <h1 className="sr">What if we miss?</h1>
       <div className="main">
         <section className="mapwrap miss-wrap" aria-labelledby="miss-title">
@@ -295,10 +295,13 @@ export function MissPage() {
             <button
               key={d.word}
               type="button"
-              aria-label={`Move aim ${current.stepM} metres ${d.word}`}
+              data-nudge={d.word}
               onClick={() => moveAim({ east: aim.east + d.de, north: aim.north + d.dn })}
             >
-              {d.arrow}
+              <span aria-hidden="true">{d.arrow}</span>
+              <span className="sr">
+                Move aim {current.stepM} metres {d.word}
+              </span>
             </button>
           ))}
         </div>

@@ -39,15 +39,16 @@ export function Inspector({ row, t, marginDeg, search, csvHref }: Props) {
           {state ? `${state.symbol} ${state.word}` : `${NO_DATA.symbol} ${NO_DATA.word}`}
         </span>
         <div className="mono coords">
-          {row.site.lat.toFixed(2)}, {row.site.lon.toFixed(2)} · SOURCE{' '}
-          {src.url ? (
-            <a href={src.url} target="_blank" rel="noreferrer">
-              {src.label}
-            </a>
-          ) : (
-            src.label
-          )}
+          {row.site.lat.toFixed(2)}, {row.site.lon.toFixed(2)}
+          {src.url ? '' : ` · SOURCE ${src.label}`}
         </div>
+        {src.url && (
+          <a className="source-link mono" href={src.url} target="_blank" rel="noreferrer">
+            COORDINATES FROM {src.label.toUpperCase()}
+            <span aria-hidden="true"> ↗</span>
+            <span className="sr"> (opens in a new tab)</span>
+          </a>
+        )}
       </div>
 
       <div className="grid2">

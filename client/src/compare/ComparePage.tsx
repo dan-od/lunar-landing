@@ -5,6 +5,8 @@ import { useEffect, useId, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { buildReport, reportText, shownDays, type WindowResult } from '@moon/core';
 import type { ApiSite } from '../api';
+import { tabFor } from '../tabs';
+import { usePageMeta } from '../meta';
 import { useApp } from '../state';
 import { AIM_SITE_ID, DATE_MAX, DATE_MIN, isAllowedDate, type CompareSide } from '../scenario';
 import { fmtDeg, resultFor, type SiteSeries } from '../siteData';
@@ -13,7 +15,7 @@ import { NO_DATA } from '../console/types';
 import { QUICK_SETUPS, sideA, sideB } from './sides';
 import { useCase, type CaseData, type CaseSource } from './useCase';
 
-const TITLE = 'Moon Status: compare two landing cases';
+const TAB = tabFor('/compare')!;
 const HOURS = Array.from({ length: 24 }, (_, h) => h);
 const hh = (h: number) => `${String(h).padStart(2, '0')}:00`;
 
@@ -168,9 +170,7 @@ export function ComparePage() {
   const b = sideB(scenario, ids);
   const ready = started && sites.length > 0;
 
-  useEffect(() => {
-    document.title = TITLE;
-  }, []);
+  usePageMeta(TAB.title, TAB.description, TAB.path);
 
   // Opened cold with no scenario in the address: use the default case.
   useEffect(() => {
@@ -219,7 +219,7 @@ export function ComparePage() {
   };
 
   return (
-    <main id="content" className="cmp-page">
+    <main id="content" tabIndex={-1} className="cmp-page">
       <h1 className="sr">Compare two cases</h1>
 
       <div className="cmp-setups" role="group" aria-labelledby="setups-title">
