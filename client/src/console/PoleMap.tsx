@@ -3,6 +3,7 @@
 // at the longitude where each is overhead, derived from NASA positions.
 import { useEffect, useRef, useState } from 'react';
 import type { SiteRow } from './types';
+import { placePinLabels } from './pinLabels';
 import { NO_DATA } from './types';
 
 // Positions are percentages of the disc, so the disc can be drawn at any size.
@@ -53,6 +54,16 @@ export function PoleMap({ rows, selectedId, onSelect, overhead }: Props) {
     return () => ro.disconnect();
   }, []);
 
+  const px = size ?? 520;
+  const pinPos = onMap.map((r) => {
+    const rr = ((90 + r.site.lat) / (90 + EDGE_LAT)) * RIM;
+    return { r, ...polar(r.site.lon, rr) };
+  });
+  const labels = placePinLabels(
+    pinPos.map((p) => ({ id: p.r.site.id, x: (p.x / 100) * px, y: (p.y / 100) * px, text: p.r.short })),
+    selectedId,
+  );
+
   const sun = overhead ? polar(overhead.sun, BODY) : null;
   const earth = overhead ? polar(overhead.earth, BODY) : null;
 
@@ -95,9 +106,8 @@ export function PoleMap({ rows, selectedId, onSelect, overhead }: Props) {
             </div>
           </>
         )}
-        {onMap.map((r) => {
-          const rr = ((90 + r.site.lat) / (90 + EDGE_LAT)) * RIM;
-          const { x, y } = polar(r.site.lon, rr);
+        {pinPos.map(({ r, x, y }, i) => {
+          const label = labels[i]!;
           const state = r.now?.state;
           const word = state?.word ?? NO_DATA.word;
           const ready = state?.word === 'READY';
@@ -114,12 +124,19 @@ export function PoleMap({ rows, selectedId, onSelect, overhead }: Props) {
               >
                 <span />
               </button>
-              <div
-                className={`pl ${selected ? 'sel' : ''}`}
-                style={{ left: `calc(${pct(x)} + 14px)`, top: `calc(${pct(y)} - 8px)` }}
-              >
-                {r.short}
-              </div>
+              {label.side !== 'hidden' && (
+                <div
+                  className={`pl ${selected ? 'sel' : ''}`}
+                  aria-hidden="true"
+                  style={
+                    label.side === 'right'
+                      ? { left: `calc(${pct(x)} + 14px)`, top: `calc(${pct(y)} - 8px)` }
+                      : { left: `${label.box.left}px`, top: `calc(${pct(y)} - 8px)` }
+                  }
+                >
+                  {r.short}
+                </div>
+              )}
             </span>
           );
         })}
