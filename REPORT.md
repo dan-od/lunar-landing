@@ -1,13 +1,34 @@
 # Moon Status: report for the owner
 
 Written 2026-11-15, end of the second unattended session (started about
-06:30 EST). Every step of your list was done, in order, and pushed to `staging`
-after each step: 21 commits from `a7addb7`. Nothing went to `main`. All commits
+06:30 EST). Every step of your list, and both later additions, was done and pushed to
+`staging` after each step. Nothing went to `main`. All commits
 are dan-od with no tool lines; nothing was force-pushed.
 
 The full requirement-by-requirement result is in
 [docs/acceptance.md](docs/acceptance.md). Screenshots of each tab on the 2025
 case are in [docs/screens/](docs/screens/).
+
+## Additions done after the first report
+
+| Addition | Result |
+| --- | --- |
+| C: large date jumps | The date field is typable (YYYY-MM-DD) with our own calendar popup beside it: month and year dropdowns at the top, previous and next month arrows, and a day grid. Picking a day sets the date and closes it. Keyboard: arrows move by day or week, Page Up/Down by month (Shift: year), Home/End, Enter picks, Escape closes and returns focus. Today (•) and the selected day (✓) are marked with a symbol, not colour alone. New step buttons: −1 mo, +1 mo, −1 y, +1 y (31 January + 1 month = 28 February). Every error names the allowed range. The hour stays a separate field. The browser's own popup was not needed. |
+| Rule B everywhere | One shared `Select` component renders every dropdown, including the new month and year ones; a test fails if a plain `<select>` appears anywhere else. |
+| Grown site list | 21 sites, up from 5, in groups: South pole (6), Apollo (6), Other landers (9). Each has its source link, shown in the Inspector, and a note where needed (crash site, converted longitude). There is a search box. The deploy seed covers all of them, one request at a time; a second run made no NASA requests (126 of 126 from the cache). Miss stays unavailable for every site but the IM-2 target, with the reason shown. |
+| **Artemis III candidates: none listed** | NASA's release names the nine regions but gives no coordinates, and no NASA, LROC or peer-reviewed page with a centre point per region could be found and quoted. Per your rule, none is listed. The group shows in the list with that reason. **ispace Resilience** is left out for the same reason. |
+| IM-2 actual resting point | Added as its own site ("IM-2 Athena, where it came to rest", LROC), about 370 m from the target. |
+| Map labels | Site names on the pole map no longer overlap: a crowded name moves to the left of its pin or is left off. |
+
+New tests for these: calendar grid and keyboard moves, month and year steps,
+the Select guard, site groups and search, the grown list (every site grouped
+and cited), `GET /v1/sites` groups, pin label placement. Totals now: 57 core,
+140 server, 72 client tests, all passing; axe clean on every tab; no sideways
+scrolling at 320 px or 200% zoom. Checked by hand: picking December 2026 in two
+dropdown picks, keyboard moves, Escape, typed errors, the popup as a sheet at
+320 px with 44 px day cells, search, a crash site's link and note, Miss on
+Vikram. Not checked: the popup in Firefox (it would not launch here) and with a
+screen reader.
 
 ## What changed
 
