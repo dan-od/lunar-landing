@@ -2,7 +2,7 @@
 
 Written 2026-11-15, end of the second unattended session (started about
 06:30 EST). Every step of your list, and both later additions, was done and pushed to
-`staging` after each step. Nothing went to `main`. All commits
+`staging` after each step. `main` and production were deployed twice with the owner's approval (see Production deploys). All commits
 are dan-od with no tool lines; nothing was force-pushed.
 
 The full requirement-by-requirement result is in
@@ -38,7 +38,7 @@ screen reader.
 | Deploy | Commit | Result |
 | --- | --- | --- |
 | 1 | `ed6a47b` (items 1–3) | Run 43715782417: every step green. Migration `002_watches.sql` applied; 21 sites seeded; position seed 80.6 s; 125,166 cached hours; 441 terrain profiles; smoke tests 200 and 200. Checked after: health ok with database, 21 sites in three groups, email alerts on, Apollo 11 from saved positions, calendar file, all five tabs and the icons 200. |
-| 2 | polish (checkpoint) | See below. |
+| 2 | `7f3dee6` (polish, checkpoint) | Run 43716366326: every step green. No new migrations; seed done in 2.0 s with no new rows (safe to run twice, shown in production); smoke tests 200 and 200; health ok; the phone More toggle is in the live bundle. |
 
 ## Owner's follow-ups (later on 2026-11-15)
 
