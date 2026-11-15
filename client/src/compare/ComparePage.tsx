@@ -251,7 +251,10 @@ export function ComparePage() {
         {!(aimMoved && terrainSite) && (
           <span className="hint cmp-why" id="aim-why">
             Target vs my aim needs an aim: move it on the{' '}
-            <Link to={{ pathname: '/miss', search }}>Miss tab</Link> first.
+            <Link className="inline-link" to={{ pathname: '/miss', search }}>
+              Miss tab
+            </Link>{' '}
+            first.
           </span>
         )}
       </div>

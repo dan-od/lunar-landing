@@ -1108,6 +1108,53 @@ a.as-button {
   text-decoration: none;
 }
 
+/* ---------- API tab ---------- */
+.api-path {
+  font-weight: 500;
+  word-break: break-all;
+}
+.api-sum {
+  font-family: Overpass, system-ui, sans-serif !important;
+}
+.api-url {
+  margin: 10px 0;
+  font-size: 12px;
+  word-break: break-all;
+  color: var(--mut);
+}
+.api-reply {
+  margin: 0;
+  padding: 14px;
+  background: var(--pane);
+  font: 400 12px/1.6 'Fira Code', monospace;
+  white-space: pre-wrap;
+  word-break: break-word;
+  max-height: 60vh;
+  overflow: auto;
+  border-bottom: 1px solid var(--line);
+}
+.api-notes {
+  margin: 0;
+  padding-left: 30px;
+  font-size: 13px;
+}
+.api-notes li {
+  margin-bottom: 8px;
+}
+.api-download {
+  padding: 0 14px;
+}
+.main h3.lbl {
+  margin: 0;
+}
+
+/* A link inside a sentence still gets a full-height target. */
+.inline-link {
+  display: inline-flex;
+  align-items: center;
+  min-height: 44px;
+}
+
 /* Placeholder tabs */
 .plain-links {
   padding-left: 18px;

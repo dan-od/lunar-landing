@@ -5,12 +5,12 @@ import { SettingsDrawer } from './components/SettingsDrawer';
 import { ConsolePage } from './console/ConsolePage';
 import { ComparePage } from './compare/ComparePage';
 import { MissPage } from './miss/MissPage';
+import { ApiPage } from './apiPage/ApiPage';
 import { AppProvider, useApp } from './state';
 import { TABS } from './tabs';
 
 const HEADINGS: Record<string, string> = {
   '/watch': 'Watch and be alerted',
-  '/api': 'API',
 };
 
 function Shell() {
@@ -39,7 +39,8 @@ function Shell() {
         <Route path="/" element={<ConsolePage />} />
         <Route path="/compare" element={<ComparePage />} />
         <Route path="/miss" element={<MissPage />} />
-        {TABS.filter((t) => !['/', '/compare', '/miss'].includes(t.path)).map((t) => (
+        <Route path="/api" element={<ApiPage />} />
+        {TABS.filter((t) => !['/', '/compare', '/miss', '/api'].includes(t.path)).map((t) => (
           <Route
             key={t.path}
             path={t.path}
