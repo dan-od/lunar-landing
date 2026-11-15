@@ -1323,8 +1323,101 @@ main.main {
   padding: 24px;
 }
 
+/* Bottom tab bar: only on narrow screens (1-9). */
+.tabbar {
+  display: none;
+}
+
 /* ---------- narrow screens: the panes stack at full width ---------- */
 @media (max-width: 899px) {
+  /* Tabs move to a bar pinned to the bottom, as in the prototype. */
+  .hd .tabs {
+    display: none;
+  }
+  .tabbar {
+    display: grid;
+    grid-template-columns: repeat(5, 1fr);
+    position: sticky;
+    bottom: 0;
+    z-index: 3;
+    background: var(--pane);
+    border-top: 1px solid var(--edge);
+  }
+  .tabbar a {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    min-height: 56px;
+    color: var(--white);
+    text-decoration: none;
+    font-weight: 600;
+    font-size: 11px;
+    letter-spacing: 0.04em;
+    border-right: 1px solid var(--line);
+  }
+  .tabbar a:last-child {
+    border-right: 0;
+  }
+  .tabbar a[aria-current='page'] {
+    background: var(--yel);
+    color: var(--deep);
+  }
+  .hd {
+    flex-wrap: nowrap;
+  }
+  .brand {
+    border-right: 0;
+    font-size: 14px;
+    padding: 0 12px;
+    white-space: nowrap;
+  }
+  .hd .right {
+    flex: 1 1 auto;
+  }
+  .hd .right button {
+    padding: 0 12px;
+    min-width: 48px;
+  }
+  .hd-word {
+    display: none;
+  }
+  .scn {
+    gap: 8px 12px;
+    padding: 10px 12px;
+  }
+  .scn .lead,
+  .scn .xtra,
+  .scn .when-hint {
+    display: none;
+  }
+  .scn-when,
+  .scn-when .when {
+    flex: 1 1 100%;
+  }
+  .scn .when-date {
+    flex: 1 1 140px;
+  }
+  .scn .sp {
+    flex: 1 1 100%;
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+  }
+  .scn .sp button {
+    margin-left: 0;
+    border-right-width: 0;
+  }
+  .scn .sp button:last-child {
+    border-right-width: 1px;
+  }
+  .ft {
+    padding-bottom: 10px;
+  }
+  .mapwrap {
+    min-height: 0;
+  }
+  .cmp-side .grid3 {
+    grid-template-columns: 1fr 1fr;
+  }
   .side,
   .insp {
     max-width: none;

@@ -36,11 +36,13 @@ export function Header() {
           <button
             type="button"
             id="settings-open"
+            aria-label="Settings"
             aria-haspopup="dialog"
             aria-expanded={drawerOpen}
             onClick={() => setDrawerOpen(true)}
           >
-            <span aria-hidden="true">⚙ </span>SETTINGS
+            <span aria-hidden="true">⚙ </span>
+            <span className="hd-word">SETTINGS</span>
           </button>
         </div>
       </div>
@@ -62,10 +64,10 @@ export function Header() {
             onNow={(next) => say(`Landing set to now: ${next.date} ${hh(next.hour)} UTC`)}
           />
         </span>
-        <span>
+        <span className="xtra">
           MARGIN <b>{scenario.margin.toFixed(1)}°</b>
         </span>
-        <span>
+        <span className="xtra">
           ACCURACY <b>±{scenario.accuracy} m</b>
         </span>
         <span className="sp">
@@ -84,5 +86,19 @@ export function Header() {
         </span>
       </div>
     </header>
+  );
+}
+
+/** On a phone the tabs move to a bar pinned to the bottom of the screen (1-9). */
+export function BottomTabs() {
+  const { search } = useApp();
+  return (
+    <nav className="tabbar" aria-label="Sections">
+      {TABS.map((t) => (
+        <NavLink key={t.path} to={{ pathname: t.path, search }} end={t.path === '/'}>
+          {t.label}
+        </NavLink>
+      ))}
+    </nav>
   );
 }

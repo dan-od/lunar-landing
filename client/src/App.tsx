@@ -1,5 +1,5 @@
 import { Routes, Route, Link } from 'react-router-dom';
-import { Header } from './components/Header';
+import { Header, BottomTabs } from './components/Header';
 import { Page } from './components/Page';
 import { SettingsDrawer } from './components/SettingsDrawer';
 import { ConsolePage } from './console/ConsolePage';
@@ -76,6 +76,7 @@ function Shell() {
         <span>SMOOTH-MOON MODEL · TERRAIN ON THE MISS TAB AND AIM POINTS</span>
         <span>TIMES IN UTC</span>
       </footer>
+      <BottomTabs />
       <SettingsDrawer />
       <div className="live" aria-live="polite">
         {toast && (
