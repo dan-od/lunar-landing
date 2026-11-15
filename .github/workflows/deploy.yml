@@ -67,8 +67,9 @@ jobs:
             docker ps --filter name=moon --format 'table {{.Names}}\t{{.Status}}'
           DEPLOY
       # The server does not create its own tables. Each of these is safe to run
-      # on every deploy: migrations apply once, sites are upserted, and the cache
-      # seed asks NASA Horizons (one request at a time) only for hours not saved.
+      # on every deploy: migrations apply once, sites are upserted, the terrain
+      # profiles for the demo site are replaced with the committed file, and the
+      # cache seed asks NASA Horizons (one request at a time) only for hours not saved.
       - name: Migrate and seed
         run: |
           ssh ${{ secrets.DEPLOY_USER }}@${{ secrets.DEPLOY_HOST }} <<'DEPLOY'
@@ -80,6 +81,7 @@ jobs:
             done
             docker compose exec -T server node server/dist/db/migrate.js
             docker compose exec -T server node server/dist/sites/seed.js
+            docker compose exec -T server node server/dist/terrain/loadTerrain.js
             docker compose exec -T server node server/dist/cache/seedCache.js
           DEPLOY
       - name: Smoke test

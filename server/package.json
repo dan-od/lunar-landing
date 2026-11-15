@@ -12,6 +12,7 @@
     "migrate": "tsx src/db/migrate.ts",
     "seed": "tsx src/sites/seed.ts",
     "seed:cache": "tsx src/cache/seedCache.ts",
+    "load:terrain": "tsx src/terrain/loadTerrain.ts",
     "test": "vitest run"
   },
   "dependencies": {

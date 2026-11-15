@@ -85,6 +85,13 @@ npm run seed --workspace server
 npm run seed:cache --workspace server
 ```
 
+Load the prepared terrain profiles for the demo site into the database (safe to
+repeat; it replaces that site's profiles with the committed file):
+
+```bash
+npm run load:terrain --workspace server
+```
+
 The cache seed fetches 60 days hourly from 2025-02-04 for the five curated sites:
 10 requests, 14,410 rows, about 13 seconds. Change the span with `SEED_START` and
 `SEED_DAYS`. Spans outside the seed are fetched on first use and saved.

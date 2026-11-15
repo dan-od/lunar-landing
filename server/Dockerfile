@@ -23,5 +23,7 @@ COPY --from=build /app/core/dist ./core/dist
 COPY --from=build /app/server/dist ./server/dist
 # The migration runner reads its .sql files from beside the compiled runner.
 COPY server/src/db/migrations ./server/dist/db/migrations
+# The prepared terrain profiles, read by the terrain loader on each deploy.
+COPY tools/terrain/im2_terrain.json ./server/dist/terrain/im2_terrain.json
 EXPOSE 8080
 CMD ["node", "server/dist/index.js"]
