@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { groupSites, ARTEMIS_NOTE, SEARCH_FROM } from './siteGroups';
+import { groupSites, SEARCH_FROM } from './siteGroups';
 
 const s = (id: string, name: string, group?: string, custom = false) => ({ site: { id, name, group, custom, aim: undefined }, short: name });
 
@@ -12,13 +12,12 @@ const rows = [
 ];
 
 describe('site list groups and search', () => {
-  it('groups in the fixed order, with the empty Artemis III group explained', () => {
+  it('groups in the fixed order and shows no empty group (no Artemis III group)', () => {
     const g = groupSites(rows, '');
-    expect(g.map((x) => x.title)).toEqual(['Artemis III candidates', 'South pole', 'Apollo', 'Other landers', 'Your sites']);
-    expect(g[0]!.rows).toEqual([]);
-    expect(g[0]!.note).toBe(ARTEMIS_NOTE);
-    expect(g[2]!.rows.map((r) => r.site.id)).toEqual(['a12', 'ap11']);
-    expect(g[4]!.rows.map((r) => r.site.id)).toEqual(['c:-85,30']);
+    expect(g.map((x) => x.title)).toEqual(['South pole', 'Apollo', 'Other landers', 'Your sites']);
+    expect(g.every((x) => x.rows.length > 0)).toBe(true);
+    expect(g[1]!.rows.map((r) => r.site.id)).toEqual(['a12', 'ap11']);
+    expect(g[3]!.rows.map((r) => r.site.id)).toEqual(['c:-85,30']);
   });
 
   it('searches names, ignoring case and accents, and hides empty groups while searching', () => {

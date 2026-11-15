@@ -57,7 +57,7 @@ export const TAB_HELP: Record<string, TabHelp> = {
       { name: 'Next change', meaning: 'How long after landing the Sun or Earth next rises or sets.' },
       { name: 'Margin', meaning: TERMS.margin.text },
     ],
-    note: 'Positions come from NASA JPL Horizons. The Moon is treated as smooth except on the Miss tab, where real terrain is used.',
+    note: 'Positions come from NASA JPL Horizons. The Moon is treated as smooth except on the Miss tab, where real terrain is used. Every site in the list has a published source for its coordinates. NASA’s nine Artemis III candidate regions are not listed: NASA published them as named regions without centre points, and Moon Status never guesses coordinates.',
   },
   '/compare': {
     title: 'Compare',
@@ -103,7 +103,7 @@ export const TAB_HELP: Record<string, TabHelp> = {
       { name: 'Sunrise and sunset', meaning: 'When the Sun climbs above the margin, or drops below it, at that place.' },
       { name: 'Earth rise and Earth set', meaning: 'When Earth comes into view for radio contact, or goes out of view.' },
       { name: 'Times', meaning: 'All in UTC, to the hour, because NASA’s positions are hourly.' },
-      { name: 'Email watch (when offered)', meaning: 'Pick a rule and an address; after you confirm by email, you get one email each time the rule breaks. Every email has an unsubscribe link (a page with a Stop alerts button) and works with your mail app's own unsubscribe button; either deletes your address.' },
+      { name: 'Email watch (when offered)', meaning: 'Pick a rule and an address; after you confirm by email, you get one email each time the rule breaks. Every email has an unsubscribe link (a page with a Stop alerts button) and works with your mail app’s own unsubscribe button; either deletes your address.' },
     ],
   },
   '/api': {

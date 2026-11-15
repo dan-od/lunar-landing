@@ -26,7 +26,7 @@ or from the command line.
 | F-2 | Pass | Test: ten simultaneous loads, never two NASA requests at once. |
 | F-3 | Pass | Test; hand: re-running the seed made no NASA requests for saved spans. |
 | F-4 | Pass | Test on a saved reply at 0, 2 and 5 degrees. |
-| F-5 | Pass | 21 sites in four groups, each with a cited link stored with it and shown in the Inspector (test: every site has a group and an https source; `GET /v1/sites` returns group and note). Artemis III regions left out: no published centre points. |
+| F-5 | Pass | 21 sites in three groups, each with a cited link stored with it and shown in the Inspector (test: every site has a group and an https source; `GET /v1/sites` returns group and note). Artemis III regions left out: no published centre points. |
 | F-6 | Pass | `tools/terrain/report.md`: worst direction error 0.0038°, F-6 pairing passes. |
 | F-7 | Pass | Test: Miss odds, the `odds70` watch rule and `/v1/miss` agree for one aim. |
 | 1-1 | Pass | Hand: first open offers the 2025 case or a site choice; one click loads it. |

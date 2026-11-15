@@ -2,8 +2,8 @@
 // without one is left out (AGENTS.md data rules). Longitude is degrees east.
 import type { Site, SiteGroup } from './types.js';
 
-/** How the site list is grouped. Artemis III candidates are kept as a group, but
- * no region is listed until NASA publishes a centre point for it. */
+/** Groups a site can belong to. No Artemis III region is listed (NASA published
+ * them without centre points), so that group is empty and the app does not show it. */
 export const SITE_GROUPS: SiteGroup[] = ['Artemis III candidates', 'South pole', 'Apollo', 'Other landers'];
 
 export const CURATED_SITES: Site[] = [

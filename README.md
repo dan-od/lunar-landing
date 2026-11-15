@@ -55,9 +55,10 @@ Every source is listed with its link and licence in [CREDITS.md](CREDITS.md).
   [PGDA, "A New View of the Lunar South Pole from LOLA"](https://pgda.gsfc.nasa.gov/products/90)
   (NASA Goddard Planetary Geodesy Data Archive). Cite: Barker et al., 2023,
   *Planet. Sci. J.* 4, 183, [doi:10.3847/PSJ/acf3e1](https://doi.org/10.3847/PSJ/acf3e1).
-- **Site coordinates** — 21 sites in four groups (South pole, Apollo, Other
-  landers, and Artemis III candidates, which is empty until NASA publishes centre
-  points for its nine regions). Sources: NASA NSSDC
+- **Site coordinates** — 21 sites in three groups (South pole, Apollo, Other
+  landers). NASA's nine Artemis III candidate regions (2024) are **not listed**:
+  NASA published them as named regions without centre points, and no citable
+  centre point could be found, so none is shown rather than guessed. Sources: NASA NSSDC
   ([lunar landing sites](https://nssdc.gsfc.nasa.gov/planetary/lunar/lunar_sites.html)),
   NASA ([IM-1](https://www.nasa.gov/?p=620655)) and LROC (Arizona State
   University for NASA). Each site's link is stored with it and shown in the

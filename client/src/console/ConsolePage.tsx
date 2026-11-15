@@ -180,7 +180,6 @@ export function ConsolePage() {
       {groups.map((g) => (
         <section key={g.title} className="site-group" aria-label={g.title}>
           <h3 className="lbl site-group-title">{g.title.toUpperCase()}</h3>
-          {g.note && g.rows.length === 0 && <p className="pad hint line">{g.note}</p>}
           {g.rows.map((r) => {
             const isFetching = !busy && fetching.has(r.site.id);
             const refused = failures[r.site.id];
