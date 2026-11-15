@@ -16,7 +16,22 @@ export interface Scenario {
   aim: { east: number; north: number };
   /** Time marker, days after landing (0..30). */
   t: number;
+  /** Compare: how side B is chosen. A quick setup derives it from side A. */
+  setup: CompareSetup;
+  /** Compare: side B when it was set by hand (setup "custom"). */
+  b: CompareSide | null;
 }
+
+/** One side of Compare: its own place, date and hour (3-1). */
+export interface CompareSide {
+  site: string;
+  date: string;
+  hour: number;
+}
+
+/** Quick setups that can be stored in the address, plus "custom" for a hand-set side B. */
+export type CompareSetup = 'date' | 'time' | 'site' | 'custom';
+const SETUPS: CompareSetup[] = ['date', 'time', 'site', 'custom'];
 
 export const DATE_MIN = '2020-01-01';
 export const DATE_MAX = '2040-12-31';
@@ -30,6 +45,8 @@ export const DEFAULT_SCENARIO: Scenario = {
   accuracy: 250,
   aim: { east: 0, north: 0 },
   t: 0,
+  setup: 'date',
+  b: null,
 };
 
 const DATE_RE = /^\d{4}-\d{2}-\d{2}$/;
@@ -93,8 +110,23 @@ export function parseScenario(params: URLSearchParams): ParsedScenario {
   const tt = num(params.get('t'));
   const t = tt !== undefined && tt >= 0 && tt <= 30 ? tt : d.t;
 
+  // Compare: side B set by hand travels as "site,date,hour".
+  let b: CompareSide | null = null;
+  const rawB = params.get('b');
+  if (rawB) {
+    const [bSite, bDate, bHourRaw] = rawB.split(',');
+    const bHour = Number(bHourRaw);
+    if (bSite && bDate && isAllowedDate(bDate) && Number.isInteger(bHour) && bHour >= 0 && bHour <= 23) {
+      b = { site: bSite, date: bDate, hour: bHour };
+    }
+  }
+  const rawSetup = params.get('cmp') as CompareSetup | null;
+  let setup: CompareSetup = rawSetup && SETUPS.includes(rawSetup) ? rawSetup : b ? 'custom' : d.setup;
+  if (setup === 'custom' && !b) setup = d.setup;
+  if (setup !== 'custom') b = null;
+
   return {
-    scenario: { site, date, hour, margin, accuracy, aim, t },
+    scenario: { site, date, hour, margin, accuracy, aim, t, setup, b },
     notices,
     present: params.has('site'),
   };
@@ -110,6 +142,12 @@ export function scenarioToQuery(s: Scenario): string {
   p.set('accuracy', String(s.accuracy));
   if (s.aim.east !== 0 || s.aim.north !== 0) p.set('aim', `${s.aim.east},${s.aim.north}`);
   if (s.t > 0) p.set('t', String(s.t));
+  if (s.setup === 'custom' && s.b) {
+    p.set('cmp', 'custom');
+    p.set('b', `${s.b.site},${s.b.date},${s.b.hour}`);
+  } else if (s.setup !== 'date') {
+    p.set('cmp', s.setup);
+  }
   return p.toString();
 }
 

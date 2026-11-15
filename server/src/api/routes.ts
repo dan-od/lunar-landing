@@ -3,7 +3,7 @@
 // scenario and the model used.
 import { Router, type Request } from 'express';
 import type { BodySummary, Site } from '@moon/core';
-import { computeResult, csvRow, stateFor } from '@moon/core';
+import { buildReport, computeResult, csvRow, stateFor } from '@moon/core';
 import { notFound, serviceUnavailable } from './errors.js';
 import { parseDate, parseInteger, parseNumber, parsePlace, type PlaceQuery } from './validate.js';
 import { createRateLimiter, type RateLimitOptions } from './rateLimit.js';
@@ -119,14 +119,18 @@ export function createV1Router(deps: V1Deps): Router {
     }
   });
 
-  /** Everything both window endpoints need, computed once by the one calculator. */
-  async function loadWindows(req: Request) {
-    const place = parsePlace(req.query as Record<string, unknown>);
-    const start = parseDate(req.query.start, 'start');
-    const hour = parseInteger(req.query.hour, 'hour', 0, 23, 0);
-    const days = parseInteger(req.query.days, 'days', 1, 60, 30);
-    const margin = parseNumber(req.query.margin, 'margin', 0, 5, 2);
-    const site = await resolveSite(place);
+  interface WindowsQuery {
+    place: PlaceQuery;
+    start: string;
+    hour: number;
+    days: number;
+    margin: number;
+  }
+
+  /** One case, computed once by the one calculator. Every window endpoint uses this. */
+  async function computeWindows(q: WindowsQuery) {
+    const { start, hour, days, margin } = q;
+    const site = await resolveSite(q.place);
 
     const startMs = Date.parse(isoAt(start, hour));
     const stopMs = startMs + days * 86_400_000;
@@ -144,6 +148,16 @@ export function createV1Router(deps: V1Deps): Router {
     }
     const result = computeResult(sunW, earthW, { marginDeg: margin });
     return { site, start, hour, days, margin, startMs, stopMs, sun, earth, saved, complete, result };
+  }
+
+  function loadWindows(req: Request) {
+    return computeWindows({
+      place: parsePlace(req.query as Record<string, unknown>),
+      start: parseDate(req.query.start, 'start'),
+      hour: parseInteger(req.query.hour, 'hour', 0, 23, 0),
+      days: parseInteger(req.query.days, 'days', 1, 60, 30),
+      margin: parseNumber(req.query.margin, 'margin', 0, 5, 2),
+    });
   }
 
   // GET /v1/windows
@@ -237,6 +251,63 @@ export function createV1Router(deps: V1Deps): Router {
       res.setHeader('Content-Disposition', `attachment; filename="moon-status-windows-${fileId}-${w.start}.csv"`);
       // Byte-order mark so spreadsheet apps read the file as UTF-8.
       res.send(`${UTF8_BOM}${lines.join('\r\n')}\r\n`);
+    } catch (err) {
+      next(err);
+    }
+  });
+
+  // GET /v1/report — the change report between two cases (flow 3). The sentences
+  // are built from the same calculator results the two sides would show.
+  router.get('/report', async (req: Request, res, next) => {
+    try {
+      const query = req.query as Record<string, unknown>;
+      const days = parseInteger(query.days, 'days', 1, 60, 30);
+      const margin = parseNumber(query.margin, 'margin', 0, 5, 2);
+      const side = (prefix: 'a_' | 'b_'): WindowsQuery => ({
+        place: parsePlace(query, prefix),
+        start: parseDate(query[`${prefix}date`], `${prefix}date`),
+        hour: parseInteger(query[`${prefix}hour`], `${prefix}hour`, 0, 23, 0),
+        days,
+        margin,
+      });
+      // Validate both sides before fetching anything.
+      const qa = side('a_');
+      const qb = side('b_');
+      const a = await computeWindows(qa);
+      const b = await computeWindows(qb);
+      const report = buildReport(a.result, b.result);
+
+      const sideReply = (w: typeof a) => ({
+        state: {
+          word: w.result.landing.word,
+          symbol: w.result.landing.symbol,
+          power_up: w.result.landing.powerUp,
+          link_up: w.result.landing.linkUp,
+        },
+        works: w.result.works,
+        power: serializeSummary(w.result.power),
+        contact: serializeSummary(w.result.contact),
+      });
+      const sideScenario = (w: typeof a) => ({
+        site: w.site.id,
+        lat: w.site.lat,
+        lon: w.site.lon,
+        date: w.start,
+        hour: w.hour,
+      });
+
+      res.json({
+        model: a.result.model,
+        source: 'JPL Horizons',
+        saved: a.saved && b.saved,
+        scenario: { a: sideScenario(a), b: sideScenario(b), days, margin },
+        verdict: report.verdict,
+        note: report.note,
+        same: report.same,
+        lines: report.lines,
+        a: sideReply(a),
+        b: sideReply(b),
+      });
     } catch (err) {
       next(err);
     }

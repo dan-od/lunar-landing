@@ -783,6 +783,108 @@ p {
   color: var(--mut);
 }
 
+/* ---------- compare ---------- */
+.cmp-page {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+}
+.cmp-setups {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: stretch;
+  background: var(--pane);
+  border-bottom: 1px solid var(--line);
+}
+.cmp-setups .lbl {
+  border: 0;
+  display: flex;
+  align-items: center;
+}
+.cmp-setups button {
+  padding: 0 14px;
+  border-left: 1px solid var(--line);
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+}
+.cmp-setups button[aria-pressed='true'] {
+  background: var(--elec);
+  box-shadow: inset 0 -3px 0 var(--yel);
+}
+.cmp-why {
+  display: flex;
+  align-items: center;
+  padding: 0 14px;
+}
+
+.cmp-side {
+  flex: 1 1 320px;
+  border-right: 1px solid var(--line);
+}
+.cmp-head {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+.grid2.gap {
+  gap: 10px;
+}
+.cmp-side .grid3 .ro:nth-child(3n) {
+  border-right: 0;
+}
+.cmp-track .track {
+  height: 14px;
+}
+.cmp-axis {
+  display: flex;
+  justify-content: space-between;
+  font-size: 10px;
+  letter-spacing: 0.08em;
+  margin-top: 4px;
+}
+
+.err {
+  color: var(--white);
+  border-left: 3px solid var(--red);
+  padding: 4px 8px;
+  margin: 0 0 10px;
+  font-size: 13px;
+  background: var(--deep);
+}
+.fld input[aria-invalid='true'] {
+  border-color: var(--red);
+}
+
+.cmp-note {
+  font-size: 13px;
+}
+.cmp-lines {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+.cmp-line {
+  padding: 10px 14px;
+  border-bottom: 1px solid var(--line);
+}
+.cmp-mark {
+  font-size: 11px;
+  letter-spacing: 0.06em;
+  white-space: nowrap;
+}
+.cmp-line.better .cmp-mark {
+  color: var(--yel);
+}
+.cmp-actions {
+  margin-top: auto;
+  border-top: 1px solid var(--line);
+}
+.cmp-actions a {
+  border-left: 1px solid var(--line);
+}
+
 /* Placeholder tabs */
 main.main {
   padding: 24px;

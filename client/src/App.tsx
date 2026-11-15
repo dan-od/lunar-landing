@@ -3,11 +3,11 @@ import { Header } from './components/Header';
 import { Page } from './components/Page';
 import { SettingsDrawer } from './components/SettingsDrawer';
 import { ConsolePage } from './console/ConsolePage';
+import { ComparePage } from './compare/ComparePage';
 import { AppProvider, useApp } from './state';
 import { TABS } from './tabs';
 
 const HEADINGS: Record<string, string> = {
-  '/compare': 'Compare two cases',
   '/miss': 'What if we miss?',
   '/watch': 'Watch and be alerted',
   '/api': 'API',
@@ -37,7 +37,8 @@ function Shell() {
       )}
       <Routes>
         <Route path="/" element={<ConsolePage />} />
-        {TABS.filter((t) => t.path !== '/').map((t) => (
+        <Route path="/compare" element={<ComparePage />} />
+        {TABS.filter((t) => t.path !== '/' && t.path !== '/compare').map((t) => (
           <Route
             key={t.path}
             path={t.path}

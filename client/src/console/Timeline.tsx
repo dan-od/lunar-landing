@@ -13,7 +13,7 @@ interface Props {
   onPlay: () => void;
 }
 
-function Track({ windows, landingMs, kind }: { windows: Window[]; landingMs: number; kind: 'power' | 'contact' }) {
+export function Track({ windows, landingMs, kind }: { windows: Window[]; landingMs: number; kind: 'power' | 'contact' }) {
   return (
     <span className={`track ${kind}`}>
       {windows.map((w) => {

@@ -5,5 +5,6 @@ export * from './calculator.js';
 export * from './sites.js';
 export * from './subpoint.js';
 export * from './csv.js';
+export * from './report.js';
 
 export const CORE_VERSION = '0.1.0';

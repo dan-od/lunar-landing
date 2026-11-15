@@ -58,16 +58,19 @@ export interface PlaceQuery {
   lon?: number;
 }
 
-/** A place is either a curated site id or a lat/lon pair. */
-export function parsePlace(query: Record<string, unknown>): PlaceQuery {
-  const site = str(query.site);
-  const latRaw = str(query.lat);
-  const lonRaw = str(query.lon);
+/**
+ * A place is either a curated site id or a lat/lon pair. `prefix` selects one
+ * side of a two-sided request (for example "a_" reads a_site, a_lat, a_lon).
+ */
+export function parsePlace(query: Record<string, unknown>, prefix = ''): PlaceQuery {
+  const site = str(query[`${prefix}site`]);
+  const latRaw = str(query[`${prefix}lat`]);
+  const lonRaw = str(query[`${prefix}lon`]);
   if (site) return { site };
   if (latRaw !== undefined || lonRaw !== undefined) {
-    const lat = parseNumber(latRaw, 'lat', -90, 90);
-    const lon = parseNumber(lonRaw, 'lon', -180, 360);
+    const lat = parseNumber(latRaw, `${prefix}lat`, -90, 90);
+    const lon = parseNumber(lonRaw, `${prefix}lon`, -180, 360);
     return { lat, lon };
   }
-  throw badRequest('site', 'Give a site id, or a lat and lon.', undefined);
+  throw badRequest(`${prefix}site`, `Give ${prefix}site, or ${prefix}lat and ${prefix}lon.`, undefined);
 }

@@ -97,6 +97,7 @@ The cache seed fetches 60 days hourly from 2025-02-04 for the five curated sites
 | `GET /v1/sky` | `site` or `lat`+`lon`; `date`; `hour` (0), `margin` (2) | Sun and Earth direction and height; state word and symbol |
 | `GET /v1/windows` | `site` or `lat`+`lon`; `start`; `hour` (0); `days` (30, up to 60); `margin` (2) | power and contact windows, uptime, longest gap, next change, hourly series |
 | `GET /v1/windows.csv` | as `/v1/windows` | spreadsheet file: scenario and model in the first lines, then one row per window |
+| `GET /v1/report` | `a_site` (or `a_lat`+`a_lon`), `a_date`, `a_hour` (0); the same for `b_`; `days` (30); `margin` (2) | verdict and five sentences, each marked better, worse or same, plus each side's numbers |
 
 Every reply names the model. Errors name the field at fault and the allowed range
 (400), the unknown site (404), the seconds to wait (429), or say that nothing is
