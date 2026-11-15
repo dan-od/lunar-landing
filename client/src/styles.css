@@ -822,6 +822,7 @@ table.t th {
 .fld input,
 .fld select {
   width: 100%;
+  max-width: 100%;
   height: 44px;
   background: var(--deep);
   color: var(--white);
@@ -833,6 +834,120 @@ table.t th {
   padding: 0;
   border: 0;
   background: transparent;
+}
+
+/* ---------- dropdowns and date fields: our own square icons ----------
+   The browser's arrow is removed and a square chevron (or calendar) is drawn
+   12 px from the right edge, centred, in the muted colour. The native date
+   picker button stays clickable but invisible, on top of our icon. */
+.app select,
+.app input[type='date'] {
+  appearance: none;
+  -webkit-appearance: none;
+  -moz-appearance: none;
+  height: 44px;
+  background-color: var(--deep);
+  color: var(--white);
+  border: 1px solid var(--edge);
+  padding: 0 36px 0 10px;
+  background-repeat: no-repeat;
+  background-position: right 12px center;
+  background-size: 12px 12px;
+  color-scheme: dark;
+  font-family: 'Fira Code', ui-monospace, monospace;
+  font-size: 13px;
+  max-width: 100%;
+}
+.app select {
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 12 12'%3E%3Cpath d='M2 4l4 4 4-4' fill='none' stroke='%23B9C6E4' stroke-width='2' stroke-linecap='square' stroke-linejoin='miter'/%3E%3C/svg%3E");
+  text-overflow: ellipsis;
+}
+.app select::-ms-expand {
+  display: none;
+}
+.app input[type='date'] {
+  position: relative;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 12 12'%3E%3Cpath d='M1 2.5h10v8.5H1zM1 5h10M3.5 0.5v3M8.5 0.5v3' fill='none' stroke='%23B9C6E4' stroke-width='1.5' stroke-linecap='square' stroke-linejoin='miter'/%3E%3C/svg%3E");
+}
+.app input[type='date']::-webkit-calendar-picker-indicator {
+  position: absolute;
+  top: 0;
+  right: 0;
+  width: 40px;
+  height: 100%;
+  margin: 0;
+  padding: 0;
+  opacity: 0;
+  cursor: pointer;
+}
+.app input[type='date']::-webkit-datetime-edit {
+  padding: 0;
+}
+.app input[type='date']::-webkit-inner-spin-button,
+.app input[type='date']::-webkit-clear-button {
+  display: none;
+}
+.app select:disabled,
+.app input[type='date']:disabled {
+  opacity: 0.55;
+  cursor: not-allowed;
+}
+
+/* Width caps: a place name never stretches past 420 px, a date or hour past 220 px. */
+.fld select {
+  max-width: 420px;
+}
+.when-date input,
+.when-hour select {
+  width: 100%;
+  max-width: 220px;
+}
+
+/* ---------- landing date, hour and Now (scenario bar, Compare) ---------- */
+.when {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-end;
+  gap: 4px 8px;
+}
+.when .fld {
+  margin: 0;
+}
+.when-date {
+  flex: 1 1 150px;
+  max-width: 220px;
+}
+.when-hour {
+  flex: 0 1 110px;
+  max-width: 220px;
+}
+.when-now {
+  flex: 0 0 auto;
+  height: 44px;
+}
+.when-err {
+  flex: 1 1 100%;
+  margin: 0;
+}
+.when-hint {
+  flex: 1 1 100%;
+  font-family: Overpass, system-ui, sans-serif;
+  font-size: 11px;
+}
+.scn-when {
+  display: flex;
+  align-items: flex-end;
+  gap: 8px;
+}
+.scn-when > .lead {
+  align-self: center;
+}
+.scn .when-hint {
+  flex: 0 1 auto;
+  align-self: center;
+}
+.scn .fld span {
+  font-size: 9px;
 }
 
 /* ---------- short message ---------- */
