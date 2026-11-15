@@ -2,14 +2,44 @@
 // without opening a port.
 import express, { type Express } from 'express';
 import { healthRouter } from './health.js';
+import { config } from './config.js';
+import { getPool } from './db/pool.js';
+import { createV1Router, type V1Deps } from './api/routes.js';
+import { apiErrorHandler, serviceUnavailable } from './api/errors.js';
+import { appSeriesProvider, dbSitesRepo, staticSitesRepo } from './api/providers.js';
 
-export function createApp(): Express {
+/** Production wiring: database-backed when a database is configured. */
+function defaultDeps(): V1Deps {
+  const pool = getPool();
+  const rateLimit = { windowMs: 60_000, max: config.rateLimitPerMinute };
+  if (pool) {
+    return { sitesRepo: dbSitesRepo(pool), seriesProvider: appSeriesProvider(pool), rateLimit };
+  }
+  return {
+    sitesRepo: staticSitesRepo(),
+    seriesProvider: {
+      async get() {
+        throw serviceUnavailable('No database is configured, so no positions are saved.');
+      },
+    },
+    rateLimit,
+  };
+}
+
+export function createApp(deps: V1Deps = defaultDeps()): Express {
   const app = express();
   app.disable('x-powered-by');
+  // Behind the client container and the shared proxy: take the visitor address
+  // from X-Forwarded-For, trusting only private-range hops.
+  app.set('trust proxy', config.trustProxy);
   app.use(express.json());
 
-  // All application endpoints live under /api.
   app.use('/api', healthRouter);
+  app.use('/v1', createV1Router(deps));
+  app.use('/v1', (_req, res) => {
+    res.status(404).json({ error: { message: 'No such endpoint.' } });
+  });
 
+  app.use(apiErrorHandler);
   return app;
 }

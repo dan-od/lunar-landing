@@ -5,7 +5,7 @@ import type { Body, PositionRow } from '@moon/core';
 export interface PositionCache {
   /** Cached rows for a site + body, or undefined if nothing is stored yet. */
   get(siteId: string, body: Body): Promise<PositionRow[] | undefined>;
-  /** Store (replace) the rows for a site + body. */
+  /** Store rows for a site + body, merging with what is already saved (by hour). */
   put(siteId: string, body: Body, rows: PositionRow[]): Promise<void>;
 }
 
@@ -22,9 +22,10 @@ export class MemoryPositionCache implements PositionCache {
   }
 
   async put(siteId: string, body: Body, rows: PositionRow[]): Promise<void> {
-    this.store.set(
-      this.key(siteId, body),
-      rows.map((r) => ({ ...r })),
-    );
+    const byTime = new Map<string, PositionRow>();
+    for (const r of this.store.get(this.key(siteId, body)) ?? []) byTime.set(r.time, r);
+    for (const r of rows) byTime.set(r.time, { ...r });
+    const merged = [...byTime.values()].sort((a, b) => a.time.localeCompare(b.time));
+    this.store.set(this.key(siteId, body), merged);
   }
 }

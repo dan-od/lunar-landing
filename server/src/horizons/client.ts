@@ -4,6 +4,7 @@ import type { Body, PositionRow, Site } from '@moon/core';
 import { toEastLongitude } from '@moon/core';
 import { config } from '../config.js';
 import { parseHorizons } from './parse.js';
+import { horizonsGet } from './http.js';
 
 /** COMMAND ids: Sun = 10, Earth = 399. */
 const COMMAND: Record<Body, string> = { sun: '10', earth: '399' };
@@ -42,10 +43,10 @@ export async function fetchHorizons(
   span: HorizonsSpan,
 ): Promise<PositionRow[]> {
   const url = buildHorizonsUrl(site, body, span);
-  const res = await fetch(url);
-  if (!res.ok) {
-    throw new Error(`Horizons request failed: HTTP ${res.status}`);
-  }
-  const text = await res.text();
+  const text = await horizonsGet(url, {
+    timeoutMs: config.horizonsTimeoutMs,
+    maxRetries: config.horizonsMaxRetries,
+    baseDelayMs: config.horizonsRetryBaseMs,
+  });
   return parseHorizons(text, body);
 }
