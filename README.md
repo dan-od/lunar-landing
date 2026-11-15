@@ -4,10 +4,24 @@ A web app for the 2026 NASA Space Apps challenge *Lunar Landing Site Navigator*.
 It answers one question: at a given place on the Moon and a given time, does a
 lander have **sunlight for power** and a **line of sight to Earth**?
 
-Pick a landing site near the south pole and a date, and see at a glance whether a
-lander would be ready, plus a 30-day timeline, a plain-language change report, a
-map of what happens if the lander misses its target, and alerts when a schedule
-change turns a good site bad.
+Pick a landing site and a date (any day from 1960 to 2100, in UTC) and see at a
+glance whether a lander would be ready. Live at https://moon.okoro.me.
+
+## What it does
+
+| Tab | Answers |
+| --- | --- |
+| **Console** | Is each site ready at the landing moment (a symbol and a word: ready, no power, no link, dark)? A pole map, a 30-day sunlight and Earth-contact timeline with a slider and Play, a sky view, and the next sunrise or sunset. Add your own coordinates; download the windows as a spreadsheet. |
+| **Compare** | Two cases side by side (place, date and hour each), four quick setups, and a change report: a verdict and five plain sentences marked better, worse or the same. |
+| **Miss** | If the lander comes down 100, 250 or 320 m off target, how many landings out of 10 still work, on real terrain? Move the aim, or jump to the safest nearby spot, and carry it to the other tabs. |
+| **Watch** | The upcoming sunrises, sunsets, Earth rises and Earth sets for the 30 days after landing, each with Add to calendar (a calendar file with a reminder). Where email alerts are switched on, a confirmed email watch sends one alert when its rule breaks. |
+| **API** | The same answers by program, sent live from the page, plus an assistant connector and "How we know it's right". |
+
+Every tab has a Help panel (what it answers, three steps, what each number
+means), a "?" beside each term, and the Console has a four-step first-visit tour.
+The landing date and hour are real fields with a "Now" button, the scenario lives
+in the page address so links restore the view, and on a phone the tabs move to a
+bar at the bottom.
 
 ## What is modelled, and what is not
 
@@ -26,12 +40,27 @@ change turns a good site bad.
 
 ## Data sources
 
-- **NASA JPL Horizons API** — Sun (`COMMAND=10`) and Earth (`COMMAND=399`)
-  azimuth and elevation from a point on the Moon (`coord@301`, geodetic
-  east-longitude / latitude / height-km), quantity 4, hourly.
-- **LOLA south pole elevation map** — `LDEM_80S_80MPP_ADJ.TIF` (181 MB, 80 m/px),
-  used to prepare terrain horizon profiles for the demo site. Not committed to the
-  repository (it lives under `data/`, which is git-ignored).
+Every source is listed with its link and licence in [CREDITS.md](CREDITS.md).
+
+- **NASA JPL Horizons** ([system](https://ssd.jpl.nasa.gov/horizons/),
+  [API documentation](https://ssd-api.jpl.nasa.gov/doc/horizons.html)) — Sun
+  (`COMMAND=10`) and Earth (`COMMAND=399`) azimuth and elevation from a point on
+  the Moon (`coord@301`, geodetic east-longitude / latitude / height-km),
+  quantity 4, hourly. Called only by the server, one request at a time, and every
+  reply is saved and reused.
+- **LOLA south pole elevation map** (NASA Goddard, Lunar Orbiter Laser Altimeter)
+  — `LDEM_80S_80MPP_ADJ.TIF` (181 MB, 80 m/px), used to prepare terrain horizon
+  profiles for the demo site. Not committed to the repository (it lives under
+  `data/`, which is git-ignored). Product page:
+  [PGDA, "A New View of the Lunar South Pole from LOLA"](https://pgda.gsfc.nasa.gov/products/90)
+  (NASA Goddard Planetary Geodesy Data Archive). Cite: Barker et al., 2023,
+  *Planet. Sci. J.* 4, 183, [doi:10.3847/PSJ/acf3e1](https://doi.org/10.3847/PSJ/acf3e1).
+- **Site coordinates** — NASA NSSDC
+  ([lunar landing sites](https://nssdc.gsfc.nasa.gov/planetary/lunar/lunar_sites.html)),
+  NASA ([IM-1](https://www.nasa.gov/?p=620655)) and LROC (Arizona State
+  University for NASA); each site's source is shown in the app.
+- **Apollo 11 Sun angle** — [Apollo by the Numbers, NASA SP-2000-4029](https://www.nasa.gov/wp-content/uploads/static/history/SP-4029/Apollo_18-27_LM_Lunar_Landing.htm),
+  used only for the check below.
 - **Space Apps brand** — colours and fonts only. The Space Apps logo and orbit
   pattern are not shown, because the original brand-kit files are not in the
   repository. No NASA insignia.
@@ -165,7 +194,9 @@ npm run dev:server     # Express on :8080 (needs DATABASE_URL for the cache)
 npm run dev:client     # Vite on :5173, proxying /api to :8080
 ```
 
-Database migrations (needs a running PostgreSQL and `DATABASE_URL`):
+Database migrations (needs a running PostgreSQL and `DATABASE_URL` in the
+environment; the scripts do not read `.env` themselves, so either export it or
+run `npx tsx --env-file=.env src/db/migrate.ts` in `server/`):
 
 ```bash
 npm run migrate
@@ -189,9 +220,14 @@ repeat; it replaces that site's profiles with the committed file):
 npm run load:terrain --workspace server
 ```
 
-The cache seed fetches 60 days hourly from 2025-02-04 for the five curated sites:
-10 requests, 14,410 rows, about 13 seconds. Change the span with `SEED_START` and
-`SEED_DAYS`. Spans outside the seed are fetched on first use and saved.
+The cache seed fetches, for the five curated sites, 60 days hourly from
+2025-02-04 (the 2025 case), Apollo 11's landing day, and the 60 days starting
+today (UTC), so the Now button opens on saved positions. It asks NASA only for
+hours not already saved, so running it twice is safe (the second run makes no
+requests). Change the spans with `SEED_START`, `SEED_DAYS` and `SEED_TODAY_DAYS`.
+Any other date from 1960 to 2100 is fetched on first use and saved; each visitor
+may open `NEW_PERIODS_PER_HOUR` such new dates an hour (saved dates are not
+counted).
 
 ## API (version 1)
 
@@ -201,13 +237,43 @@ The cache seed fetches 60 days hourly from 2025-02-04 for the five curated sites
 | `GET /v1/sky` | `site` or `lat`+`lon`; `date`; `hour` (0), `margin` (2) | Sun and Earth direction and height; state word and symbol |
 | `GET /v1/windows` | `site` or `lat`+`lon`; `start`; `hour` (0); `days` (30, up to 60); `margin` (2); optional `aim_east`+`aim_north` for an aim point on prepared terrain | power and contact windows, uptime, longest gap, next change, hourly series |
 | `GET /v1/windows.csv` | as `/v1/windows` | spreadsheet file: scenario and model in the first lines, then one row per window |
+| `GET /v1/windows.ics` | as `/v1/windows`; `remind` (minutes before, 60); optional `at` + `kind` (`sunrise`, `sunset`, `earthrise`, `earthset`) for one change | calendar file of the upcoming changes, each with a reminder and the model named |
 | `GET /v1/report` | `a_site` (or `a_lat`+`a_lon`), `a_date`, `a_hour` (0); the same for `b_`; `days` (30); `margin` (2) | verdict and five sentences, each marked better, worse or same, plus each side's numbers |
 | `GET /v1/slip` | `site` or `lat`+`lon`; `date`; `hour` (0); `margin` (2) | ready or not ready at the landing hour for each whole-day slip from −30 to +30; unknown where no positions are saved |
 | `GET /v1/miss` | `site`; `date`; `hour` (0); `east`, `north` (aim, 0); `accuracy` (250) | terrain model: landings out of 10 that would work at 100, 250 and 320 m, the safest aim, and the grid of prepared points. 409 for a site without prepared terrain |
+| `GET /v1/watches/config` | none | whether email alerts are on here, the four rules, and the privacy line |
+| `POST /v1/watches` | JSON: `site`, `date`, `hour`, `margin`, `accuracy`, optional `aim_east`+`aim_north`, `rule` (`power`, `link3`, `slip14`, `odds70`), `email` | the watch as waiting, and its private manage token; a confirmation email is sent. 404 when email alerts are off |
+| `POST /v1/watches/confirm`, `/lookup`, `/recheck`, `/:id/resend`; `DELETE /v1/watches/:id`; `GET`/`POST /v1/watches/unsubscribe` | confirmation token, or manage tokens | confirm (link valid 24 hours), list with event log, re-check after a scenario change, send a new link, delete, one-click unsubscribe (deletes the address) |
 
-Every reply names the model. Errors name the field at fault and the allowed range
-(400), the unknown site (404), the seconds to wait (429), or say that nothing is
-saved (503). Every endpoint is rate limited per visitor (`RATE_LIMIT_PER_MINUTE`).
+Dates run from 1960-01-01 to 2100-12-31 (UTC). Every reply names the model.
+Errors name the field at fault and the allowed range (400), the unknown site
+(404), the seconds to wait (429), or say that nothing is saved (503). Every
+endpoint is rate limited per visitor (`RATE_LIMIT_PER_MINUTE`); new custom
+coordinates (`CUSTOM_SITES_PER_HOUR`), dates not saved yet
+(`NEW_PERIODS_PER_HOUR`) and new watches (`WATCHES_PER_HOUR`) have hourly limits
+of their own.
+
+### Watch by email
+
+Email alerts are **off unless both `EMAIL_SENDING_KEY` and `TOKEN_SIGNING_SECRET`
+are set** (and a database is configured). When off, the watch endpoints answer
+404, no daily check runs, the page hides the form, and the calendar buttons stay.
+
+- Mail goes through Resend's API from `Moon Status <moon@okoro.me>`.
+- Nothing is sent to an address until its owner opens the confirmation link,
+  which expires after 24 hours and can be sent again.
+- Rules are re-checked when the watched scenario changes and once a day, with the
+  same calculator as the API (`slip14` reads the `/v1/slip` result, `odds70` the
+  `/v1/miss` result). One alert per break, never one per check, at most 5 a day
+  per watch.
+- Every email has a one-click unsubscribe (`List-Unsubscribe`, RFC 8058) that
+  deletes the watch and its address. All watch data is deleted after
+  `WATCH_DATA_DELETE_AFTER` (default 2026-12-15, 30 days after the event).
+- Tokens are stored only as keyed hashes and compared in constant time; logs and
+  events show addresses masked (`d•••@example.org`).
+- In development, `EMAIL_SENDER=fake` (with `TOKEN_SIGNING_SECRET`) sends nothing
+  and logs the links instead. It is ignored in production. Tests use a fake
+  sender only.
 
 ### Assistant connector
 
@@ -228,8 +294,10 @@ In `npm run dev:client`, or a build made with `VITE_TEST_BUILD=1`, add
 `force=loading`, `force=down` or `force=empty` to the address to see the loading,
 service-unavailable and empty states. Production builds ignore it.
 
-Copy `.env.example` to `.env` and fill in local values. No real secrets live in
-the repository; production values come from the deployment pipeline.
+Copy `.env.example` to `.env` and fill in local values; it names every setting.
+No real secrets live in the repository; production values come from the
+deployment pipeline's secrets (`MOON_DB_PASSWORD`, `EMAIL_SENDING_KEY`,
+`TOKEN_SIGNING_SECRET` and the deploy access secrets listed in the workflow).
 
 ## Full stack
 
@@ -246,6 +314,31 @@ secrets, builds and restarts the stack, runs the migrations, seeds the sites and
 the position cache, then checks `/api/health` and `/v1/sites`. The secret names
 it expects are listed at the top of that file. The proxy site file is
 `nginx/moon.conf`; copying it to the host is a one-time manual step.
+
+## Use of AI tools
+
+AI assistance was used heavily in this project, and the Space Apps rules allow
+it. This is what it did, as far as the repository shows:
+
+- **Claude (Anthropic), through Claude Code**, wrote most of the code, tests and
+  documentation in this repository under the owner's direction: the server,
+  calculator, client, terrain tooling, deploy workflow, README, CREDITS and the
+  build reports. It also ran the checks recorded in `REPORT.md` (tests, browser
+  checks, accessibility scans) and researched sources such as the Apollo 11 Sun
+  angle. Several Claude models were used across sessions.
+- **The product document and flow prototype** (`docs/PRD.md`,
+  `docs/prototype/index.html`) were drafted with an AI assistant in chat and
+  reviewed by the owner screen by screen.
+- **The owner** chose the challenge, the product and its scope, set the rules in
+  `AGENTS.md`, reviewed the work, made the design and data decisions, and owns
+  the deployment and the submission.
+
+Every number shown comes from NASA data through the code, not from an AI model:
+the app itself makes no AI calls. The assistant connector (`/mcp`) only lets an
+outside assistant read the app's own numbers.
+
+The owner should check this section against their own records (for example which
+chat assistant drafted the PRD) before submitting.
 
 ## Credits
 

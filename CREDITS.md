@@ -9,7 +9,8 @@ asset is added or removed.
 | Source | Used for | Link | Licence / terms |
 | --- | --- | --- | --- |
 | NASA JPL Horizons System | Hourly direction and height of the Sun and Earth from a point on the Moon | https://ssd.jpl.nasa.gov/horizons/ (API: https://ssd-api.jpl.nasa.gov/doc/horizons.html) | NASA/JPL data, not copyrighted as a U.S. Government work; used under JPL's API fair-use rules (one request at a time, replies cached). Credit: NASA/JPL-Caltech, Solar System Dynamics |
-| LOLA south pole elevation map, `LDEM_80S_80MPP_ADJ.TIF` (NASA Goddard) | Terrain horizon profiles for the demo site (Miss view). Kept out of the repository | https://pgda.gsfc.nasa.gov/ (Planetary Geodesy Data Archive, NASA GSFC) | NASA data, not copyrighted as a U.S. Government work. Credit: NASA GSFC / LOLA science team. Exact product page and citation to be confirmed before submission |
+| LOLA south pole elevation map, `LDEM_80S_80MPP_ADJ.TIF` (NASA Goddard) | Terrain horizon profiles for the demo site (Miss view). Kept out of the repository | Product page: https://pgda.gsfc.nasa.gov/products/90 ("A New View of the Lunar South Pole from LOLA", Planetary Geodesy Data Archive, NASA GSFC); file: https://pgda.gsfc.nasa.gov/data/LOLA_20mpp/LDEM_80S_80MPP_ADJ.TIF; data DOI 10.60903/gsfcpgda-lola-spole | NASA data, not copyrighted as a U.S. Government work. Cited as the page asks: Barker, M. K., Mazarico, E., Neumann, G. A., Smith, D. E., et al. (2023), "A New View of the Lunar South Pole from the Lunar Orbiter Laser Altimeter (LOLA)", *Planet. Sci. J.* 4, 183, https://doi.org/10.3847/PSJ/acf3e1 |
+| Apollo by the Numbers (NASA SP-2000-4029, Richard W. Orloff) | The published Sun angle at Apollo 11's landing, for the "How we know it's right" check | https://www.nasa.gov/wp-content/uploads/static/history/SP-4029/Apollo_18-27_LM_Lunar_Landing.htm | NASA publication, U.S. Government work. Only one figure (10.8°) is quoted |
 
 ### Site coordinates
 
@@ -35,12 +36,20 @@ original brand kit files only.
 
 The small Moon mark beside the words "Moon Status" in the header is an original
 drawing made for this project. It is not a NASA or Space Apps asset. The same
-mark is the page icon (`client/public/favicon.svg`).
+mark is the page icon (`client/public/favicon.svg`, with `favicon.ico`,
+`favicon-32.png`, `apple-touch-icon.png`, `icon-192.png` and `icon-512.png`
+rendered from it).
 
 The link preview image (`client/public/og.png`, 1200 × 630) is also original: it
 shows only the name Moon Status, that mark, a headline and the four state tags,
 in the brand colours and fonts. It contains no NASA or Space Apps logo, pattern
 or name. Its source is `docs/og-card.html`.
+
+## Services
+
+| Service | Used for | Link | Terms |
+| --- | --- | --- | --- |
+| Resend | Sending watch confirmation and alert emails from moon@okoro.me, through its HTTP API (no SDK). Only when both email secrets are set | https://resend.com/ | Resend terms of service; the owner's account |
 
 ## Fonts
 
@@ -76,6 +85,8 @@ Loaded from Google Fonts (https://fonts.google.com/).
 | typescript-eslint | https://typescript-eslint.io/ | MIT |
 | SuperTest | https://github.com/ladjs/supertest | MIT |
 | axe-core (accessibility scanner, used to check each tab) | https://github.com/dequelabs/axe-core | MPL-2.0 |
+| Playwright (used outside the repository to check the form fields in the WebKit and Chromium engines; not a dependency) | https://playwright.dev/ | Apache-2.0 |
+| ImageMagick and headless Google Chrome (render the page icons and the link preview image from their SVG and HTML sources) | https://imagemagick.org/, https://www.google.com/chrome/ | ImageMagick License; Chrome terms |
 | Type definitions (`@types/express`, `@types/node`, `@types/pg`, `@types/react`, `@types/react-dom`, `@types/supertest`) | https://github.com/DefinitelyTyped/DefinitelyTyped | MIT |
 
 ## Runtime and hosting software
