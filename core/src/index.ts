@@ -7,5 +7,7 @@ export * from './subpoint.js';
 export * from './csv.js';
 export * from './report.js';
 export * from './miss.js';
+export * from './changes.js';
+export * from './ics.js';
 
 export const CORE_VERSION = '0.1.0';

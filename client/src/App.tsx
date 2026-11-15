@@ -7,12 +7,9 @@ import { ConsolePage } from './console/ConsolePage';
 import { ComparePage } from './compare/ComparePage';
 import { MissPage } from './miss/MissPage';
 import { ApiPage } from './apiPage/ApiPage';
+import { WatchPage } from './watch/WatchPage';
 import { AppProvider, useApp } from './state';
 import { TABS } from './tabs';
-
-const HEADINGS: Record<string, string> = {
-  '/watch': 'Watch and be alerted',
-};
 
 function Shell() {
   const { notices, dismissNotices, toast, search } = useApp();
@@ -40,16 +37,8 @@ function Shell() {
         <Route path="/" element={<ConsolePage />} />
         <Route path="/compare" element={<ComparePage />} />
         <Route path="/miss" element={<MissPage />} />
+        <Route path="/watch" element={<WatchPage />} />
         <Route path="/api" element={<ApiPage />} />
-        {TABS.filter((t) => !['/', '/compare', '/miss', '/api'].includes(t.path)).map((t) => (
-          <Route
-            key={t.path}
-            path={t.path}
-            element={
-              <Page title={t.title} description={t.description} path={t.path} heading={HEADINGS[t.path] ?? t.label} />
-            }
-          />
-        ))}
         <Route
           path="*"
           element={

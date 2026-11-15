@@ -148,3 +148,27 @@ export function getMiss(site: string, date: string, hour: number, signal?: Abort
   const q = new URLSearchParams({ site, date, hour: String(hour) });
   return getJson<MissReply>(`/v1/miss?${q.toString()}`, signal);
 }
+
+/**
+ * Address of the calendar file of upcoming changes (6-2, Watch). With `only`,
+ * just that one change. `remind` is minutes before each change.
+ */
+export function windowsIcsUrl(
+  site: string,
+  start: string,
+  hour: number,
+  days: number,
+  margin: number,
+  remind: number,
+  aim?: AimOffset,
+  only?: { at: string; kind: string },
+): string {
+  const q = windowsQuery(site, start, hour, days, aim);
+  q.set('margin', String(margin));
+  q.set('remind', String(remind));
+  if (only) {
+    q.set('at', only.at);
+    q.set('kind', only.kind);
+  }
+  return `/v1/windows.ics?${q.toString()}`;
+}

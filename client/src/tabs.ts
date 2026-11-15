@@ -31,8 +31,9 @@ export const TABS: TabDef[] = [
   {
     path: '/watch',
     label: 'WATCH',
-    title: 'Moon Status: watch a site and be alerted',
-    description: 'Be told when a change of landing date or aim makes a lunar landing site stop working.',
+    title: 'Moon Status: watch a landing site',
+    description:
+      'See when the Sun and Earth will rise and set at a lunar landing site over the 30 days after landing, and add each change to your calendar with a reminder.',
   },
   {
     path: '/api',

@@ -1259,6 +1259,27 @@ a.as-button {
   text-decoration: none;
 }
 
+/* ---------- watch ---------- */
+.watch-table td {
+  vertical-align: middle;
+}
+.watch-add {
+  text-align: right;
+}
+.watch-add a,
+.watch-all {
+  padding: 0 14px;
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  white-space: nowrap;
+}
+.watch-all {
+  width: 100%;
+  justify-content: center;
+  margin: 4px 0 10px;
+}
+
 /* ---------- API tab ---------- */
 .api-path {
   font-weight: 500;
@@ -1314,7 +1335,7 @@ a.as-button {
   min-height: 44px;
 }
 
-/* Placeholder tabs */
+/* Not-found page */
 .plain-links {
   padding-left: 18px;
   line-height: 2.2;

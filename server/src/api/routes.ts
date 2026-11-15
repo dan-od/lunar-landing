@@ -3,8 +3,9 @@
 // scenario and the model used.
 import { Router, type Request } from 'express';
 import type { Aim, BodySummary } from '@moon/core';
-import { MISS_RADII, aimText, buildReport, csvRow, outOfTen, stateFor } from '@moon/core';
-import { badRequest, serviceUnavailable } from './errors.js';
+import { CHANGE_LABELS, MISS_RADII, aimText, buildIcs, buildReport, changesFrom, csvRow, outOfTen, stateFor, type ChangeKind } from '@moon/core';
+import { badRequest, notFound, serviceUnavailable } from './errors.js';
+import { config } from '../config.js';
 import { parseDate, parseInteger, parseNumber, parsePlace } from './validate.js';
 import { createRateLimiter, type RateLimitOptions } from './rateLimit.js';
 import { createCalc, isoAt, spanTime, type CalcDeps, type WindowsQuery } from './calc.js';
@@ -195,6 +196,60 @@ export function createV1Router(deps: V1Deps): Router {
             };
           }),
       });
+    } catch (err) {
+      next(err);
+    }
+  });
+
+  // GET /v1/windows.ics: the upcoming changes (sunrise, sunset, Earth rise,
+  // Earth set) as a calendar file with a reminder on each (6-2, the Watch tab).
+  // With at and kind, just that one change. Read from the same windows as above.
+  router.get('/windows.ics', async (req: Request, res, next) => {
+    try {
+      const query = req.query as Record<string, unknown>;
+      const remind = parseInteger(query.remind, 'remind', 0, 1440, 60);
+      let only: { at: number; kind: ChangeKind } | undefined;
+      if (query.at !== undefined || query.kind !== undefined) {
+        const kind = String(query.kind ?? '') as ChangeKind;
+        if (!(kind in CHANGE_LABELS)) {
+          throw badRequest('kind', 'kind must name one change.', 'sunrise, sunset, earthrise or earthset');
+        }
+        const at = Date.parse(String(query.at ?? ''));
+        if (Number.isNaN(at)) throw badRequest('at', 'at must be a UTC time such as 2025-03-06T17:00:00Z.');
+        only = { at, kind };
+      }
+      const w = await loadWindows(req);
+      const { site, result } = w;
+      let changes = changesFrom(result, new Date(w.startMs).toISOString(), w.days * 24);
+      if (only) {
+        changes = changes.filter((c) => c.kind === only.kind && Date.parse(c.time) === only.at);
+        if (changes.length === 0) throw notFound('No change of that kind at that time for this landing.');
+      }
+      const model = w.aim
+        ? `Terrain model: the horizon at the aim point (${aimText(w.aim)}), from the LOLA elevation map.`
+        : `Smooth-Moon model with a ${w.margin}° shadow allowance; hills are not counted.`;
+      const landing = sheetTime(w.startMs);
+      const link = `${config.publicSiteUrl}/watch?site=${encodeURIComponent(site.id)}&date=${w.start}&hour=${w.hour}&margin=${w.margin}`;
+      const fileId = site.id.replace(/[^A-Za-z0-9_-]+/g, '-');
+      const ics = buildIcs({
+        name: `Moon Status: ${site.name}`,
+        events: changes.map((c) => ({
+          uid: `${c.kind}-${c.time.replace(/[-:]/g, '')}-${fileId}-${w.start}-${w.hour}@moon-status`,
+          start: c.time,
+          minutes: 60,
+          summary: `${c.label} at ${site.name}`,
+          description:
+            `${c.label} at ${site.name}, ${c.hoursAfterLanding} hours after a landing at ${landing} UTC. ` +
+            `${model} Positions from NASA JPL Horizons, hourly, so the time is to the hour.\n${link}`,
+          alarmMinutesBefore: remind,
+        })),
+      });
+      res.setHeader('Content-Type', 'text/calendar; charset=utf-8');
+      res.setHeader(
+        'Content-Disposition',
+        `attachment; filename="moon-status-${only ? only.kind : 'changes'}-${fileId}-${w.start}.ics"`,
+      );
+      res.send(ics);
     } catch (err) {
       next(err);
     }
