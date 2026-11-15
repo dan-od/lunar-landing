@@ -26,3 +26,21 @@ describe('pole map labels never overlap (D)', () => {
     expect(out.some((l) => l.side === 'left' || l.side === 'hidden')).toBe(true);
   });
 });
+
+describe('pole map labels stay off the rings (polish)', () => {
+  const crossesCircle = (b: { left: number; right: number; top: number; bottom: number }, c: { cx: number; cy: number; r: number }) => {
+    const nx = Math.max(b.left, Math.min(c.cx, b.right));
+    const ny = Math.max(b.top, Math.min(c.cy, b.bottom));
+    const near = Math.hypot(nx - c.cx, ny - c.cy);
+    const far = Math.max(...[[b.left, b.top], [b.right, b.top], [b.left, b.bottom], [b.right, b.bottom]].map(([x, y]) => Math.hypot(x! - c.cx, y! - c.cy)));
+    return near < c.r && c.r < far;
+  };
+
+  it('moves a label that would sit on a ring to a clear spot', () => {
+    const circles = [{ cx: 260, cy: 260, r: 87 }];
+    // A pin just inside the ring, right of centre: its right-hand label would cross the ring.
+    const [l] = placePinLabels([{ id: 'a', x: 330, y: 260, text: 'Shackleton' }], 'none', circles);
+    expect(l!.side).not.toBe('hidden');
+    expect(crossesCircle(l!.box, circles[0]!)).toBe(false);
+  });
+});

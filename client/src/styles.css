@@ -548,6 +548,8 @@ p {
 
 .pl {
   position: absolute;
+  /* A dark backing, so a ring line never runs through a name. */
+  background: var(--deep);
   color: var(--white);
   font: 400 11px 'Fira Code', monospace;
   white-space: nowrap;
@@ -770,6 +772,14 @@ table.t th {
 .sky-margin-t,
 .sky-name {
   fill: var(--white);
+}
+/* A dark halo, so no line ever runs through a label. */
+.sky-name,
+.sky-margin-t {
+  paint-order: stroke;
+  stroke: var(--pane);
+  stroke-width: 3px;
+  stroke-linejoin: round;
 }
 .sky-sun {
   fill: var(--yel);
@@ -1726,6 +1736,10 @@ main.main {
   }
 }
 
+.sp-more {
+  display: none;
+}
+
 /* Bottom tab bar: only on narrow screens (1-9). */
 .tabbar {
   display: none;
@@ -1800,16 +1814,37 @@ main.main {
   .scn .when-date {
     flex: 1 1 140px;
   }
+  /* Phone: only date, hour and Now; the step buttons open from More, and the
+     "?" for slip sits beside More rather than in the button grid. */
+  .sp-more {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    flex: 1 1 100%;
+  }
+  .sp-more button {
+    border: 1px solid var(--line) !important;
+    padding: 0 14px;
+    font-weight: 700;
+    font-size: 12px;
+    letter-spacing: 0.06em;
+  }
+  .sp-more-term {
+    display: inline-flex;
+    align-items: center;
+    gap: 10px;
+    color: var(--mut);
+  }
   .scn .sp {
+    display: none;
+  }
+  .scn .sp.open {
     flex: 1 1 100%;
     display: grid;
     grid-template-columns: repeat(4, 1fr);
   }
   .scn .sp .sp-term {
-    justify-content: center;
-    padding: 0;
-    border: 1px solid var(--line);
-    border-right-width: 0;
+    display: none;
   }
   .scn .sp button {
     margin-left: 0;

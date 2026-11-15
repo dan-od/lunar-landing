@@ -61,3 +61,35 @@ describe('sky view labels (D)', () => {
     expect(l!.box.right).toBeLessThanOrEqual(BOUNDS.right);
   });
 });
+
+describe('sky view labels stay off the lines (polish)', () => {
+  const crosses = (b: SkyLabelBox, y: number) => b.top < y && y < b.bottom;
+
+  it('moves a label off the horizon and allowance lines', () => {
+    const lines = [100, 92];
+    for (const cy of [90, 92, 95, 100, 103]) {
+      const labels = placeSkyLabels(
+        [
+          { cx: 120, cy, text: 'SUN +1.7°' },
+          { cx: 250, cy: 30, text: 'EARTH +10.9°' },
+        ],
+        { ...BOUNDS, lines },
+      );
+      for (const l of labels) for (const y of lines) expect(crosses(l.box, y), `cy ${cy} line ${y}`).toBe(false);
+      expect(overlap(labels[0]!.box, labels[1]!.box)).toBe(false);
+    }
+  });
+
+  it('still separates two close labels while keeping both off the lines', () => {
+    const lines = [100, 92];
+    const labels = placeSkyLabels(
+      [
+        { cx: 150, cy: 96, text: 'SUN +1.7°' },
+        { cx: 152, cy: 97, text: 'EARTH +2.0°' },
+      ],
+      { ...BOUNDS, lines },
+    );
+    expect(overlap(labels[0]!.box, labels[1]!.box)).toBe(false);
+    for (const l of labels) for (const y of lines) expect(crosses(l.box, y)).toBe(false);
+  });
+});

@@ -24,23 +24,53 @@ export interface PinLabel {
 const overlaps = (a: PinLabel['box'], b: PinLabel['box']) =>
   a.left < b.right && b.left < a.right && a.top < b.bottom && b.top < a.bottom;
 
-export function placePinLabels(pins: PinLabelInput[], selectedId: string): PinLabel[] {
+export interface Circle {
+  cx: number;
+  cy: number;
+  r: number;
+}
+
+/** True when the circle's line passes through the box. */
+function crossesCircle(b: PinLabel['box'], c: Circle): boolean {
+  const nx = Math.max(b.left, Math.min(c.cx, b.right));
+  const ny = Math.max(b.top, Math.min(c.cy, b.bottom));
+  const near = Math.hypot(nx - c.cx, ny - c.cy);
+  const far = Math.max(
+    Math.hypot(b.left - c.cx, b.top - c.cy),
+    Math.hypot(b.right - c.cx, b.top - c.cy),
+    Math.hypot(b.left - c.cx, b.bottom - c.cy),
+    Math.hypot(b.right - c.cx, b.bottom - c.cy),
+  );
+  return near < c.r && c.r < far;
+}
+
+export function placePinLabels(pins: PinLabelInput[], selectedId: string, circles: Circle[] = []): PinLabel[] {
   const order = [...pins].sort((a, b) => Number(b.id === selectedId) - Number(a.id === selectedId));
   // Pins themselves are obstacles too (a 12 px diamond).
-  const taken: Array<PinLabel['box']> = pins.map((p) => ({ left: p.x - 8, right: p.x + 8, top: p.y - 8, bottom: p.y + 8 }));
+  const pinBox = (p: PinLabelInput) => ({ left: p.x - 8, right: p.x + 8, top: p.y - 8, bottom: p.y + 8 });
+  const placedBoxes: Array<PinLabel['box']> = [];
   const placed = new Map<string, PinLabel>();
   for (const p of order) {
     const w = p.text.length * CHAR + PAD;
-    const own = { left: p.x - 8, right: p.x + 8, top: p.y - 8, bottom: p.y + 8 };
-    const others = taken.filter((b) => !(b.left === own.left && b.top === own.top));
-    const right = { left: p.x + 14, right: p.x + 14 + w, top: p.y - 8, bottom: p.y - 8 + H };
-    const left = { left: p.x - 14 - w, right: p.x - 14, top: p.y - 8, bottom: p.y - 8 + H };
-    const free = (b: PinLabel['box']) => !others.some((o) => overlaps(o, b));
-    let label: PinLabel;
-    if (p.id === selectedId || free(right)) label = { id: p.id, side: 'right', box: right };
-    else if (free(left)) label = { id: p.id, side: 'left', box: left };
-    else label = { id: p.id, side: 'hidden', box: { left: p.x, right: p.x, top: p.y, bottom: p.y } };
-    if (label.side !== 'hidden') taken.push(label.box);
+    const others = [...pins.filter((o) => o.id !== p.id).map(pinBox), ...placedBoxes];
+    const at = (side: 'right' | 'left', dy: number) => {
+      const top = p.y - 8 + dy;
+      return side === 'right'
+        ? { side, box: { left: p.x + 14, right: p.x + 14 + w, top, bottom: top + H } }
+        : { side, box: { left: p.x - 14 - w, right: p.x - 14, top, bottom: top + H } };
+    };
+    // Beside the pin first, then nudged up or down a little, on either side.
+    const candidates = [0, -12, 12, -20, 20].flatMap((dy) => [at('right', dy), at('left', dy)]);
+    const clearOfLabels = (b: PinLabel['box']) => !others.some((o) => overlaps(o, b));
+    const clearOfRings = (b: PinLabel['box']) => !circles.some((c) => crossesCircle(b, c));
+    let pick = candidates.find((c) => clearOfLabels(c.box) && clearOfRings(c.box));
+    // Crowded rings: accept a ring crossing (the label has a dark backing) before hiding it.
+    if (!pick) pick = candidates.find((c) => clearOfLabels(c.box));
+    if (!pick && p.id === selectedId) pick = candidates[0];
+    const label: PinLabel = pick
+      ? { id: p.id, side: pick.side as 'right' | 'left', box: pick.box }
+      : { id: p.id, side: 'hidden', box: { left: p.x, right: p.x, top: p.y, bottom: p.y } };
+    if (label.side !== 'hidden') placedBoxes.push(label.box);
     placed.set(p.id, label);
   }
   return pins.map((p) => placed.get(p.id)!);

@@ -1,3 +1,4 @@
+import { useState } from 'react';
 import { NavLink } from 'react-router-dom';
 import { TABS } from '../tabs';
 import { shortName, useApp } from '../state';
@@ -18,6 +19,7 @@ const SLIPS: Array<{ key: string; by: { days?: number; months?: number; years?: 
 
 export function Header() {
   const { scenario, update, search, sites, started, drawerOpen, setDrawerOpen, helpOpen, setHelpOpen, say } = useApp();
+  const [moreOpen, setMoreOpen] = useState(false);
   const site = sites.find((s) => s.id === scenario.site);
 
   return (
@@ -86,7 +88,24 @@ export function Header() {
         <span className="xtra">
           ACCURACY <b>±{scenario.accuracy} m</b> <Term id="accuracy" />
         </span>
-        <span className="sp">
+        {/* On a phone only the date, hour and Now show; the step buttons sit behind More. */}
+        <span className="sp-more">
+          <button
+            type="button"
+            aria-expanded={moreOpen}
+            aria-controls="slip-buttons"
+            disabled={!started}
+            onClick={() => setMoreOpen((o) => !o)}
+          >
+            {moreOpen ? 'FEWER' : 'MORE'}
+            <span className="sr"> date steps (days, months, years)</span>
+            <span aria-hidden="true"> {moreOpen ? '▲' : '▼'}</span>
+          </button>
+          <span className="sp-more-term">
+            SLIP <Term id="slip" />
+          </span>
+        </span>
+        <span className={`sp ${moreOpen ? 'open' : ''}`} id="slip-buttons">
           <span className="sp-term">
             <span className="lead">SLIP </span>
             <Term id="slip" />

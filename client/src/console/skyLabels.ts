@@ -41,42 +41,44 @@ const overlaps = (a: SkyLabelBox, b: SkyLabelBox) =>
 
 export function placeSkyLabels(
   items: SkyLabelInput[],
-  bounds: { left: number; right: number; top: number; bottom: number },
+  bounds: { left: number; right: number; top: number; bottom: number; lines?: number[] },
 ): SkyLabel[] {
-  const first = items.map((it) => {
+  const lines = bounds.lines ?? [];
+  const crossesLine = (b: SkyLabelBox) => lines.some((y) => b.top < y && y < b.bottom);
+  const inside = (b: SkyLabelBox) =>
+    b.top >= bounds.top && b.bottom <= bounds.bottom + 12 && b.left >= bounds.left - 30 && b.right <= bounds.right;
+  // Nearest spots first: beside the dot, then a line above or below, and so on.
+  const OFFSETS = [0, -12, 12, -24, 24, -36, 36, -48, 48, -60, 60];
+  const placed: SkyLabel[] = [];
+
+  for (const it of items) {
     const w = it.text.length * CHAR_W;
-    const anchor: 'start' | 'end' = it.cx + GAP + w > bounds.right ? 'end' : 'start';
-    const x = anchor === 'end' ? it.cx - GAP : it.cx + GAP;
-    return { x, y: it.cy + 4, anchor, text: it.text };
-  });
-
-  // Two labels that collide: put the higher body's label above and the lower
-  // one's below, a full line apart, centred on where they were.
-  if (first.length === 2) {
-    const [a, b] = first as [(typeof first)[0], (typeof first)[0]];
-    if (overlaps(boxFor(a.x, a.y, a.anchor, a.text), boxFor(b.x, b.y, b.anchor, b.text))) {
-      // Share one side so the two lines stack neatly.
-      const anchor = a.anchor === 'end' || b.anchor === 'end' ? 'end' : 'start';
-      const ia = items[0]!;
-      const ib = items[1]!;
-      const edge = anchor === 'start' ? Math.max(ia.cx, ib.cx) + GAP : Math.min(ia.cx, ib.cx) - GAP;
-      const upper = ia.cy <= ib.cy ? a : b;
-      const lower = upper === a ? b : a;
-      const mid = (a.y + b.y) / 2;
-      let top = mid - LINE_H / 2;
-      // Keep both lines inside the picture.
-      top = Math.max(top, bounds.top + LINE_H - 2);
-      top = Math.min(top, bounds.bottom + 10 - LINE_H - 1);
-      upper.y = top;
-      lower.y = top + LINE_H + 1;
-      a.anchor = b.anchor = anchor;
-      a.x = b.x = edge;
+    const preferred: 'start' | 'end' = it.cx + GAP + w > bounds.right ? 'end' : 'start';
+    const sides: Array<'start' | 'end'> = preferred === 'start' ? ['start', 'end'] : ['end', 'start'];
+    let chosen: SkyLabel | undefined;
+    let fallback: SkyLabel | undefined;
+    for (const side of sides) {
+      const x = side === 'end' ? it.cx - GAP : it.cx + GAP;
+      for (const off of OFFSETS) {
+        const y = it.cy + 4 + off;
+        const box = boxFor(x, y, side, it.text);
+        if (!inside(box)) continue;
+        const clearOfLabels = !placed.some((p) => overlaps(p.box, box));
+        if (clearOfLabels && !fallback) fallback = { x, y, anchor: side, box };
+        if (clearOfLabels && !crossesLine(box)) {
+          chosen = { x, y, anchor: side, box };
+          break;
+        }
+      }
+      if (chosen) break;
     }
+    // No spot clear of every line: at least keep it clear of the other label and inside.
+    const last = chosen ?? fallback ?? (() => {
+      const x = preferred === 'end' ? it.cx - GAP : it.cx + GAP;
+      const y = Math.min(Math.max(it.cy + 4, bounds.top + LINE_H - 2), bounds.bottom + 10);
+      return { x, y, anchor: preferred, box: boxFor(x, y, preferred, it.text) };
+    })();
+    placed.push(last);
   }
-
-  return first.map((l) => {
-    let y = Math.max(l.y, bounds.top + LINE_H - 2);
-    y = Math.min(y, bounds.bottom + 10);
-    return { x: l.x, y, anchor: l.anchor, box: boxFor(l.x, y, l.anchor, l.text) };
-  });
+  return placed;
 }

@@ -41,7 +41,8 @@ export function SkyView({ readout, marginDeg, tDays, horizon }: Props) {
   // Labels are placed together so they never overlap when the two are close.
   const labels = placeSkyLabels(
     bodies.map((b) => ({ cx: x(b.az), cy: b.elev < scale.lo ? bottom - 7 : y(b.elev), text: b.text })),
-    { left: LEFT, right: LEFT + PLOT_W, top: TOP, bottom },
+    // Keep labels off the frame edges, the horizon, and the allowance line.
+    { left: LEFT, right: LEFT + PLOT_W, top: TOP, bottom, lines: horizon ? [TOP, bottom, horizonY] : [TOP, bottom, horizonY, marginY] },
   );
 
   const describe = (name: string, elev: number, az: number) =>

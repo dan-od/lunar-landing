@@ -59,9 +59,12 @@ export function PoleMap({ rows, selectedId, onSelect, overhead }: Props) {
     const rr = ((90 + r.site.lat) / (90 + EDGE_LAT)) * RIM;
     return { r, ...polar(r.site.lon, rr) };
   });
+  // The rim and the three rings, so names are kept off their lines.
+  const circles = [RIM, 27.8, 16.7, 8.3].map((r) => ({ cx: px / 2, cy: px / 2, r: (r / 100) * px }));
   const labels = placePinLabels(
     pinPos.map((p) => ({ id: p.r.site.id, x: (p.x / 100) * px, y: (p.y / 100) * px, text: p.r.short })),
     selectedId,
+    circles,
   );
 
   const sun = overhead ? polar(overhead.sun, BODY) : null;
@@ -89,7 +92,7 @@ export function PoleMap({ rows, selectedId, onSelect, overhead }: Props) {
               style={{ left: `calc(${pct(earth.x)} - 7px)`, top: `calc(${pct(earth.y)} - 7px)` }}
               aria-hidden="true"
             />
-            <div className="pl" style={{ left: `calc(${pct(earth.x)} - 18px)`, top: `calc(${pct(earth.y)} + 9px)` }}>
+            <div className="pl" style={{ left: `calc(${pct(earth.x)} - 18px)`, top: earth.y < C ? `calc(${pct(earth.y)} - 24px)` : `calc(${pct(earth.y)} + 9px)` }}>
               EARTH
             </div>
           </>
@@ -101,7 +104,7 @@ export function PoleMap({ rows, selectedId, onSelect, overhead }: Props) {
               style={{ left: `calc(${pct(sun.x)} - 7px)`, top: `calc(${pct(sun.y)} - 7px)` }}
               aria-hidden="true"
             />
-            <div className="pl" style={{ left: `calc(${pct(sun.x)} - 12px)`, top: `calc(${pct(sun.y)} + 9px)` }}>
+            <div className="pl" style={{ left: `calc(${pct(sun.x)} - 12px)`, top: sun.y < C ? `calc(${pct(sun.y)} - 24px)` : `calc(${pct(sun.y)} + 9px)` }}>
               SUN
             </div>
           </>
@@ -128,11 +131,7 @@ export function PoleMap({ rows, selectedId, onSelect, overhead }: Props) {
                 <div
                   className={`pl ${selected ? 'sel' : ''}`}
                   aria-hidden="true"
-                  style={
-                    label.side === 'right'
-                      ? { left: `calc(${pct(x)} + 14px)`, top: `calc(${pct(y)} - 8px)` }
-                      : { left: `${label.box.left}px`, top: `calc(${pct(y)} - 8px)` }
-                  }
+                  style={{ left: `${label.box.left}px`, top: `${label.box.top}px` }}
                 >
                   {r.short}
                 </div>
