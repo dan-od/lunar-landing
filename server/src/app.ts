@@ -14,12 +14,14 @@ import { appSeriesProvider, dbSitesRepo, dbTerrainRepo, staticSitesRepo } from '
 function defaultDeps(): V1Deps {
   const pool = getPool();
   const rateLimit = { windowMs: 60_000, max: config.rateLimitPerMinute };
+  const customLimit = { windowMs: 3_600_000, max: config.customSitesPerHour };
   if (pool) {
     return {
       sitesRepo: dbSitesRepo(pool),
       seriesProvider: appSeriesProvider(pool),
       terrainRepo: dbTerrainRepo(pool),
       rateLimit,
+      customLimit,
     };
   }
   return {

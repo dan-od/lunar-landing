@@ -16,7 +16,7 @@ import {
   safestAim,
   stateFor,
 } from '@moon/core';
-import { badRequest, conflict, notFound, serviceUnavailable } from './errors.js';
+import { ApiError, badRequest, conflict, notFound, serviceUnavailable } from './errors.js';
 import {
   DATE_MAX,
   DATE_MIN,
@@ -36,6 +36,8 @@ export interface V1Deps {
   /** Prepared terrain. Without it every site is treated as having none. */
   terrainRepo?: TerrainRepo;
   rateLimit?: RateLimitOptions;
+  /** How many new custom coordinates a visitor may use per window (2-3). */
+  customLimit?: RateLimitOptions;
 }
 
 const addDays = (date: string, n: number): string =>
@@ -52,9 +54,10 @@ const spanTime = (ms: number): string => new Date(ms).toISOString().slice(0, 16)
 /** Epoch ms to 'YYYY-MM-DD HH:MM' (UTC), which spreadsheet apps read as a date and time. */
 const sheetTime = spanTime;
 
+/** A custom point. Its id is its coordinates, so two points never share saved positions. */
 function adhocSite(lat: number, lon: number): Site {
   return {
-    id: 'point',
+    id: `point:${lat},${lon}`,
     name: `Custom point ${lat}, ${lon}`,
     short: 'Custom',
     lat,
@@ -83,13 +86,46 @@ export function createV1Router(deps: V1Deps): Router {
   const router = Router();
   if (deps.rateLimit) router.use(createRateLimiter(deps.rateLimit));
 
-  async function resolveSite(place: PlaceQuery): Promise<Site> {
+  // New coordinates cost two NASA requests each, so a visitor may add only a few
+  // per hour (2-3). A point the visitor has already used is not counted again.
+  const customPoints = new Map<string, { resetAt: number; ids: Set<string> }>();
+  function allowCustomPoint(visitor: string, pointId: string): void {
+    const limit = deps.customLimit;
+    if (!limit) return;
+    const now = (limit.now ?? Date.now)();
+    let entry = customPoints.get(visitor);
+    if (!entry || now >= entry.resetAt) {
+      entry = { resetAt: now + limit.windowMs, ids: new Set() };
+      customPoints.set(visitor, entry);
+    }
+    if (entry.ids.has(pointId)) return;
+    if (entry.ids.size >= limit.max) {
+      const wait = Math.max(1, Math.ceil((entry.resetAt - now) / 1000));
+      throw new ApiError(
+        429,
+        {
+          error: {
+            message: `Too many new coordinates. A visitor can add ${limit.max} an hour. Try again in ${wait} seconds.`,
+            retryAfterSeconds: wait,
+          },
+        },
+        { 'Retry-After': String(wait) },
+      );
+    }
+    entry.ids.add(pointId);
+  }
+
+  const visitorOf = (req: Request): string => req.ip ?? req.socket.remoteAddress ?? 'unknown';
+
+  async function resolveSite(place: PlaceQuery, visitor: string): Promise<Site> {
     if (place.site) {
       const site = await deps.sitesRepo.get(place.site);
       if (!site) throw notFound(`No site with id "${place.site}".`);
       return site;
     }
-    return adhocSite(place.lat!, place.lon!);
+    const point = adhocSite(place.lat!, place.lon!);
+    allowCustomPoint(visitor, point.id);
+    return point;
   }
 
   // GET /v1/sites
@@ -120,7 +156,7 @@ export function createV1Router(deps: V1Deps): Router {
       const date = parseDate(req.query.date);
       const hour = parseInteger(req.query.hour, 'hour', 0, 23, 0);
       const margin = parseNumber(req.query.margin, 'margin', 0, 5, 2);
-      const site = await resolveSite(place);
+      const site = await resolveSite(place, visitorOf(req));
 
       const span: HorizonsSpan = {
         start: `${date} 00:00`,
@@ -195,6 +231,8 @@ export function createV1Router(deps: V1Deps): Router {
   }
 
   interface WindowsQuery {
+    /** Who is asking, for the limit on new coordinates. */
+    visitor: string;
     place: PlaceQuery;
     start: string;
     hour: number;
@@ -207,7 +245,7 @@ export function createV1Router(deps: V1Deps): Router {
   /** One case, computed once by the one calculator. Every window endpoint uses this. */
   async function computeWindows(q: WindowsQuery) {
     const { start, hour, days, margin } = q;
-    const site = await resolveSite(q.place);
+    const site = await resolveSite(q.place, q.visitor);
 
     const startMs = Date.parse(isoAt(start, hour));
     const stopMs = startMs + days * 86_400_000;
@@ -265,6 +303,7 @@ export function createV1Router(deps: V1Deps): Router {
 
   function loadWindows(req: Request) {
     return computeWindows({
+      visitor: visitorOf(req),
       place: parsePlace(req.query as Record<string, unknown>),
       start: parseDate(req.query.start, 'start'),
       hour: parseInteger(req.query.hour, 'hour', 0, 23, 0),
@@ -392,7 +431,7 @@ export function createV1Router(deps: V1Deps): Router {
   router.get('/miss', async (req: Request, res, next) => {
     try {
       const query = req.query as Record<string, unknown>;
-      const site = await resolveSite(parsePlace(query));
+      const site = await resolveSite(parsePlace(query), visitorOf(req));
       const date = parseDate(query.date);
       const hour = parseInteger(query.hour, 'hour', 0, 23, 0);
       const accuracy = parseInteger(query.accuracy, 'accuracy', 0, 100_000, 250);
@@ -486,7 +525,7 @@ export function createV1Router(deps: V1Deps): Router {
   router.get('/slip', async (req: Request, res, next) => {
     try {
       const query = req.query as Record<string, unknown>;
-      const site = await resolveSite(parsePlace(query));
+      const site = await resolveSite(parsePlace(query), visitorOf(req));
       const date = parseDate(query.date);
       const hour = parseInteger(query.hour, 'hour', 0, 23, 0);
       const margin = parseNumber(query.margin, 'margin', 0, 5, 2);
@@ -553,6 +592,7 @@ export function createV1Router(deps: V1Deps): Router {
       const days = parseInteger(query.days, 'days', 1, 60, 30);
       const margin = parseNumber(query.margin, 'margin', 0, 5, 2);
       const side = (prefix: 'a_' | 'b_'): WindowsQuery => ({
+        visitor: visitorOf(req),
         place: parsePlace(query, prefix),
         start: parseDate(query[`${prefix}date`], `${prefix}date`),
         hour: parseInteger(query[`${prefix}hour`], `${prefix}hour`, 0, 23, 0),

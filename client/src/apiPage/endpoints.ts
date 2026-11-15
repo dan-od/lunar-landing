@@ -1,5 +1,6 @@
 // The public endpoints, each with the request it makes for the current scenario.
 // The API tab shows these and sends them for real; the pages use the same ones.
+import { setPlace } from '../api';
 import { AIM_SITE_ID, slipDate, type Scenario } from '../scenario';
 
 export interface EndpointDef {
@@ -85,14 +86,14 @@ export function endpointUrl(key: string, s: Scenario, terrainSiteId: string | un
     case 'sites':
       return '/v1/sites';
     case 'sky':
-      q.set('site', site);
+      setPlace(q, site);
       q.set('date', s.date);
       q.set('hour', String(s.hour));
       q.set('margin', String(s.margin));
       return `/v1/sky?${q.toString()}`;
     case 'windows':
     case 'csv':
-      q.set('site', site);
+      setPlace(q, site);
       q.set('start', s.date);
       q.set('hour', String(s.hour));
       q.set('days', '30');
@@ -101,16 +102,16 @@ export function endpointUrl(key: string, s: Scenario, terrainSiteId: string | un
       return `/v1/windows${key === 'csv' ? '.csv' : ''}?${q.toString()}`;
     case 'report':
       // The same place, ten days later: the Compare tab's first quick setup.
-      q.set('a_site', site);
+      setPlace(q, site, 'a_');
       q.set('a_date', s.date);
       q.set('a_hour', String(s.hour));
-      q.set('b_site', site);
+      setPlace(q, site, 'b_');
       q.set('b_date', slipDate(s.date, 10));
       q.set('b_hour', String(s.hour));
       q.set('margin', String(s.margin));
       return `/v1/report?${q.toString()}`;
     case 'slip':
-      q.set('site', site);
+      setPlace(q, site);
       q.set('date', s.date);
       q.set('hour', String(s.hour));
       q.set('margin', String(s.margin));

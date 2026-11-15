@@ -4,6 +4,14 @@ import { createContext, useCallback, useContext, useEffect, useMemo, useRef, use
 import { useLocation, useNavigate } from 'react-router-dom';
 import { aimText, getCuratedSite } from '@moon/core';
 import { ApiFailure, getSites, type ApiSite } from './api';
+import {
+  cleanName,
+  customId,
+  loadCustomSites,
+  parseCustomId,
+  saveCustomSites,
+  type CustomSite,
+} from './customSites';
 import { AIM_SITE_ID, DEFAULT_SCENARIO, parseScenario, scenarioToQuery, type Scenario } from './scenario';
 
 /** States that can be forced in a development or test build (1-7). */
@@ -33,6 +41,8 @@ interface AppState {
   sites: ApiSite[];
   /** The site with prepared terrain (the Miss demo site), if any. */
   terrainSite: ApiSite | undefined;
+  /** Add coordinates of the visitor's own; returns the new site's id. */
+  addCustomSite: (name: string, lat: number, lon: number) => string;
   sitesStatus: SitesStatus;
   /** Set when the site list could not be fetched; saved sites are shown if any. */
   sitesFailure: ApiFailure | null;
@@ -59,6 +69,19 @@ const short = (id: string, name: string) => getCuratedSite(id)?.short ?? name.sl
 /** Short name for the scenario bar and timeline. */
 export function shortName(site: ApiSite): string {
   return site.aim ? `${short(site.aim.base, site.name)} aim` : short(site.id, site.name);
+}
+
+/** Coordinates a visitor added, as a site. It has no prepared terrain. */
+function customAsSite(c: CustomSite): ApiSite {
+  return {
+    id: c.id,
+    name: c.name || 'Custom site',
+    lat: c.lat,
+    lon: c.lon,
+    source: 'Your coordinates',
+    has_terrain: false,
+    custom: true,
+  };
 }
 
 const MOON_RADIUS_M = 1_737_400;
@@ -99,13 +122,27 @@ export function AppProvider({ children }: { children: ReactNode }) {
   const terrainSite = useMemo(() => fetchedSites.find((x) => x.has_terrain), [fetchedSites]);
   const aimEast = scenario.aim.east;
   const aimNorth = scenario.aim.north;
-  const sites = useMemo(
-    () =>
-      terrainSite && (aimEast !== 0 || aimNorth !== 0)
-        ? [...fetchedSites, aimSite(terrainSite, aimEast, aimNorth)]
-        : fetchedSites,
-    [fetchedSites, terrainSite, aimEast, aimNorth],
-  );
+  const [customs, setCustoms] = useState<CustomSite[]>(() => loadCustomSites());
+  const sites = useMemo(() => {
+    const list = [...fetchedSites, ...customs.map(customAsSite)];
+    // A shared link to someone else's custom point: show it, unnamed.
+    const linked = parseCustomId(scenario.site);
+    if (linked && !list.some((x) => x.id === scenario.site)) {
+      list.push(customAsSite({ id: scenario.site, name: '', ...linked }));
+    }
+    if (terrainSite && (aimEast !== 0 || aimNorth !== 0)) list.push(aimSite(terrainSite, aimEast, aimNorth));
+    return list;
+  }, [fetchedSites, customs, scenario.site, terrainSite, aimEast, aimNorth]);
+
+  const addCustomSite = useCallback((name: string, lat: number, lon: number) => {
+    const id = customId(lat, lon);
+    setCustoms((prev) => {
+      const next = [...prev.filter((c) => c.id !== id), { id, name: cleanName(name), lat, lon }];
+      saveCustomSites(next);
+      return next;
+    });
+    return id;
+  }, []);
 
   const query = scenarioToQuery(scenario) + (force ? `&force=${force}` : '');
   const search = started ? `?${query}` : force ? `?force=${force}` : '';
@@ -229,6 +266,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
     dismissNotices: () => setNotices([]),
     sites,
     terrainSite,
+    addCustomSite,
     sitesStatus,
     sitesFailure,
     reloadSites,

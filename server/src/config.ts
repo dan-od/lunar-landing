@@ -11,6 +11,7 @@ export interface Config {
   horizonsRetryBaseMs: number;
   publicSiteUrl: string;
   rateLimitPerMinute: number;
+  customSitesPerHour: number;
   trustProxy: string;
 }
 
@@ -24,5 +25,6 @@ export const config: Config = {
   horizonsRetryBaseMs: Number(process.env.HORIZONS_RETRY_BASE_MS ?? 1_000),
   publicSiteUrl: process.env.PUBLIC_SITE_URL ?? 'http://localhost:8080',
   rateLimitPerMinute: Number(process.env.RATE_LIMIT_PER_MINUTE ?? 120),
+  customSitesPerHour: Number(process.env.CUSTOM_SITES_PER_HOUR ?? 5),
   trustProxy: process.env.TRUST_PROXY ?? 'loopback, linklocal, uniquelocal',
 };

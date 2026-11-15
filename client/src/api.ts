@@ -1,4 +1,5 @@
 // Calls to the server's v1 API. The browser never talks to NASA.
+import { parseCustomId } from './customSites';
 
 export interface ApiSite {
   id: string;
@@ -9,6 +10,8 @@ export interface ApiSite {
   has_terrain: boolean;
   /** Set on the aim point carried from the Miss tab: the site it belongs to and its offset. */
   aim?: { base: string; east: number; north: number };
+  /** True for coordinates the visitor added themselves. */
+  custom?: boolean;
 }
 
 export interface SeriesPoint {
@@ -87,8 +90,26 @@ export interface AimOffset {
   north: number;
 }
 
+/**
+ * Put a place into a query: a listed site by its id, or a custom point by its
+ * coordinates (which its id carries). `prefix` selects one side of /v1/report.
+ */
+export function setPlace(q: URLSearchParams, siteId: string, prefix = ''): void {
+  const point = parseCustomId(siteId);
+  if (point) {
+    q.set(`${prefix}lat`, String(point.lat));
+    q.set(`${prefix}lon`, String(point.lon));
+  } else {
+    q.set(`${prefix}site`, siteId);
+  }
+}
+
 function windowsQuery(site: string, start: string, hour: number, days: number, aim?: AimOffset): URLSearchParams {
-  const q = new URLSearchParams({ site, start, hour: String(hour), days: String(days) });
+  const q = new URLSearchParams();
+  setPlace(q, site);
+  q.set('start', start);
+  q.set('hour', String(hour));
+  q.set('days', String(days));
   if (aim) {
     q.set('aim_east', String(aim.east));
     q.set('aim_north', String(aim.north));
