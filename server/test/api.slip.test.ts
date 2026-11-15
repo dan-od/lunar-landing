@@ -98,12 +98,12 @@ describe('GET /v1/slip (7-5)', () => {
         return { sun: rows('sun'), earth: rows('earth'), saved: true };
       },
     };
-    const edge = (await request(makeApp({ seriesProvider: everywhere })).get('/v1/slip?site=im2&date=2040-12-20'))
+    const edge = (await request(makeApp({ seriesProvider: everywhere })).get('/v1/slip?site=im2&date=2100-12-20'))
       .body;
     expect(edge.slip_proof_0_to_14).toBeNull(); // only 12 of the 15 days exist before the last allowed date
-    expect((edge.slips as Slip[]).at(-1)).toMatchObject({ slip_days: 11, date: '2040-12-31' });
+    expect((edge.slips as Slip[]).at(-1)).toMatchObject({ slip_days: 11, date: '2100-12-31' });
 
-    const bad = await request(app).get('/v1/slip?site=im2&date=2050-01-01');
+    const bad = await request(app).get('/v1/slip?site=im2&date=2150-01-01');
     expect(bad.status).toBe(400);
     expect(bad.body.error.field).toBe('date');
     expect((await request(app).get('/v1/slip?site=nowhere&date=2025-03-06')).status).toBe(404);

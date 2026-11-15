@@ -80,9 +80,9 @@ describe('GET /v1/report', () => {
 
   it('names the side and field at fault', async () => {
     const app = makeApp();
-    const badDate = await request(app).get('/v1/report?a_site=im2&a_date=2025-03-06&b_site=im2&b_date=2050-01-01');
+    const badDate = await request(app).get('/v1/report?a_site=im2&a_date=2025-03-06&b_site=im2&b_date=2150-01-01');
     expect(badDate.status).toBe(400);
-    expect(badDate.body.error).toMatchObject({ field: 'b_date', allowed: '2020-01-01 to 2040-12-31' });
+    expect(badDate.body.error).toMatchObject({ field: 'b_date', allowed: '1960-01-01 to 2100-12-31' });
 
     const badLat = await request(app).get('/v1/report?a_lat=95&a_lon=10&a_date=2025-03-06&b_site=im2&b_date=2025-03-06');
     expect(badLat.body.error).toMatchObject({ field: 'a_lat', allowed: '-90 to 90' });

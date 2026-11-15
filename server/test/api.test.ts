@@ -93,10 +93,10 @@ describe('errors name the field at fault (7-4)', () => {
     expect(res.body.error).toMatchObject({ field: 'lon', allowed: '-180 to 360' });
   });
 
-  it('a date outside 2020-2040 is refused with the range', async () => {
-    const res = await request(makeApp()).get('/v1/sky?site=im2&date=2050-01-01');
+  it('a date outside 1960-2100 is refused with the range', async () => {
+    const res = await request(makeApp()).get('/v1/sky?site=im2&date=2150-01-01');
     expect(res.status).toBe(400);
-    expect(res.body.error).toMatchObject({ field: 'date', allowed: '2020-01-01 to 2040-12-31' });
+    expect(res.body.error).toMatchObject({ field: 'date', allowed: '1960-01-01 to 2100-12-31' });
   });
 
   it('too many days is refused with the range', async () => {

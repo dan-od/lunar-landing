@@ -53,7 +53,7 @@ describe('compare state in the address (3-1, 3-2)', () => {
   });
 
   it('falls back to the default setup when side B is unusable', () => {
-    for (const q of ['cmp=custom', 'b=ch3,2050-01-01,3', 'b=ch3,2025-04-01,99', 'cmp=nonsense']) {
+    for (const q of ['cmp=custom', 'b=ch3,2150-01-01,3', 'b=ch3,2025-04-01,99', 'cmp=nonsense']) {
       const parsed = parseScenario(new URLSearchParams(`site=im2&${q}`));
       expect(parsed.scenario.setup).toBe('date');
       expect(parsed.scenario.b).toBeNull();
@@ -73,24 +73,24 @@ describe('compare state in the address (3-1, 3-2)', () => {
 });
 
 describe('allowed dates (1-13)', () => {
-  it('a 2050 date opens the default date and says why', () => {
-    const parsed = parseScenario(new URLSearchParams('site=im2&date=2050-01-01'));
+  it('a 2150 date opens the default date and says why', () => {
+    const parsed = parseScenario(new URLSearchParams('site=im2&date=2150-01-01'));
     expect(parsed.scenario.date).toBe(DEFAULT_SCENARIO.date);
     expect(parsed.notices.length).toBe(1);
-    expect(parsed.notices[0]).toContain('2050-01-01');
-    expect(parsed.notices[0]).toContain('2020-01-01 to 2040-12-31');
+    expect(parsed.notices[0]).toContain('2150-01-01');
+    expect(parsed.notices[0]).toContain('1960-01-01 to 2100-12-31');
     expect(parsed.notices[0]).toContain(DEFAULT_SCENARIO.date);
   });
 
   it('refuses impossible and malformed dates the same way', () => {
     expect(parseScenario(new URLSearchParams('date=2025-02-31')).notices.length).toBe(1);
     expect(parseScenario(new URLSearchParams('date=tomorrow')).notices.length).toBe(1);
-    expect(parseScenario(new URLSearchParams('date=2019-12-31')).notices.length).toBe(1);
+    expect(parseScenario(new URLSearchParams('date=1959-12-31')).notices.length).toBe(1);
   });
 
   it('accepts the edges of the range', () => {
-    expect(parseScenario(new URLSearchParams('date=2020-01-01')).scenario.date).toBe('2020-01-01');
-    expect(parseScenario(new URLSearchParams('date=2040-12-31')).scenario.date).toBe('2040-12-31');
+    expect(parseScenario(new URLSearchParams('date=1960-01-01')).scenario.date).toBe('1960-01-01');
+    expect(parseScenario(new URLSearchParams('date=2100-12-31')).scenario.date).toBe('2100-12-31');
   });
 });
 
@@ -101,7 +101,15 @@ describe('slipDate (1-5)', () => {
   });
 
   it('stays inside the allowed dates', () => {
-    expect(slipDate('2040-12-31', 10)).toBe('2040-12-31');
-    expect(slipDate('2020-01-01', -1)).toBe('2020-01-01');
+    expect(slipDate('2100-12-31', 10)).toBe('2100-12-31');
+    expect(slipDate('1960-01-01', -1)).toBe('1960-01-01');
+  });
+});
+
+describe('wider allowed dates (G)', () => {
+  it('accepts Apollo 11 (1969) and dates up to 2100, refuses 2101', () => {
+    expect(parseScenario(new URLSearchParams('date=1969-07-20')).scenario.date).toBe('1969-07-20');
+    expect(parseScenario(new URLSearchParams('date=2099-06-01')).scenario.date).toBe('2099-06-01');
+    expect(parseScenario(new URLSearchParams('date=2101-01-01')).notices[0]).toContain('1960-01-01 to 2100-12-31');
   });
 });

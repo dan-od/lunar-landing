@@ -52,7 +52,7 @@ Where the prototype and the canvas differ, the prototype wins.
   positions and terrain profiles before trusting the Miss view.
 - "A landing works" means Sun and Earth above the horizon at touchdown and for at
   least 90% of the first 10 days.
-- Times are UTC. Allowed dates are 2020-01-01 to 2040-12-31.
+- Times are UTC. Allowed dates are 1960-01-01 to 2100-12-31 (widened by the owner on 2026-11-15).
 
 ## Security rules
 

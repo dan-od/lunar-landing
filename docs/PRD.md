@@ -125,7 +125,7 @@ These fix the meanings the calculations depend on, so two parts of the app canno
 | Site height | 0 km above the reference surface unless terrain is prepared for the site | Assumed |
 | Direction | Degrees clockwise from north, 0 to 360, for both NASA positions and terrain profiles | Must be verified |
 | Time | UTC everywhere, hourly positions, 12-hour cells on timelines | Locked |
-| Allowed dates | 2020-01-01 to 2040-12-31; anything else is refused with the range | Assumed |
+| Allowed dates | 1960-01-01 to 2100-12-31; anything else is refused with the range | Owner decision, 2026-11-15 (was 2020 to 2040) |
 | Window | An unbroken stretch where a condition holds, with start, end and length | Locked |
 | Slip | A whole number of days added to the landing date, from minus 30 to plus 30 | Locked |
 
@@ -462,7 +462,7 @@ These fill the gaps found on re-reading: the sky view, slip analysis, the incide
 | --- | --- | --- | --- |
 | 1-11 | The inspector shows a sky view: the Sun and Earth drawn against a horizon line, with the shadow allowance marked, at the time shown by the marker | Positions in the picture match the height readouts at three times | Must |
 | 1-12 | An incident list shows the next sunsets, sunrises, Earthsets and Earthrises across all sites, soonest first | The first entry equals the earliest next change in the site list | Should |
-| 1-13 | Dates outside 2020 to 2040 are refused with the allowed range | A link with a 2050 date opens the default date and says why | Must |
+| 1-13 | Dates outside 1960 to 2100 are refused with the allowed range | A link with a 2150 date opens the default date and says why | Must |
 | F-6 | Direction convention verified between NASA positions and terrain profiles | The check in Definitions is recorded with its result | Must (if Miss ships) |
 | F-7 | "A landing works" uses the 10-day, 90% definition everywhere | Miss odds, the watch rule and the API return the same answer for one point | Must (if Miss ships) |
 | 7-5 | GET /v1/slip returns ready or not ready for each slip day from minus 30 to plus 30 | The reply at slip 0 equals the Console state | Should |

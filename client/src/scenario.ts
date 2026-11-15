@@ -36,8 +36,8 @@ const SETUPS: CompareSetup[] = ['date', 'time', 'site', 'aim', 'custom'];
 /** Id of the aim point carried from the Miss tab, listed as a site of its own. */
 export const AIM_SITE_ID = 'aim';
 
-export const DATE_MIN = '2020-01-01';
-export const DATE_MAX = '2040-12-31';
+export const DATE_MIN = '1960-01-01';
+export const DATE_MAX = '2100-12-31';
 export const ACCURACIES = [100, 250, 320];
 
 export const DEFAULT_SCENARIO: Scenario = {

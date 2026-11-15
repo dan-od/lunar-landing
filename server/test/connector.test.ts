@@ -117,9 +117,9 @@ describe('assistant connector (8-1)', () => {
   });
 
   it('passes API errors through with the field at fault', async () => {
-    const bad = await run('get_windows', { site: 'im2', date: '2050-01-01' });
+    const bad = await run('get_windows', { site: 'im2', date: '2150-01-01' });
     expect(bad.isError).toBe(true);
-    expect(bad.value.error).toMatchObject({ field: 'start', allowed: '2020-01-01 to 2040-12-31' });
+    expect(bad.value.error).toMatchObject({ field: 'start', allowed: '1960-01-01 to 2100-12-31' });
 
     const noTerrain = await run('miss_tolerance', { site: 'im1', date: '2025-03-06' });
     expect(noTerrain.isError).toBe(true);

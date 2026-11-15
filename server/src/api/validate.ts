@@ -1,9 +1,9 @@
 // Parse and validate query parameters. Each failure names the field and the
-// allowed range (7-4). Dates are UTC and limited to 2020-2040 (1-13).
+// allowed range (7-4). Dates are UTC and limited to 1960-2100 (1-13, widened by the owner).
 import { badRequest } from './errors.js';
 
-export const DATE_MIN = '2020-01-01';
-export const DATE_MAX = '2040-12-31';
+export const DATE_MIN = '1960-01-01';
+export const DATE_MAX = '2100-12-31';
 export const DATE_RANGE = `${DATE_MIN} to ${DATE_MAX}`;
 
 const DATE_RE = /^\d{4}-\d{2}-\d{2}$/;

@@ -187,7 +187,7 @@ export function ApiPage() {
         <h2 className="lbl">05 / GOOD TO KNOW</h2>
         <ul className="pad api-notes">
           <li>Every reply names the model it used: smooth Moon or terrain.</li>
-          <li>Times are UTC. Dates run from 2020-01-01 to 2040-12-31.</li>
+          <li>Times are UTC. Dates run from 1960-01-01 to 2100-12-31.</li>
           <li>Version 1 only adds fields; nothing is removed or renamed.</li>
           <li>
             The same scenario is in this page&apos;s address, so a{' '}

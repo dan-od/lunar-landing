@@ -23,7 +23,7 @@ function query(params: Record<string, string | number | undefined>): string {
 }
 
 const site = z.string().describe('Site id from list_sites, for example "im2".');
-const date = z.string().describe('Landing date, YYYY-MM-DD (UTC), from 2020-01-01 to 2040-12-31.');
+const date = z.string().describe('Landing date, YYYY-MM-DD (UTC), from 1960-01-01 to 2100-12-31.');
 const hour = z.number().int().min(0).max(23).optional().describe('Landing hour (UTC), 0 to 23. Default 0.');
 const margin = z
   .number()
