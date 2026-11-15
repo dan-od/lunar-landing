@@ -2,6 +2,7 @@
 // shadow allowance marked, at the time shown by the marker. Left to right is
 // direction (north, east, south, west, north); up is height above the horizon.
 import { fmtDeg, skyFraction, skyScale, type Readout } from '../siteData';
+import { placeSkyLabels } from './skyLabels';
 
 const W = 300;
 const H = 170;
@@ -36,7 +37,12 @@ export function SkyView({ readout, marginDeg, tDays, horizon }: Props) {
   const bodies = [
     { key: 'sun', name: 'SUN', elev: readout.sunElev, az: readout.sunAz, cls: 'sky-sun' },
     { key: 'earth', name: 'EARTH', elev: readout.earthElev, az: readout.earthAz, cls: 'sky-earth' },
-  ];
+  ].map((b) => ({ ...b, text: `${b.name} ${fmtDeg(b.elev)}${b.elev < scale.lo ? ' ▼' : ''}` }));
+  // Labels are placed together so they never overlap when the two are close.
+  const labels = placeSkyLabels(
+    bodies.map((b) => ({ cx: x(b.az), cy: b.elev < scale.lo ? bottom - 7 : y(b.elev), text: b.text })),
+    { left: LEFT, right: LEFT + PLOT_W, top: TOP, bottom },
+  );
 
   const describe = (name: string, elev: number, az: number) =>
     `${name} ${Math.abs(elev).toFixed(1)} degrees ${elev >= 0 ? 'above' : 'below'} the horizon, toward the ${compass(az)}`;
@@ -101,18 +107,16 @@ export function SkyView({ readout, marginDeg, tDays, horizon }: Props) {
         </text>
       ))}
 
-      {bodies.map((b) => {
+      {bodies.map((b, i) => {
         const off = b.elev < scale.lo;
-        const cy = y(b.elev);
+        const cy = off ? bottom - 7 : y(b.elev);
         const cx = x(b.az);
-        const anchor = cx > LEFT + PLOT_W - 60 ? 'end' : 'start';
-        const tx = anchor === 'end' ? cx - 11 : cx + 11;
+        const l = labels[i]!;
         return (
           <g key={b.key} data-body={b.key} data-elev={b.elev} data-az={b.az}>
-            <circle className={b.cls} cx={cx} cy={off ? bottom - 7 : cy} r={7} />
-            <text className="sky-t sky-name" x={tx} y={(off ? bottom - 7 : cy) + 4} textAnchor={anchor}>
-              {b.name} {fmtDeg(b.elev)}
-              {off ? ' ▼' : ''}
+            <circle className={b.cls} cx={cx} cy={cy} r={7} />
+            <text className="sky-t sky-name" x={l.x} y={l.y} textAnchor={l.anchor}>
+              {b.text}
             </text>
           </g>
         );

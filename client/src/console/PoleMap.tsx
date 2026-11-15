@@ -35,7 +35,7 @@ export function PoleMap({ rows, selectedId, onSelect, overhead }: Props) {
   const earth = overhead ? polar(overhead.earth, BODY) : null;
 
   return (
-    <section className="mapwrap" aria-labelledby="map-title">
+    <section className="mapwrap fill" aria-labelledby="map-title">
       <h2 className="cap" id="map-title">
         02 / SOUTH POLE · POLAR VIEW
       </h2>
