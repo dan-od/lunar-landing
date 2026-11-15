@@ -66,7 +66,25 @@ export async function getSites(signal?: AbortSignal): Promise<ApiSite[]> {
   return body.sites;
 }
 
-export function getWindows(site: string, start: string, days: number, signal?: AbortSignal): Promise<WindowsReply> {
-  const q = new URLSearchParams({ site, start, days: String(days) });
+export function getWindows(
+  site: string,
+  start: string,
+  hour: number,
+  days: number,
+  signal?: AbortSignal,
+): Promise<WindowsReply> {
+  const q = new URLSearchParams({ site, start, hour: String(hour), days: String(days) });
   return getJson<WindowsReply>(`/v1/windows?${q.toString()}`, signal);
+}
+
+/** Address of the spreadsheet file for one site's windows (6-1). */
+export function windowsCsvUrl(site: string, start: string, hour: number, days: number, margin: number): string {
+  const q = new URLSearchParams({
+    site,
+    start,
+    hour: String(hour),
+    days: String(days),
+    margin: String(margin),
+  });
+  return `/v1/windows.csv?${q.toString()}`;
 }

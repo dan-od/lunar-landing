@@ -10,6 +10,8 @@ interface Props {
   t: number;
   marginDeg: number;
   search: string;
+  /** Address of the spreadsheet file for this site and scenario. */
+  csvHref: string;
 }
 
 /** "LROC, https://…" to a label and a link. */
@@ -19,7 +21,7 @@ function splitSource(source: string): { label: string; url?: string } {
   return { label: source.slice(0, i).replace(/,\s*$/, '').trim(), url: source.slice(i).trim() };
 }
 
-export function Inspector({ row, t, marginDeg, search }: Props) {
+export function Inspector({ row, t, marginDeg, search, csvHref }: Props) {
   const { now, result, landing } = row;
   const state = now?.state;
   const src = splitSource(row.site.source);
@@ -99,6 +101,15 @@ export function Inspector({ row, t, marginDeg, search }: Props) {
         <Link to={{ pathname: '/miss', search }}>MISS</Link>
         <Link to={{ pathname: '/watch', search }}>WATCH</Link>
       </div>
+
+      {result && (
+        <div className="line exits single">
+          <a href={csvHref} download>
+            <span aria-hidden="true">↓ </span>DOWNLOAD SPREADSHEET ·{' '}
+            {result.power.windows.length + result.contact.windows.length} WINDOWS
+          </a>
+        </div>
+      )}
 
       <p className="pad hint">
         Smooth-Moon model. Hills and crater rims are only counted on the Miss tab, where terrain is

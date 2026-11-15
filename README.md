@@ -95,7 +95,8 @@ The cache seed fetches 60 days hourly from 2025-02-04 for the five curated sites
 | --- | --- | --- |
 | `GET /v1/sites` | none | id, name, lat, lon, source, has_terrain |
 | `GET /v1/sky` | `site` or `lat`+`lon`; `date`; `hour` (0), `margin` (2) | Sun and Earth direction and height; state word and symbol |
-| `GET /v1/windows` | `site` or `lat`+`lon`; `start`; `days` (30, up to 60); `margin` (2) | power and contact windows, uptime, longest gap, next change, hourly series |
+| `GET /v1/windows` | `site` or `lat`+`lon`; `start`; `hour` (0); `days` (30, up to 60); `margin` (2) | power and contact windows, uptime, longest gap, next change, hourly series |
+| `GET /v1/windows.csv` | as `/v1/windows` | spreadsheet file: scenario and model in the first lines, then one row per window |
 
 Every reply names the model. Errors name the field at fault and the allowed range
 (400), the unknown site (404), the seconds to wait (429), or say that nothing is
@@ -120,6 +121,11 @@ the repository; production values come from the deployment pipeline.
 client joins the shared `web` proxy network; the database is on an internal
 network only; no ports are published. The server's health check answers at
 `/api/health` on `127.0.0.1`.
+
+## Credits
+
+Every data source, library, font and asset is listed with its link and licence in
+[CREDITS.md](CREDITS.md).
 
 ## Licence
 

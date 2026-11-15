@@ -395,6 +395,10 @@ p {
 .exits a + a {
   border-left: 1px solid var(--line);
 }
+.exits.single a {
+  justify-content: flex-start;
+  padding: 0 14px;
+}
 
 /* ---------- pole map (gradient only behind map panes) ---------- */
 .mapwrap {

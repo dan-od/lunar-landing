@@ -3,14 +3,13 @@
 // this browser, and never invents data.
 import { useCallback, useEffect, useState } from 'react';
 import { ApiFailure, getWindows, type ApiSite, type SeriesPoint } from './api';
-import { toSeries, type SiteSeries } from './siteData';
+import { DISPLAY_DAYS, toSeries, type SiteSeries } from './siteData';
 import type { ForceState } from './state';
 
-/** 30 days from a 00:00 landing; one more day when the landing hour is later. */
-const fetchDays = (hour: number) => (hour === 0 ? 30 : 31);
 export const MAX_RETRIES = 3;
 
 interface Saved {
+  /** Landing moment the points start at, e.g. "2025-03-06T00". */
   date: string;
   points: SeriesPoint[];
 }
@@ -76,14 +75,14 @@ export function useSiteData(sites: ApiSite[], date: string, hour: number, force:
           let points: SeriesPoint[] | undefined;
           try {
             if (force === 'down') throw new ApiFailure('unavailable', 'NASA’s position service is not answering.');
-            const reply = await getWindows(id, date, fetchDays(hour), controller.signal);
+            const reply = await getWindows(id, date, hour, DISPLAY_DAYS, controller.signal);
             points = reply.series;
             if (reply.partial) partial = true;
-            writeSaved(id, date, points);
+            writeSaved(id, `${date}T${hour}`, points);
           } catch (err) {
             if ((err as Error).name === 'AbortError') return;
             failure = err instanceof ApiFailure ? err : new ApiFailure('network', 'The request failed.');
-            points = readSaved(id, date);
+            points = readSaved(id, `${date}T${hour}`);
           }
           if (!points) return;
           const series = toSeries(points, date, hour);

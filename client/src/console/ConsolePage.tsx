@@ -4,6 +4,7 @@ import { useEffect, useMemo, useRef, useState } from 'react';
 import { TABS } from '../tabs';
 import { shortName, useApp } from '../state';
 import { MAX_RETRIES, useSiteData } from '../useSiteData';
+import { windowsCsvUrl } from '../api';
 import { DISPLAY_DAYS, overheadLongitudes, readoutAt, resultFor } from '../siteData';
 import { PoleMap } from './PoleMap';
 import { Timeline } from './Timeline';
@@ -224,7 +225,15 @@ export function ConsolePage() {
           }}
         />
       </div>
-      {selected && <Inspector row={selected} t={scenario.t} marginDeg={scenario.margin} search={search} />}
+      {selected && (
+        <Inspector
+          row={selected}
+          t={scenario.t}
+          marginDeg={scenario.margin}
+          search={search}
+          csvHref={windowsCsvUrl(selected.site.id, scenario.date, scenario.hour, DISPLAY_DAYS, scenario.margin)}
+        />
+      )}
     </main>
   );
 }
