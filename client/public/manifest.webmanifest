@@ -1,0 +1,14 @@
+{
+  "name": "Moon Status",
+  "short_name": "Moon Status",
+  "description": "Will a lunar lander have sunlight for power and a line of sight to Earth?",
+  "start_url": "/",
+  "display": "browser",
+  "background_color": "#07173F",
+  "theme_color": "#050F2C",
+  "icons": [
+    { "src": "/icon-192.png", "sizes": "192x192", "type": "image/png" },
+    { "src": "/icon-512.png", "sizes": "512x512", "type": "image/png" },
+    { "src": "/favicon.svg", "sizes": "any", "type": "image/svg+xml" }
+  ]
+}
