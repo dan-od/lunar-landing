@@ -40,7 +40,7 @@ or from the command line.
 | 1-9 | Pass | Hand at 390 px: tabs in a bar at the bottom, no sideways scrolling, no control under 44 px. |
 | 1-10 | Not built | No explain mode. The Help panel and the "?" beside each term give plain definitions instead. |
 | 1-11 | Pass | Test (positions match readouts); hand: the Sun and Earth labels no longer overlap (layout test). |
-| 1-12 | Not built | Incident list was last in the order and not reached. |
+| 1-12 | Pass | Test: entries across all sites, soonest first, and the first equals the earliest next change in the site list. Hand: on the 2025 case the first entry is sunrise at IM-2, T+7 h, the same as its Inspector; choosing it selects the site and moves the marker. |
 | 1-13 | Pass | Test: a 2150 date opens the default date and says why, with the range 1960-01-01 to 2100-12-31 (range widened by the owner). |
 | 2-1 | Pass | Hand: a new point (−85.5, 31.2) showed "fetching", then loaded real positions (Sun +2.3°) and could be selected. |
 | 2-2 | Pass | Test; hand: 95 for latitude is refused with the message above the field and focus back on it. |

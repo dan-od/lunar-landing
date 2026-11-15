@@ -12,6 +12,7 @@ import { Timeline } from './Timeline';
 import { Inspector } from './Inspector';
 import { AddCoordinates } from './AddCoordinates';
 import { Tour } from '../help/Tour';
+import { Incidents } from './IncidentList';
 import { NO_DATA, type SiteRow } from './types';
 
 const TAB = TABS[0]!;
@@ -240,6 +241,11 @@ export function ConsolePage() {
             setPlaying((p) => !p);
             if (!playing && prefersReducedMotion()) say('Reduced motion is on: the marker jumps in 5-day steps.');
           }}
+        />
+        <Incidents
+          rows={rows}
+          landingIso={`${scenario.date}T${String(scenario.hour).padStart(2, '0')}:00:00Z`}
+          onPick={(id, t) => update({ site: id, t: Math.min(DISPLAY_DAYS, Math.round(t * 2) / 2) })}
         />
       </div>
       <Tour ready={rows.length > 0} />

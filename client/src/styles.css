@@ -1259,6 +1259,23 @@ a.as-button {
   text-decoration: none;
 }
 
+/* ---------- incident list (1-12) ---------- */
+.incidents {
+  background: var(--pane);
+  border-top: 1px solid var(--line);
+}
+.inc-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+.inc-row {
+  min-height: 44px;
+}
+.inc-t {
+  flex: 0 0 72px;
+}
+
 /* ---------- watch ---------- */
 .watch-table td {
   vertical-align: middle;
