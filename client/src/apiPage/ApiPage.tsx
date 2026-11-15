@@ -172,7 +172,19 @@ export function ApiPage() {
             ))}
           </tbody>
         </table>
-        <h2 className="lbl">04 / GOOD TO KNOW</h2>
+        <h2 className="lbl">04 / ASSISTANT CONNECTOR</h2>
+        <div className="pad line api-connector">
+          <p>
+            An AI assistant can ask the same questions through a Model Context Protocol connector at
+          </p>
+          <p className="mono api-url">POST {window.location.origin}/mcp</p>
+          <p>Six read-only tools, each a call to the endpoints on the left:</p>
+          <p className="mono api-tools">
+            list_sites · get_windows · compare_sites · slip_impact · miss_tolerance · change_report
+          </p>
+          <p className="hint">It cannot start or delete anything, and the same request limit applies.</p>
+        </div>
+        <h2 className="lbl">05 / GOOD TO KNOW</h2>
         <ul className="pad api-notes">
           <li>Every reply names the model it used: smooth Moon or terrain.</li>
           <li>Times are UTC. Dates run from 2020-01-01 to 2040-12-31.</li>

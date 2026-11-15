@@ -188,6 +188,15 @@ Every reply names the model. Errors name the field at fault and the allowed rang
 (400), the unknown site (404), the seconds to wait (429), or say that nothing is
 saved (503). Every endpoint is rate limited per visitor (`RATE_LIMIT_PER_MINUTE`).
 
+### Assistant connector
+
+`POST /mcp` serves a Model Context Protocol connector (streamable HTTP, stateless)
+with six read-only tools: `list_sites`, `get_windows`, `compare_sites`,
+`slip_impact`, `miss_tolerance` and `change_report`. Each tool calls the
+endpoints above on the same server, so an assistant gets exactly the app's
+numbers, the model is named in every reply, and the same per-visitor limit
+applies. It cannot start or delete anything.
+
 The Horizons client times out each request (`HORIZONS_TIMEOUT_MS`) and retries a
 limited number of times with doubling waits (`HORIZONS_MAX_RETRIES`,
 `HORIZONS_RETRY_BASE_MS`); it does not retry 4xx replies other than 429.

@@ -16,6 +16,7 @@ export default defineConfig({
     proxy: {
       '/api/': 'http://localhost:8080',
       '/v1/': 'http://localhost:8080',
+      '/mcp': 'http://localhost:8080',
     },
   },
   test: {

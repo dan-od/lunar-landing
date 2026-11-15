@@ -1133,6 +1133,14 @@ a.as-button {
   overflow: auto;
   border-bottom: 1px solid var(--line);
 }
+.api-connector p {
+  margin-bottom: 8px;
+  font-size: 13px;
+}
+.api-tools {
+  font-size: 12px;
+  line-height: 1.8;
+}
 .api-notes {
   margin: 0;
   padding-left: 30px;

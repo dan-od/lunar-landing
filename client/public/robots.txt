@@ -3,5 +3,6 @@ User-agent: *
 Allow: /
 Disallow: /v1/
 Disallow: /api/health
+Disallow: /mcp
 
 Sitemap: https://moon.okoro.me/sitemap.xml

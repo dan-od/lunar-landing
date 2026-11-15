@@ -6,6 +6,8 @@ import { config } from './config.js';
 import { getPool } from './db/pool.js';
 import { createV1Router, type V1Deps } from './api/routes.js';
 import { apiErrorHandler, serviceUnavailable } from './api/errors.js';
+import { createRateLimiter } from './api/rateLimit.js';
+import { createMcpRouter } from './connector/http.js';
 import { appSeriesProvider, dbSitesRepo, dbTerrainRepo, staticSitesRepo } from './api/providers.js';
 
 /** Production wiring: database-backed when a database is configured. */
@@ -44,6 +46,10 @@ export function createApp(deps: V1Deps = defaultDeps()): Express {
   app.use('/v1', (_req, res) => {
     res.status(404).json({ error: { message: 'No such endpoint.' } });
   });
+
+  // The assistant connector, limited per visitor like every other endpoint.
+  const mcpLimit = deps.rateLimit ? [createRateLimiter(deps.rateLimit)] : [];
+  app.use('/mcp', ...mcpLimit, createMcpRouter());
 
   app.use(apiErrorHandler);
   return app;

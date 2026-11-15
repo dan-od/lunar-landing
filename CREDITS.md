@@ -61,6 +61,8 @@ Loaded from Google Fonts (https://fonts.google.com/).
 | Express | server | https://expressjs.com/ | MIT |
 | node-postgres (`pg`) | server | https://github.com/brianc/node-postgres | MIT |
 | dotenv | server | https://github.com/motdotla/dotenv | BSD-2-Clause |
+| Model Context Protocol TypeScript SDK (`@modelcontextprotocol/sdk`) | server (assistant connector) | https://github.com/modelcontextprotocol/typescript-sdk | MIT |
+| Zod | server (connector input checks) | https://zod.dev/ | MIT |
 
 ## Tools used to build and test
 
