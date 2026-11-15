@@ -1,0 +1,7 @@
+# Moon Status (production). The API is for programs, not for search results.
+User-agent: *
+Allow: /
+Disallow: /v1/
+Disallow: /api/health
+
+Sitemap: https://moon.okoro.me/sitemap.xml

@@ -71,12 +71,19 @@ p {
   cursor: not-allowed;
 }
 
+/* Two-tone focus ring: white outside, dark inside, so it shows on dark panes and
+   on yellow buttons and the active tab alike. */
 .app button:focus-visible,
 .app a:focus-visible,
 .app input:focus-visible,
-.app select:focus-visible {
-  outline: 2px solid var(--yel);
-  outline-offset: -2px;
+.app select:focus-visible,
+.app main:focus-visible {
+  outline: 3px solid var(--white);
+  outline-offset: -3px;
+  box-shadow: inset 0 0 0 6px var(--deep);
+}
+.app main:focus {
+  outline: none;
 }
 
 .mono {
@@ -288,7 +295,6 @@ p {
 .row small {
   display: block;
   font: 400 11px 'Fira Code', monospace;
-  opacity: 0.85;
 }
 
 .row .word {
@@ -374,6 +380,13 @@ p {
   color: var(--mut);
   margin-top: 8px;
 }
+.source-link {
+  display: flex;
+  align-items: center;
+  min-height: 44px;
+  font-size: 11px;
+  letter-spacing: 0.06em;
+}
 .insp .sub {
   font-size: 10px;
   color: var(--mut);
@@ -404,7 +417,7 @@ p {
 .mapwrap {
   position: relative;
   flex: 1 1 auto;
-  min-height: 420px;
+  min-height: 320px;
   background: linear-gradient(135deg, var(--elec), var(--deep));
   display: flex;
   flex-direction: column;
@@ -422,15 +435,17 @@ p {
   letter-spacing: 0.12em;
 }
 
+/* Large enough on a wide screen that pins near the pole do not overlap; it
+   shrinks with the pane, where the site list is the full equivalent. */
 .disc {
   position: relative;
-  width: 360px;
-  height: 360px;
+  width: min(520px, 100%);
+  aspect-ratio: 1;
   flex: 0 0 auto;
 }
 .disc .rim {
   position: absolute;
-  inset: 30px;
+  inset: 8.3%;
   border-radius: 50%;
   border: 1px solid var(--white);
   background: var(--deep);
@@ -485,6 +500,7 @@ p {
 
 .pl {
   position: absolute;
+  color: var(--white);
   font: 400 11px 'Fira Code', monospace;
   white-space: nowrap;
   pointer-events: none;
@@ -510,14 +526,71 @@ p {
   padding-bottom: 8px;
 }
 
+.tl-head {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 6px 16px;
+  padding-top: 0;
+  padding-bottom: 0;
+}
+.tl-head h2 {
+  font: inherit;
+  letter-spacing: inherit;
+}
+.tl-toggle {
+  margin-left: auto;
+  padding: 0 12px;
+  font: inherit;
+  letter-spacing: inherit;
+  border-left: 1px solid var(--line) !important;
+}
+.tl-toggle[aria-pressed='true'] {
+  background: var(--elec);
+  color: var(--white);
+}
+/* Legend swatches: outlined so the "out" swatch is visible against the pane. */
+.key {
+  display: inline-block;
+  width: 10px;
+  height: 10px;
+  border: 1px solid var(--mut);
+  vertical-align: -1px;
+}
 .key.sun {
-  color: var(--yel);
+  background: var(--yel);
 }
 .key.earth {
-  color: var(--edge);
+  background: var(--edge);
 }
 .key.out {
-  color: #3a4f8a;
+  background: var(--off);
+}
+.tl-table {
+  overflow-x: auto;
+  border-top: 1px solid var(--line);
+  margin-top: 8px;
+}
+table.t {
+  width: 100%;
+  border-collapse: collapse;
+}
+table.t caption {
+  text-align: left;
+  padding: 10px 14px;
+  font-size: 13px;
+}
+table.t td,
+table.t th {
+  padding: 8px 14px;
+  border-top: 1px solid var(--line);
+  text-align: left;
+  vertical-align: top;
+}
+table.t th {
+  font: 400 10px 'Fira Code', monospace;
+  letter-spacing: 0.12em;
+  color: var(--mut);
 }
 
 .scrub {
@@ -634,6 +707,12 @@ p {
 .sky-margin {
   stroke: var(--mut);
   stroke-width: 1;
+  stroke-dasharray: 4 3;
+}
+.sky-terrain {
+  fill: none;
+  stroke: var(--white);
+  stroke-width: 1.5;
   stroke-dasharray: 4 3;
 }
 .sky-t {
@@ -885,9 +964,176 @@ p {
   border-left: 1px solid var(--line);
 }
 
+/* ---------- miss ---------- */
+.miss-wrap {
+  padding-top: 40px;
+}
+.miss-intro {
+  text-align: center;
+  max-width: 560px;
+  margin-bottom: 12px;
+}
+.miss-intro p {
+  font-size: 16px;
+}
+.miss-map {
+  width: min(100%, 620px);
+  height: auto;
+  aspect-ratio: 1;
+  cursor: crosshair;
+  flex: 0 0 auto;
+}
+.miss-shadow {
+  fill: var(--pane);
+}
+.miss-lit {
+  fill: var(--edge);
+  stroke: var(--edge);
+  stroke-width: 1;
+}
+.miss-edge {
+  fill: none;
+  stroke: var(--white);
+  stroke-width: 4;
+}
+.miss-ring {
+  fill: none;
+  stroke: var(--white);
+  stroke-width: 3;
+  stroke-dasharray: 12 9;
+  pointer-events: none;
+}
+.miss-ring.chosen {
+  stroke: var(--yel);
+  stroke-width: 5;
+  stroke-dasharray: none;
+}
+.miss-ring-t {
+  font: 500 20px 'Fira Code', monospace;
+  fill: var(--white);
+  paint-order: stroke;
+  stroke: var(--deep);
+  stroke-width: 6px;
+  pointer-events: none;
+}
+.miss-target {
+  fill: var(--white);
+  stroke: var(--deep);
+  stroke-width: 3;
+  pointer-events: none;
+}
+.miss-cross {
+  stroke: var(--yel);
+  stroke-width: 5;
+  pointer-events: none;
+}
+.miss-label {
+  pointer-events: none;
+}
+.miss-label text {
+  font: 500 22px 'Fira Code', monospace;
+  fill: var(--deep);
+}
+.miss-label.target rect {
+  fill: var(--white);
+}
+.miss-label.aim rect {
+  fill: var(--yel);
+}
+.miss-caption {
+  margin-top: 10px;
+  font-size: 11px;
+  letter-spacing: 0.08em;
+  text-align: center;
+}
+.miss-aim {
+  font-size: 15px;
+}
+.miss-row.mine {
+  background: var(--sel);
+}
+.miss-kind {
+  font-weight: 700;
+  font-size: 15px;
+}
+.miss-odds {
+  margin-top: 4px;
+  font-size: 15px;
+}
+.miss-n {
+  font: 900 36px 'Fira Sans', sans-serif;
+  color: var(--yel);
+}
+.miss-cover {
+  margin-top: 6px;
+}
+.bar {
+  height: 8px;
+  background: var(--off);
+  margin-top: 6px;
+}
+.bar div {
+  height: 8px;
+  background: var(--yel);
+}
+.miss-plain {
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+}
+.miss-nudge {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+}
+.miss-nudge button + button {
+  border-left: 1px solid var(--line);
+}
+.miss-use {
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+}
+.insp h3.lbl {
+  margin: 0;
+}
+a.as-row {
+  color: var(--white);
+  text-decoration: none;
+}
+a.as-button {
+  display: inline-flex;
+  align-items: center;
+  min-height: 44px;
+  color: var(--white);
+  text-decoration: none;
+}
+
 /* Placeholder tabs */
+.plain-links {
+  padding-left: 18px;
+  line-height: 2.2;
+}
 main.main {
   padding: 24px;
+}
+
+/* ---------- narrow screens: the panes stack at full width ---------- */
+@media (max-width: 899px) {
+  .side,
+  .insp {
+    max-width: none;
+    flex-basis: 100%;
+    border-left: 0;
+    border-right: 0;
+    border-top: 1px solid var(--line);
+  }
+  .main,
+  .cmp-side {
+    flex-basis: 100%;
+  }
+  .scn .sp {
+    margin-left: 0;
+  }
 }
 
 /* ---------- reduced motion: nothing slides ---------- */

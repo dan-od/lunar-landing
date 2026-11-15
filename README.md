@@ -15,8 +15,11 @@ change turns a good site bad.
   computed server-side and cached.
 - By default the app uses a **smooth-Moon model**: the reference sphere plus a
   *shadow allowance* that stands in for hills the smooth model cannot see.
-- **Real terrain** (crater rims, ridges) is used only on the **Miss** view, for the
-  one demo site where horizon profiles are prepared from the LOLA elevation map.
+- **Real terrain** is used on the **Miss** view and for an aim point carried from
+  it, for the one demo site where horizon profiles are prepared from the LOLA
+  elevation map: 441 points on a 40 m grid reaching 400 m from the target. The map
+  is 80 m per pixel, so craters smaller than that are not seen. Odds count only
+  prepared points, and the screen says when a ring reaches past them.
 - Every reply and exported file names the model it used (smooth Moon or terrain).
 - Not modelled: radio link quality, thermal/battery behaviour, disc size of the
   Sun or Earth (centre of body only).
@@ -38,6 +41,79 @@ change turns a good site bad.
 the reply reported `Step-size: 60 minutes`). `12h` is also honoured; `3d` is
 ignored. Azimuth is reported clockwise from north and elevation as height above the
 local horizon, matching the convention used for terrain profiles.
+
+## How we know it's right
+
+Three independent checks stand behind the numbers. Each says what it proves and
+what it does not.
+
+### 1. Positions equal NASA's own output
+
+- **Saved replies.** `server/test/fixtures/` holds two raw NASA Horizons replies
+  (Sun and Earth from the IM-2 target, 2025-03-06 to 2025-03-08, hourly). The
+  tests parse them and require the parsed rows to equal NASA's printed values, for
+  example Sun azimuth 74.592006° and height 1.726383° at 2025-03-06 00:00 UTC.
+  Tests never call NASA.
+- **The calculator on a saved reply.** On that reply the Sun is above the horizon
+  100% of the time at a 0° shadow allowance, 86% at 2° and 0% at 5°, and Earth is
+  up throughout. The tests require exactly those numbers.
+- **Live spot check.** On 2026-11-15 the values the app had stored for the IM-2
+  target were compared with a fresh Horizons request at three times (2025-03-06,
+  03-18 and 03-31, 00:00 UTC). All six azimuths and heights matched to the sixth
+  decimal place.
+- **One request at a time.** A test starts ten page loads at once and requires
+  that no two NASA requests overlap and that saved hours are not fetched again.
+
+What this does not prove: that Horizons itself is right, or that the site
+coordinates are (they are cited in [CREDITS.md](CREDITS.md), not re-measured).
+
+### 2. Directions mean the same thing everywhere
+
+A direction error would give shadows that look plausible and are wrong, so the
+convention (degrees clockwise from north) is checked three ways.
+
+- **NASA says so.** The Horizons reply header states that azimuth is measured
+  clockwise from north.
+- **The sites agree with each other.** From each of the five sites, the Sun's
+  direction and height give the longitude where the Sun is overhead. At three
+  different times all five sites, up to 84° of latitude apart, give the same
+  longitude to within 0.01°. They could not agree if the directions were mirrored
+  or rotated.
+- **The terrain agrees with NASA (requirement F-6).** The terrain tools step
+  across the elevation map along each direction and compare it with the true
+  compass bearing on the Moon's sphere: the worst difference around the full
+  circle is 0.0038°. See `tools/terrain/report.md`.
+
+What this does not prove: the absolute height datum of the elevation map, which
+was not checked against a second source.
+
+### 3. The 2025 landing case
+
+In March 2025 the IM-2 lander came down about 250 m from its target near Mons
+Mouton, in a crater, got no sunlight on its panels, and its mission ended within
+a day. The app opens on that target and date (2025-03-06 00:00 UTC). With real
+positions and real terrain it shows:
+
+- **The Sun is barely up.** At 00:00 UTC the Sun is 1.7° above a smooth horizon
+  and Earth is 10.9° up. Under the default 2° shadow allowance the site reads
+  "no power" until the Sun clears 2° seven hours later.
+- **The target sits on the edge of a shadow.** Of the 441 prepared terrain points
+  within 400 m of the target, 209 work and 232 do not. A lander that can miss by
+  100 m works in 8 landings out of 10; by 250 m, 6 out of 10; by 320 m, 5 out
+  of 10.
+- **A safer aim exists.** Aiming 160 m west and 120 m north of the target, 10 out
+  of 10 landings work at 250 m accuracy.
+
+What this does and does not show, plainly:
+
+- It shows that a few hundred metres decide the outcome at this site, which is
+  the point of the Miss tab.
+- It does **not** reproduce the real failure. The elevation map is 80 m per
+  pixel, so a crater smaller than that is invisible to it, and the real lander
+  also came to rest on its side. For a landing at 17:00 UTC the same day (close
+  to the reported touchdown time), all 441 points work in this model.
+- The actual touchdown point is not drawn on the map, because this repository
+  has no cited position for it.
 
 ## Layout
 
@@ -85,6 +161,13 @@ npm run seed --workspace server
 npm run seed:cache --workspace server
 ```
 
+Load the prepared terrain profiles for the demo site into the database (safe to
+repeat; it replaces that site's profiles with the committed file):
+
+```bash
+npm run load:terrain --workspace server
+```
+
 The cache seed fetches 60 days hourly from 2025-02-04 for the five curated sites:
 10 requests, 14,410 rows, about 13 seconds. Change the span with `SEED_START` and
 `SEED_DAYS`. Spans outside the seed are fetched on first use and saved.
@@ -95,9 +178,10 @@ The cache seed fetches 60 days hourly from 2025-02-04 for the five curated sites
 | --- | --- | --- |
 | `GET /v1/sites` | none | id, name, lat, lon, source, has_terrain |
 | `GET /v1/sky` | `site` or `lat`+`lon`; `date`; `hour` (0), `margin` (2) | Sun and Earth direction and height; state word and symbol |
-| `GET /v1/windows` | `site` or `lat`+`lon`; `start`; `hour` (0); `days` (30, up to 60); `margin` (2) | power and contact windows, uptime, longest gap, next change, hourly series |
+| `GET /v1/windows` | `site` or `lat`+`lon`; `start`; `hour` (0); `days` (30, up to 60); `margin` (2); optional `aim_east`+`aim_north` for an aim point on prepared terrain | power and contact windows, uptime, longest gap, next change, hourly series |
 | `GET /v1/windows.csv` | as `/v1/windows` | spreadsheet file: scenario and model in the first lines, then one row per window |
 | `GET /v1/report` | `a_site` (or `a_lat`+`a_lon`), `a_date`, `a_hour` (0); the same for `b_`; `days` (30); `margin` (2) | verdict and five sentences, each marked better, worse or same, plus each side's numbers |
+| `GET /v1/miss` | `site`; `date`; `hour` (0); `east`, `north` (aim, 0); `accuracy` (250) | terrain model: landings out of 10 that would work at 100, 250 and 320 m, the safest aim, and the grid of prepared points. 409 for a site without prepared terrain |
 
 Every reply names the model. Errors name the field at fault and the allowed range
 (400), the unknown site (404), the seconds to wait (429), or say that nothing is

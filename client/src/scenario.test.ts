@@ -48,6 +48,13 @@ describe('compare state in the address (3-1, 3-2)', () => {
     }
   });
 
+  it('keeps "target vs my aim" only while an aim has been moved', () => {
+    const withAim = parseScenario(new URLSearchParams('site=im2&cmp=aim&aim=-160,120'));
+    expect(withAim.scenario.setup).toBe('aim');
+    expect(scenarioToQuery(withAim.scenario)).toContain('cmp=aim');
+    expect(parseScenario(new URLSearchParams('site=im2&cmp=aim')).scenario.setup).toBe('date');
+  });
+
   it('leaves the default setup out of the address', () => {
     expect(scenarioToQuery(DEFAULT_SCENARIO)).not.toContain('cmp');
   });

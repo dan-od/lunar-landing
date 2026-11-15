@@ -67,8 +67,9 @@ jobs:
             docker ps --filter name=moon --format 'table {{.Names}}\t{{.Status}}'
           DEPLOY
       # The server does not create its own tables. Each of these is safe to run
-      # on every deploy: migrations apply once, sites are upserted, and the cache
-      # seed asks NASA Horizons (one request at a time) only for hours not saved.
+      # on every deploy: migrations apply once, sites are upserted, the terrain
+      # profiles for the demo site are replaced with the committed file, and the
+      # cache seed asks NASA Horizons (one request at a time) only for hours not saved.
       - name: Migrate and seed
         run: |
           ssh ${{ secrets.DEPLOY_USER }}@${{ secrets.DEPLOY_HOST }} <<'DEPLOY'
@@ -82,13 +83,16 @@ jobs:
             # this script from the SSH session and the later commands never run.
             docker compose exec -T server node server/dist/db/migrate.js < /dev/null
             docker compose exec -T server node server/dist/sites/seed.js < /dev/null
+            docker compose exec -T server node server/dist/terrain/loadTerrain.js < /dev/null
             docker compose exec -T server node server/dist/cache/seedCache.js < /dev/null
             # Fail the step if the seeds did not land.
             sites=$(docker compose exec -T db psql -U moon -d moonstatus -tAc 'SELECT count(*) FROM sites' < /dev/null)
             hours=$(docker compose exec -T db psql -U moon -d moonstatus -tAc 'SELECT count(*) FROM position_cache' < /dev/null)
-            echo "sites in database: $sites, cached position hours: $hours"
+            profiles=$(docker compose exec -T db psql -U moon -d moonstatus -tAc 'SELECT count(*) FROM horizon_profiles' < /dev/null)
+            echo "sites in database: $sites, cached position hours: $hours, terrain profiles: $profiles"
             [ "$sites" -ge 5 ]
             [ "$hours" -ge 1 ]
+            [ "$profiles" -ge 1 ]
           DEPLOY
       - name: Smoke test
         run: |

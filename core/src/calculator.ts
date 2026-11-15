@@ -19,11 +19,43 @@ const WORKS_WINDOW_HOURS = 10 * HOURS_PER_DAY;
 /** A landing works if it is ready at touchdown and for at least this share of 10 days. */
 const WORKS_THRESHOLD = 0.9;
 
+/**
+ * Height of a terrain horizon profile in a direction. `heights` holds 360 values,
+ * index = degrees clockwise from north; directions between whole degrees are
+ * interpolated.
+ */
+export function horizonAt(heights: number[], azimuthDeg: number): number {
+  const az = ((azimuthDeg % 360) + 360) % 360;
+  const i = Math.floor(az);
+  const f = az - i;
+  const a = heights[i % 360] ?? 0;
+  const b = heights[(i + 1) % 360] ?? 0;
+  return a + (b - a) * f;
+}
+
+/**
+ * What a body has to clear to count. With a terrain profile it is the terrain
+ * horizon in the body's direction; otherwise it is the flat shadow allowance.
+ */
+export function thresholdFor(row: PositionRow, marginDeg: number, horizon?: number[]): number {
+  return horizon ? horizonAt(horizon, row.azimuthDeg) : clampMargin(marginDeg);
+}
+
 /** The state at a single moment from the two elevations and the allowance. */
 export function stateFor(sunElevDeg: number, earthElevDeg: number, marginDeg: number): SiteState {
   const m = clampMargin(marginDeg);
-  const powerUp = sunElevDeg > m;
-  const linkUp = earthElevDeg > m;
+  return stateForThresholds(sunElevDeg, earthElevDeg, m, m);
+}
+
+/** The state at a single moment when each body has its own height to clear. */
+export function stateForThresholds(
+  sunElevDeg: number,
+  earthElevDeg: number,
+  sunThresholdDeg: number,
+  earthThresholdDeg: number,
+): SiteState {
+  const powerUp = sunElevDeg > sunThresholdDeg;
+  const linkUp = earthElevDeg > earthThresholdDeg;
   if (powerUp && linkUp) return { word: 'READY', symbol: '●', powerUp, linkUp };
   if (!powerUp && !linkUp) return { word: 'DARK, NO LINK', symbol: '✕', powerUp, linkUp };
   if (!powerUp) return { word: 'NO POWER', symbol: '▲', powerUp, linkUp };
@@ -47,11 +79,10 @@ function addHours(iso: string, hours: number): string {
  * Summarise one body's series against the allowance: uptime, the longest gap,
  * the time to the next change from the first row, and the "up" windows.
  */
-export function summarizeSeries(rows: PositionRow[], marginDeg: number): BodySummary {
-  const m = clampMargin(marginDeg);
+export function summarizeSeries(rows: PositionRow[], marginDeg: number, horizon?: number[]): BodySummary {
   const n = rows.length;
   const step = stepHours(rows);
-  const up = rows.map((r) => r.elevationDeg > m);
+  const up = rows.map((r) => r.elevationDeg > thresholdFor(r, marginDeg, horizon));
 
   const upCount = up.filter(Boolean).length;
   const uptimePct = n === 0 ? 0 : Math.round((100 * upCount) / n);
@@ -99,15 +130,23 @@ export function summarizeSeries(rows: PositionRow[], marginDeg: number): BodySum
 export function computeResult(
   sun: PositionRow[],
   earth: PositionRow[],
-  opts: { marginDeg: number; model?: ModelName },
+  opts: { marginDeg: number; model?: ModelName; horizon?: number[] },
 ): WindowResult {
   const marginDeg = clampMargin(opts.marginDeg);
-  const model: ModelName = opts.model ?? 'smooth Moon';
+  const horizon = opts.horizon;
+  // A terrain horizon means the terrain model, unless the caller says otherwise.
+  const model: ModelName = opts.model ?? (horizon ? 'terrain' : 'smooth Moon');
   const n = Math.min(sun.length, earth.length);
+  const clears = (r: PositionRow) => r.elevationDeg > thresholdFor(r, marginDeg, horizon);
 
   const landing =
     n > 0
-      ? stateFor(sun[0]!.elevationDeg, earth[0]!.elevationDeg, marginDeg)
+      ? stateForThresholds(
+          sun[0]!.elevationDeg,
+          earth[0]!.elevationDeg,
+          thresholdFor(sun[0]!, marginDeg, horizon),
+          thresholdFor(earth[0]!, marginDeg, horizon),
+        )
       : { word: 'DARK, NO LINK' as const, symbol: '✕', powerUp: false, linkUp: false };
 
   // "Works": ready at touchdown and ready for >=90% of the first 10 days.
@@ -115,7 +154,7 @@ export function computeResult(
   const horizonSamples = Math.min(n, Math.ceil(WORKS_WINDOW_HOURS / step));
   let readyCount = 0;
   for (let i = 0; i < horizonSamples; i++) {
-    const ready = sun[i]!.elevationDeg > marginDeg && earth[i]!.elevationDeg > marginDeg;
+    const ready = clears(sun[i]!) && clears(earth[i]!);
     if (ready) readyCount++;
   }
   const readyShare = horizonSamples === 0 ? 0 : readyCount / horizonSamples;
@@ -123,8 +162,8 @@ export function computeResult(
 
   return {
     model,
-    power: summarizeSeries(sun, marginDeg),
-    contact: summarizeSeries(earth, marginDeg),
+    power: summarizeSeries(sun, marginDeg, horizon),
+    contact: summarizeSeries(earth, marginDeg, horizon),
     landing,
     works,
   };

@@ -29,6 +29,19 @@ describe('quick setups fill both sides from the scenario (3-2)', () => {
   });
 });
 
+describe('target vs my aim (3-2, 4-6)', () => {
+  it('pairs the scenario site with the aim point from the Miss tab', () => {
+    const s: Scenario = { ...base, site: 'im2', setup: 'aim', aim: { east: -160, north: 120 } };
+    expect(sideA(s)).toEqual({ site: 'im2', date: '2025-03-06', hour: 15 });
+    expect(sideB(s, [...IDS, 'aim'])).toEqual({ site: 'aim', date: '2025-03-06', hour: 15 });
+  });
+
+  it('"two sites" never picks the aim point as the other site', () => {
+    const s: Scenario = { ...base, site: 'im2', setup: 'site', aim: { east: 40, north: 0 } };
+    expect(sideB(s, ['im2', 'aim', 'im1']).site).toBe('im1');
+  });
+});
+
 describe('any pairing can be set by hand (3-1)', () => {
   it('uses the hand-set side B as it is', () => {
     const b = { site: 'ap11', date: '2025-02-20', hour: 7 };

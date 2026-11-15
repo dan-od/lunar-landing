@@ -21,9 +21,11 @@ interface Props {
   readout: Readout;
   marginDeg: number;
   tDays: number;
+  /** Terrain horizon (360 heights). When given it is drawn in place of the allowance line. */
+  horizon?: number[];
 }
 
-export function SkyView({ readout, marginDeg, tDays }: Props) {
+export function SkyView({ readout, marginDeg, tDays, horizon }: Props) {
   const scale = skyScale(readout.sunElev, readout.earthElev);
   const x = (az: number) => LEFT + (az / 360) * PLOT_W;
   const y = (elev: number) => TOP + skyFraction(elev, scale) * PLOT_H;
@@ -41,7 +43,15 @@ export function SkyView({ readout, marginDeg, tDays }: Props) {
   const label =
     `Sky view at ${tDays.toFixed(1)} days after landing. ` +
     `${describe('Sun', readout.sunElev, readout.sunAz)}. ${describe('Earth', readout.earthElev, readout.earthAz)}. ` +
-    `Shadow allowance ${marginDeg.toFixed(1)} degrees.`;
+    (horizon
+      ? `The terrain stands ${readout.sunThreshold.toFixed(1)} degrees high toward the Sun and ${readout.earthThreshold.toFixed(1)} degrees toward Earth.`
+      : `Shadow allowance ${marginDeg.toFixed(1)} degrees.`);
+  const terrainPath = horizon
+    ? horizon
+        .concat(horizon[0] ?? 0)
+        .map((h, i) => `${i === 0 ? 'M' : 'L'}${x(i).toFixed(1)},${y(h).toFixed(1)}`)
+        .join(' ')
+    : '';
 
   return (
     <svg className="sky" viewBox={`0 0 ${W} ${H}`} role="img" aria-label={label}>
@@ -49,11 +59,23 @@ export function SkyView({ readout, marginDeg, tDays }: Props) {
       <rect className="sky-ground" x={LEFT} y={horizonY} width={PLOT_W} height={bottom - horizonY} />
       <rect className="sky-frame" x={LEFT} y={TOP} width={PLOT_W} height={PLOT_H} />
 
-      {/* shadow allowance */}
-      <line className="sky-margin" x1={LEFT} x2={LEFT + PLOT_W} y1={marginY} y2={marginY} />
-      <text className="sky-t sky-margin-t" x={LEFT + PLOT_W - 3} y={marginY - 3} textAnchor="end">
-        ALLOWANCE {marginDeg.toFixed(1)}°
-      </text>
+      {horizon ? (
+        <>
+          {/* terrain horizon in every direction */}
+          <path className="sky-terrain" d={terrainPath} />
+          <text className="sky-t sky-margin-t" x={LEFT + PLOT_W - 3} y={TOP + 9} textAnchor="end">
+            TERRAIN HORIZON
+          </text>
+        </>
+      ) : (
+        <>
+          {/* shadow allowance */}
+          <line className="sky-margin" x1={LEFT} x2={LEFT + PLOT_W} y1={marginY} y2={marginY} />
+          <text className="sky-t sky-margin-t" x={LEFT + PLOT_W - 3} y={marginY - 3} textAnchor="end">
+            ALLOWANCE {marginDeg.toFixed(1)}°
+          </text>
+        </>
+      )}
 
       {/* horizon */}
       <line className="sky-horizon" x1={LEFT} x2={LEFT + PLOT_W} y1={horizonY} y2={horizonY} />

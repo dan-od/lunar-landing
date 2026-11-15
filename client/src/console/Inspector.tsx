@@ -39,15 +39,16 @@ export function Inspector({ row, t, marginDeg, search, csvHref }: Props) {
           {state ? `${state.symbol} ${state.word}` : `${NO_DATA.symbol} ${NO_DATA.word}`}
         </span>
         <div className="mono coords">
-          {row.site.lat.toFixed(2)}, {row.site.lon.toFixed(2)} · SOURCE{' '}
-          {src.url ? (
-            <a href={src.url} target="_blank" rel="noreferrer">
-              {src.label}
-            </a>
-          ) : (
-            src.label
-          )}
+          {row.site.lat.toFixed(2)}, {row.site.lon.toFixed(2)}
+          {src.url ? '' : ` · SOURCE ${src.label}`}
         </div>
+        {src.url && (
+          <a className="source-link mono" href={src.url} target="_blank" rel="noreferrer">
+            COORDINATES FROM {src.label.toUpperCase()}
+            <span aria-hidden="true"> ↗</span>
+            <span className="sr"> (opens in a new tab)</span>
+          </a>
+        )}
       </div>
 
       <div className="grid2">
@@ -72,7 +73,7 @@ export function Inspector({ row, t, marginDeg, search, csvHref }: Props) {
       <div className="pad line">
         <div className="mono sub">SKY AT T+{t.toFixed(1)} d</div>
         {now ? (
-          <SkyView readout={now} marginDeg={marginDeg} tDays={t} />
+          <SkyView readout={now} marginDeg={marginDeg} tDays={t} horizon={row.series?.horizon} />
         ) : (
           <p className="hint">No saved positions for this moment.</p>
         )}
@@ -112,8 +113,9 @@ export function Inspector({ row, t, marginDeg, search, csvHref }: Props) {
       )}
 
       <p className="pad hint">
-        Smooth-Moon model. Hills and crater rims are only counted on the Miss tab, where terrain is
-        prepared.
+        {row.series?.horizon
+          ? 'Terrain model: this aim point is judged against its own horizon from the LOLA elevation map. The shadow allowance is not used here.'
+          : 'Smooth-Moon model. Hills and crater rims are only counted on the Miss tab, where terrain is prepared.'}
       </p>
     </aside>
   );

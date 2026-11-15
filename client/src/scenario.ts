@@ -30,8 +30,11 @@ export interface CompareSide {
 }
 
 /** Quick setups that can be stored in the address, plus "custom" for a hand-set side B. */
-export type CompareSetup = 'date' | 'time' | 'site' | 'custom';
-const SETUPS: CompareSetup[] = ['date', 'time', 'site', 'custom'];
+export type CompareSetup = 'date' | 'time' | 'site' | 'aim' | 'custom';
+const SETUPS: CompareSetup[] = ['date', 'time', 'site', 'aim', 'custom'];
+
+/** Id of the aim point carried from the Miss tab, listed as a site of its own. */
+export const AIM_SITE_ID = 'aim';
 
 export const DATE_MIN = '2020-01-01';
 export const DATE_MAX = '2040-12-31';
@@ -123,6 +126,8 @@ export function parseScenario(params: URLSearchParams): ParsedScenario {
   const rawSetup = params.get('cmp') as CompareSetup | null;
   let setup: CompareSetup = rawSetup && SETUPS.includes(rawSetup) ? rawSetup : b ? 'custom' : d.setup;
   if (setup === 'custom' && !b) setup = d.setup;
+  // "Target vs my aim" needs an aim that has been moved.
+  if (setup === 'aim' && aim.east === 0 && aim.north === 0) setup = d.setup;
   if (setup !== 'custom') b = null;
 
   return {

@@ -10,7 +10,10 @@ data
 *.log
 docs
 coverage
-tools
+# Terrain tools stay out of the build, except the prepared profile file.
+tools/**
+!tools/terrain
+!tools/terrain/im2_terrain.json
 **/.venv
 .github
 nginx

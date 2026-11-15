@@ -3,10 +3,11 @@ import { TABS } from '../tabs';
 import { shortName, useApp } from '../state';
 import { slipDate } from '../scenario';
 
-const SLIPS: Array<{ days: number; text: string; label: string }> = [
-  { days: -1, text: '−1 d', label: 'Landing one day earlier' },
-  { days: 1, text: '+1 d', label: 'Landing one day later' },
-  { days: 10, text: '+10 d', label: 'Landing ten days later' },
+// The spoken name starts with the visible text, then says what it does.
+const SLIPS: Array<{ days: number; text: string; more: string }> = [
+  { days: -1, text: '−1 d', more: 'landing one day earlier' },
+  { days: 1, text: '+1 d', more: 'landing one day later' },
+  { days: 10, text: '+10 d', more: 'landing ten days later' },
 ];
 
 export function Header() {
@@ -14,8 +15,8 @@ export function Header() {
   const site = sites.find((s) => s.id === scenario.site);
 
   return (
-    <>
-      <header className="hd">
+    <header>
+      <div className="hd">
         <div className="brand">
           <svg aria-hidden="true" width="22" height="22" viewBox="0 0 32 32">
             <circle cx="16" cy="16" r="13" fill="none" stroke="#fff" strokeWidth="2" />
@@ -41,7 +42,7 @@ export function Header() {
             <span aria-hidden="true">⚙ </span>SETTINGS
           </button>
         </div>
-      </header>
+      </div>
 
       <div className="scn mono" role="group" aria-label="Scenario">
         <span className="lead">SCENARIO</span>
@@ -66,15 +67,16 @@ export function Header() {
             <button
               key={s.days}
               type="button"
-              aria-label={s.label}
+              data-slip={s.days}
               disabled={!started}
               onClick={() => update({ date: slipDate(scenario.date, s.days), t: 0 })}
             >
               {s.text}
+              <span className="sr">, {s.more}</span>
             </button>
           ))}
         </span>
       </div>
-    </>
+    </header>
   );
 }

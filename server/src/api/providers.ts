@@ -1,6 +1,6 @@
 // Data providers behind the API routes, defined as interfaces so tests can inject
 // in-memory versions and the routes never touch a database or the network directly.
-import type { Body, PositionRow, Site } from '@moon/core';
+import type { Body, PositionRow, Site, TerrainPoint } from '@moon/core';
 import type pg from 'pg';
 import { CURATED_SITES } from '@moon/core';
 import type { HorizonsSpan } from '../horizons/client.js';
@@ -27,6 +27,67 @@ export interface SeriesProvider {
     site: Site,
     span: HorizonsSpan,
   ): Promise<{ sun: PositionRow[]; earth: PositionRow[]; saved: boolean; complete?: boolean }>;
+}
+
+/** Prepared terrain for a site: its grid and one horizon profile per grid point. */
+export interface SiteTerrain {
+  stepM: number;
+  halfM: number;
+  points: TerrainPoint[];
+}
+
+export interface TerrainRepo {
+  /** The prepared terrain for a site, or undefined when none is prepared. */
+  get(siteId: string): Promise<SiteTerrain | undefined>;
+}
+
+/** No terrain anywhere (used when no database is configured). */
+export const noTerrainRepo: TerrainRepo = {
+  async get() {
+    return undefined;
+  },
+};
+
+/** Terrain held in memory, for tests and tools. */
+export function staticTerrainRepo(bySite: Record<string, SiteTerrain>): TerrainRepo {
+  return {
+    async get(siteId) {
+      return bySite[siteId];
+    },
+  };
+}
+
+/** Terrain from horizon_profiles. Profiles change only on deploy, so they are kept for a while. */
+export function dbTerrainRepo(pool: pg.Pool, ttlMs = 5 * 60_000): TerrainRepo {
+  const cache = new Map<string, { at: number; value: SiteTerrain | undefined }>();
+  return {
+    async get(siteId) {
+      const hit = cache.get(siteId);
+      if (hit && Date.now() - hit.at < ttlMs) return hit.value;
+      const { rows } = await pool.query(
+        'SELECT offset_east, offset_north, heights_deg FROM horizon_profiles WHERE site_id = $1',
+        [siteId],
+      );
+      let value: SiteTerrain | undefined;
+      if (rows.length > 0) {
+        const points: TerrainPoint[] = rows.map((r) => ({
+          east: Number(r.offset_east),
+          north: Number(r.offset_north),
+          heights: (r.heights_deg as unknown[]).map(Number),
+        }));
+        const easts = [...new Set(points.map((p) => p.east))].sort((a, b) => a - b);
+        let stepM = 0;
+        for (let i = 1; i < easts.length; i++) {
+          const d = easts[i]! - easts[i - 1]!;
+          if (stepM === 0 || d < stepM) stepM = d;
+        }
+        const halfM = points.reduce((m, p) => Math.max(m, Math.abs(p.east), Math.abs(p.north)), 0);
+        value = { stepM: stepM || 1, halfM, points };
+      }
+      cache.set(siteId, { at: Date.now(), value });
+      return value;
+    },
+  };
 }
 
 /** Curated sites from the shared constant (plus, in production, custom DB sites). */

@@ -7,6 +7,8 @@ export interface ApiSite {
   lon: number;
   source: string;
   has_terrain: boolean;
+  /** Set on the aim point carried from the Miss tab: the site it belongs to and its offset. */
+  aim?: { base: string; east: number; north: number };
 }
 
 export interface SeriesPoint {
@@ -22,9 +24,22 @@ export interface WindowsReply {
   saved: boolean;
   partial: boolean;
   series: SeriesPoint[];
+  /** Terrain horizon (360 heights) when the reply is for an aim point. */
+  horizon?: number[];
 }
 
-export type FailureKind = 'unavailable' | 'rate' | 'bad' | 'network';
+export interface MissReply {
+  model: string;
+  saved: boolean;
+  grid: {
+    step_m: number;
+    half_m: number;
+    /** [metres east, metres north, 1 if a landing there works] */
+    points: Array<[number, number, number]>;
+  };
+}
+
+export type FailureKind = 'unavailable' | 'rate' | 'bad' | 'network' | 'no-terrain';
 
 export class ApiFailure extends Error {
   constructor(
@@ -57,6 +72,7 @@ async function getJson<T>(url: string, signal?: AbortSignal): Promise<T> {
     // Not JSON (for example a proxy error page): keep the generic message.
   }
   if (res.status === 429) throw new ApiFailure('rate', message, retryAfter);
+  if (res.status === 409) throw new ApiFailure('no-terrain', message);
   if (res.status >= 500) throw new ApiFailure('unavailable', message);
   throw new ApiFailure('bad', message);
 }
@@ -66,25 +82,48 @@ export async function getSites(signal?: AbortSignal): Promise<ApiSite[]> {
   return body.sites;
 }
 
+export interface AimOffset {
+  east: number;
+  north: number;
+}
+
+function windowsQuery(site: string, start: string, hour: number, days: number, aim?: AimOffset): URLSearchParams {
+  const q = new URLSearchParams({ site, start, hour: String(hour), days: String(days) });
+  if (aim) {
+    q.set('aim_east', String(aim.east));
+    q.set('aim_north', String(aim.north));
+  }
+  return q;
+}
+
+/** Windows for a site; with `aim`, for that aim point on the site's prepared terrain. */
 export function getWindows(
   site: string,
   start: string,
   hour: number,
   days: number,
   signal?: AbortSignal,
+  aim?: AimOffset,
 ): Promise<WindowsReply> {
-  const q = new URLSearchParams({ site, start, hour: String(hour), days: String(days) });
-  return getJson<WindowsReply>(`/v1/windows?${q.toString()}`, signal);
+  return getJson<WindowsReply>(`/v1/windows?${windowsQuery(site, start, hour, days, aim).toString()}`, signal);
 }
 
 /** Address of the spreadsheet file for one site's windows (6-1). */
-export function windowsCsvUrl(site: string, start: string, hour: number, days: number, margin: number): string {
-  const q = new URLSearchParams({
-    site,
-    start,
-    hour: String(hour),
-    days: String(days),
-    margin: String(margin),
-  });
+export function windowsCsvUrl(
+  site: string,
+  start: string,
+  hour: number,
+  days: number,
+  margin: number,
+  aim?: AimOffset,
+): string {
+  const q = windowsQuery(site, start, hour, days, aim);
+  q.set('margin', String(margin));
   return `/v1/windows.csv?${q.toString()}`;
+}
+
+/** The prepared terrain grid for a site and landing moment: which points work. */
+export function getMiss(site: string, date: string, hour: number, signal?: AbortSignal): Promise<MissReply> {
+  const q = new URLSearchParams({ site, date, hour: String(hour) });
+  return getJson<MissReply>(`/v1/miss?${q.toString()}`, signal);
 }

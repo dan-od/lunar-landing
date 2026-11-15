@@ -28,6 +28,8 @@ export const badRequest = (field: string, message: string, allowed?: string) =>
 
 export const notFound = (message: string) => new ApiError(404, { error: { message } });
 
+export const conflict = (message: string) => new ApiError(409, { error: { message } });
+
 export const tooManyRequests = (retryAfterSeconds: number) =>
   new ApiError(
     429,

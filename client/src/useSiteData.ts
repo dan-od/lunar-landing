@@ -12,24 +12,25 @@ interface Saved {
   /** Landing moment the points start at, e.g. "2025-03-06T00". */
   date: string;
   points: SeriesPoint[];
+  horizon?: number[];
 }
 
 const key = (siteId: string) => `moon:series:${siteId}`;
 
-function readSaved(siteId: string, date: string): SeriesPoint[] | undefined {
+function readSaved(siteId: string, date: string): Saved | undefined {
   try {
     const raw = window.localStorage.getItem(key(siteId));
     if (!raw) return undefined;
     const saved = JSON.parse(raw) as Saved;
-    return saved.date === date ? saved.points : undefined;
+    return saved.date === date ? saved : undefined;
   } catch {
     return undefined;
   }
 }
 
-function writeSaved(siteId: string, date: string, points: SeriesPoint[]): void {
+function writeSaved(siteId: string, date: string, points: SeriesPoint[], horizon?: number[]): void {
   try {
-    window.localStorage.setItem(key(siteId), JSON.stringify({ date, points } satisfies Saved));
+    window.localStorage.setItem(key(siteId), JSON.stringify({ date, points, horizon } satisfies Saved));
   } catch {
     // Storage full or blocked: results are simply not saved.
   }
@@ -56,7 +57,11 @@ export function useSiteData(sites: ApiSite[], date: string, hour: number, force:
   });
   const [retries, setRetries] = useState(0);
 
-  const ids = sites.map((s) => s.id).join(',');
+  // The aim point is fetched from its base site with its offset, so its place in
+  // the key carries the offset too.
+  const ids = sites
+    .map((s) => (s.aim ? `${s.id}@${s.aim.base}:${s.aim.east}:${s.aim.north}` : s.id))
+    .join(',');
   const loadKey = `${ids}|${date}|${hour}`;
 
   useEffect(() => {
@@ -71,21 +76,30 @@ export function useSiteData(sites: ApiSite[], date: string, hour: number, force:
       let partial = false;
 
       await Promise.all(
-        siteIds.map(async (id) => {
+        siteIds.map(async (entry) => {
+          const [id = entry, aimPart] = entry.split('@');
+          const [base, east, north] = (aimPart ?? '').split(':');
+          const aim = aimPart ? { east: Number(east), north: Number(north) } : undefined;
+          const savedKey = `${date}T${hour}${aimPart ? `@${aimPart}` : ''}`;
           let points: SeriesPoint[] | undefined;
+          let horizon: number[] | undefined;
           try {
             if (force === 'down') throw new ApiFailure('unavailable', 'NASA’s position service is not answering.');
-            const reply = await getWindows(id, date, hour, DISPLAY_DAYS, controller.signal);
+            const reply = await getWindows(aim ? base! : id, date, hour, DISPLAY_DAYS, controller.signal, aim);
             points = reply.series;
+            horizon = reply.horizon;
             if (reply.partial) partial = true;
-            writeSaved(id, `${date}T${hour}`, points);
+            writeSaved(id, savedKey, points, horizon);
           } catch (err) {
             if ((err as Error).name === 'AbortError') return;
             failure = err instanceof ApiFailure ? err : new ApiFailure('network', 'The request failed.');
-            points = readSaved(id, `${date}T${hour}`);
+            const saved = readSaved(id, savedKey);
+            points = saved?.points;
+            horizon = saved?.horizon;
           }
-          if (!points) return;
-          const series = toSeries(points, date, hour);
+          // An aim point without its terrain horizon is never shown on the smooth model.
+          if (!points || (aim && !horizon)) return;
+          const series = toSeries(points, date, hour, horizon);
           if (series.sun.length > 0) data[id] = series;
         }),
       );
