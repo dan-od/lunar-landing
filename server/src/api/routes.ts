@@ -2,72 +2,29 @@
 // connector read these, so there is one source of answers. Every reply names the
 // scenario and the model used.
 import { Router, type Request } from 'express';
-import type { Aim, BodySummary, Site } from '@moon/core';
-import {
-  MAX_AIM_DISTANCE,
-  MISS_RADII,
-  aimText,
-  buildReport,
-  computeResult,
-  csvRow,
-  missGrid,
-  outOfTen,
-  ringOdds,
-  safestAim,
-  stateFor,
-} from '@moon/core';
-import { ApiError, badRequest, conflict, notFound, serviceUnavailable } from './errors.js';
-import {
-  DATE_MAX,
-  DATE_MIN,
-  parseDate,
-  parseInteger,
-  parseNumber,
-  parsePlace,
-  type PlaceQuery,
-} from './validate.js';
+import type { Aim, BodySummary } from '@moon/core';
+import { MISS_RADII, aimText, buildReport, csvRow, outOfTen, stateFor } from '@moon/core';
+import { badRequest, serviceUnavailable } from './errors.js';
+import { parseDate, parseInteger, parseNumber, parsePlace } from './validate.js';
 import { createRateLimiter, type RateLimitOptions } from './rateLimit.js';
-import type { SeriesProvider, SiteTerrain, SitesRepo, TerrainRepo } from './providers.js';
+import { createCalc, isoAt, spanTime, type CalcDeps, type WindowsQuery } from './calc.js';
+import { createWatchRouter, type WatchDeps } from '../watch/routes.js';
 import type { HorizonsSpan } from '../horizons/client.js';
 
-export interface V1Deps {
-  sitesRepo: SitesRepo;
-  seriesProvider: SeriesProvider;
-  /** Prepared terrain. Without it every site is treated as having none. */
-  terrainRepo?: TerrainRepo;
+export interface V1Deps extends CalcDeps {
   rateLimit?: RateLimitOptions;
-  /** How many new custom coordinates a visitor may use per window (2-3). */
-  customLimit?: RateLimitOptions;
+  /** Email alerts (flow 5). Left out, the watch endpoints say they are switched off. */
+  watch?: WatchDeps;
 }
 
 const addDays = (date: string, n: number): string =>
   new Date(Date.parse(`${date}T00:00:00Z`) + n * 86_400_000).toISOString().slice(0, 10);
 
-const isoAt = (date: string, hour: number): string => `${date}T${String(hour).padStart(2, '0')}:00:00Z`;
-
 /** Byte-order mark, so spreadsheet apps read the file as UTF-8. */
 const UTF8_BOM = String.fromCharCode(0xfeff);
 
-/** Epoch ms to the 'YYYY-MM-DD HH:MM' form Horizons spans use. */
-const spanTime = (ms: number): string => new Date(ms).toISOString().slice(0, 16).replace('T', ' ');
-
 /** Epoch ms to 'YYYY-MM-DD HH:MM' (UTC), which spreadsheet apps read as a date and time. */
 const sheetTime = spanTime;
-
-/** A custom point. Its id is its coordinates, so two points never share saved positions. */
-function adhocSite(lat: number, lon: number): Site {
-  return {
-    id: `point:${lat},${lon}`,
-    name: `Custom point ${lat}, ${lon}`,
-    short: 'Custom',
-    lat,
-    lon,
-    heightKm: 0,
-    source: '(custom point)',
-    hasTerrain: false,
-    custom: true,
-  };
-}
 
 function serializeSummary(s: BodySummary) {
   return {
@@ -86,47 +43,14 @@ export function createV1Router(deps: V1Deps): Router {
   const router = Router();
   if (deps.rateLimit) router.use(createRateLimiter(deps.rateLimit));
 
-  // New coordinates cost two NASA requests each, so a visitor may add only a few
-  // per hour (2-3). A point the visitor has already used is not counted again.
-  const customPoints = new Map<string, { resetAt: number; ids: Set<string> }>();
-  function allowCustomPoint(visitor: string, pointId: string): void {
-    const limit = deps.customLimit;
-    if (!limit) return;
-    const now = (limit.now ?? Date.now)();
-    let entry = customPoints.get(visitor);
-    if (!entry || now >= entry.resetAt) {
-      entry = { resetAt: now + limit.windowMs, ids: new Set() };
-      customPoints.set(visitor, entry);
-    }
-    if (entry.ids.has(pointId)) return;
-    if (entry.ids.size >= limit.max) {
-      const wait = Math.max(1, Math.ceil((entry.resetAt - now) / 1000));
-      throw new ApiError(
-        429,
-        {
-          error: {
-            message: `Too many new coordinates. A visitor can add ${limit.max} an hour. Try again in ${wait} seconds.`,
-            retryAfterSeconds: wait,
-          },
-        },
-        { 'Retry-After': String(wait) },
-      );
-    }
-    entry.ids.add(pointId);
-  }
+  // The one calculator: these routes and the watch rules share it.
+  const calc = createCalc(deps);
+  const { resolveSite, terrainFor, computeWindows } = calc;
 
   const visitorOf = (req: Request): string => req.ip ?? req.socket.remoteAddress ?? 'unknown';
 
-  async function resolveSite(place: PlaceQuery, visitor: string): Promise<Site> {
-    if (place.site) {
-      const site = await deps.sitesRepo.get(place.site);
-      if (!site) throw notFound(`No site with id "${place.site}".`);
-      return site;
-    }
-    const point = adhocSite(place.lat!, place.lon!);
-    allowCustomPoint(visitor, point.id);
-    return point;
-  }
+  // Email alerts (flow 5). Mounted even when switched off, so the page can ask.
+  router.use('/watches', createWatchRouter(calc, deps.sitesRepo, deps.watch));
 
   // GET /v1/sites
   router.get('/sites', async (_req, res, next) => {
@@ -196,100 +120,6 @@ export function createV1Router(deps: V1Deps): Router {
       next(err);
     }
   });
-
-  /** The prepared terrain for a site, or a 409 that says which sites have terrain. */
-  async function terrainFor(site: Site): Promise<SiteTerrain> {
-    const terrain = site.custom ? undefined : await deps.terrainRepo?.get(site.id);
-    if (terrain) return terrain;
-    const withTerrain = (await deps.sitesRepo.list())
-      .filter((s) => s.hasTerrain)
-      .map((s) => `${s.name} (${s.id})`);
-    throw conflict(
-      `No terrain is prepared for ${site.name}. ` +
-        (withTerrain.length > 0
-          ? `Terrain is prepared for: ${withTerrain.join('; ')}.`
-          : 'No site has terrain prepared yet.'),
-    );
-  }
-
-  /** An aim must sit on a prepared grid point within reach of the target. */
-  function checkAim(terrain: SiteTerrain, aim: Aim, eastField: string, northField: string): Aim {
-    const reach = Math.floor(Math.min(MAX_AIM_DISTANCE, terrain.halfM) / terrain.stepM) * terrain.stepM;
-    const allowed = `multiples of ${terrain.stepM} from -${reach} to ${reach}, within ${MAX_AIM_DISTANCE} m of the target`;
-    for (const [field, value] of [
-      [eastField, aim.east],
-      [northField, aim.north],
-    ] as const) {
-      if (value % terrain.stepM !== 0 || Math.abs(value) > reach) {
-        throw badRequest(field, `${field} is not on the prepared terrain grid.`, allowed);
-      }
-    }
-    if (Math.hypot(aim.east, aim.north) > MAX_AIM_DISTANCE) {
-      throw badRequest(eastField, 'The aim is too far from the target.', allowed);
-    }
-    return aim;
-  }
-
-  interface WindowsQuery {
-    /** Who is asking, for the limit on new coordinates. */
-    visitor: string;
-    place: PlaceQuery;
-    start: string;
-    hour: number;
-    days: number;
-    margin: number;
-    /** When given, the point's terrain horizon is used instead of the shadow allowance. */
-    aim?: Aim;
-  }
-
-  /** One case, computed once by the one calculator. Every window endpoint uses this. */
-  async function computeWindows(q: WindowsQuery) {
-    const { start, hour, days, margin } = q;
-    const site = await resolveSite(q.place, q.visitor);
-
-    const startMs = Date.parse(isoAt(start, hour));
-    const stopMs = startMs + days * 86_400_000;
-    const span: HorizonsSpan = {
-      start: spanTime(startMs),
-      stop: spanTime(stopMs),
-      step: '1h',
-    };
-    const { sun, earth, saved, complete } = await deps.seriesProvider.get(site, span);
-
-    const within = (iso: string) => {
-      const t = Date.parse(iso);
-      return t >= startMs && t < stopMs;
-    };
-    const sunW = sun.filter((r) => within(r.time));
-    const earthW = earth.filter((r) => within(r.time));
-    if (sunW.length === 0 || earthW.length === 0) {
-      throw serviceUnavailable('No saved positions for that range.', sun.length > 0 || earth.length > 0);
-    }
-    let horizon: number[] | undefined;
-    if (q.aim) {
-      const terrain = await terrainFor(site);
-      const aim = checkAim(terrain, q.aim, 'aim_east', 'aim_north');
-      horizon = terrain.points.find((p) => p.east === aim.east && p.north === aim.north)?.heights;
-      if (!horizon) throw badRequest('aim_east', 'That aim is not on the prepared terrain grid.');
-    }
-    const result = computeResult(sunW, earthW, { marginDeg: margin, horizon });
-    return {
-      site,
-      start,
-      hour,
-      days,
-      margin,
-      startMs,
-      stopMs,
-      sun,
-      earth,
-      saved,
-      complete,
-      result,
-      aim: q.aim,
-      horizon,
-    };
-  }
 
   /** aim_east and aim_north come together or not at all. */
   function parseAimPair(query: Record<string, unknown>): Aim | undefined {
@@ -442,38 +272,19 @@ export function createV1Router(deps: V1Deps): Router {
           '100, 250 or 320',
         );
       }
-      const terrain = await terrainFor(site);
-      const aim = checkAim(
-        terrain,
-        {
+      // Asked first, so a site without terrain is told so before anything else.
+      await terrainFor(site);
+      const miss = await calc.computeMiss({
+        site,
+        date,
+        hour,
+        aim: {
           east: parseInteger(query.east, 'east', -1000, 1000, 0),
           north: parseInteger(query.north, 'north', -1000, 1000, 0),
         },
-        'east',
-        'north',
-      );
-
-      // "Works" looks at touchdown and the first 10 days.
-      const startMs = Date.parse(isoAt(date, hour));
-      const stopMs = startMs + 10 * 86_400_000;
-      const span: HorizonsSpan = {
-        start: spanTime(startMs),
-        stop: spanTime(stopMs),
-        step: '1h',
-      };
-      const { sun, earth, saved } = await deps.seriesProvider.get(site, span);
-      const within = (iso: string) => {
-        const t = Date.parse(iso);
-        return t >= startMs && t < stopMs;
-      };
-      const sunW = sun.filter((r) => within(r.time));
-      const earthW = earth.filter((r) => within(r.time));
-      if (sunW.length === 0 || earthW.length === 0) {
-        throw serviceUnavailable('No saved positions for that range.', sun.length > 0 || earth.length > 0);
-      }
-
-      const grid = missGrid(sunW, earthW, terrain.points);
-      const best = safestAim(grid, accuracy, terrain.stepM);
+      });
+      const { terrain, aim, saved, grid } = miss;
+      const best = miss.safest(accuracy);
       res.json({
         model: 'terrain',
         source: 'JPL Horizons positions; LOLA south pole elevation map (LDEM_80S_80MPP_ADJ)',
@@ -488,18 +299,7 @@ export function createV1Router(deps: V1Deps): Router {
           accuracy,
         },
         aim_text: aimText(aim),
-        odds: MISS_RADII.map((radius) => {
-          const o = ringOdds(grid, aim, radius, terrain.stepM);
-          return {
-            accuracy_m: radius,
-            share: o.share,
-            out_of_10: outOfTen(o.share),
-            working: o.working,
-            points: o.points,
-            // 1 when the whole ring lies inside the prepared terrain.
-            coverage: o.coverage,
-          };
-        }),
+        odds: miss.odds,
         safest: {
           east: best.east,
           north: best.north,
@@ -530,45 +330,7 @@ export function createV1Router(deps: V1Deps): Router {
       const hour = parseInteger(query.hour, 'hour', 0, 23, 0);
       const margin = parseNumber(query.margin, 'margin', 0, 5, 2);
 
-      const landingMs = Date.parse(isoAt(date, hour));
-      const moments: Array<{ slip: number; ms: number; date: string }> = [];
-      for (let slip = -30; slip <= 30; slip++) {
-        const ms = landingMs + slip * 86_400_000;
-        const d = new Date(ms).toISOString().slice(0, 10);
-        if (d >= DATE_MIN && d <= DATE_MAX) moments.push({ slip, ms, date: d });
-      }
-      const span: HorizonsSpan = {
-        start: spanTime(moments[0]!.ms),
-        stop: spanTime(moments[moments.length - 1]!.ms),
-        step: '1h',
-      };
-      const { sun, earth, saved } = await deps.seriesProvider.get(site, span);
-      const sunAt = new Map(sun.map((r) => [Date.parse(r.time), r]));
-      const earthAt = new Map(earth.map((r) => [Date.parse(r.time), r]));
-
-      const slips = moments.map((m) => {
-        const s = sunAt.get(m.ms);
-        const e = earthAt.get(m.ms);
-        if (!s || !e) return { slip_days: m.slip, date: m.date, ready: null, word: null, symbol: null };
-        const state = stateFor(s.elevationDeg, e.elevationDeg, margin);
-        return {
-          slip_days: m.slip,
-          date: m.date,
-          ready: state.word === 'READY',
-          word: state.word,
-          symbol: state.symbol,
-        };
-      });
-      const known = slips.filter((x) => x.ready !== null).length;
-      if (known === 0) throw serviceUnavailable('No saved positions for those dates.', false);
-
-      // Slip-proof: ready at every slip from 0 to 14 days. Unknown if any of those is unknown.
-      const forward = slips.filter((x) => x.slip_days >= 0 && x.slip_days <= 14);
-      const slipProof = forward.some((x) => x.ready === false)
-        ? false
-        : forward.length === 15 && forward.every((x) => x.ready === true)
-          ? true
-          : null;
+      const { saved, known, slipProof, slips } = await calc.computeSlip({ site, date, hour, margin });
 
       res.json({
         model: 'smooth Moon',

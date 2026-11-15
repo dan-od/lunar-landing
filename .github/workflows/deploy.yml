@@ -12,6 +12,9 @@
 #                        separate value, never inside a URL. PostgreSQL only reads
 #                        it the first time the database volume is created; changing
 #                        it later does not change the password of an existing database.
+#   EMAIL_SENDING_KEY    Resend API key for watch emails. Email alerts stay off unless
+#                        both this and TOKEN_SIGNING_SECRET are set.
+#   TOKEN_SIGNING_SECRET long random text that keys the stored hashes of watch links
 #
 # One-time step on the host, not done by this workflow: copy nginx/moon.conf to
 # /opt/docker-homelab/nginx/sites/moon.conf and reload nginx-proxy.
@@ -47,7 +50,8 @@ jobs:
             --exclude='.git' --exclude='node_modules' --exclude='.env' \
             --exclude='data' --exclude='tools/terrain/.venv' \
             ./ ${{ secrets.DEPLOY_USER }}@${{ secrets.DEPLOY_HOST }}:/opt/docker-homelab/sites/moon/
-      # Every variable docker-compose.yml reads. Only the password is a secret.
+      # Every variable docker-compose.yml reads. The password, the email key and
+      # the signing secret are secrets; an empty value leaves email alerts off.
       - name: Write .env
         run: |
           ssh ${{ secrets.DEPLOY_USER }}@${{ secrets.DEPLOY_HOST }} "umask 077; cat > /opt/docker-homelab/sites/moon/.env" <<'EOF'
@@ -56,6 +60,9 @@ jobs:
           POSTGRES_PASSWORD=${{ secrets.MOON_DB_PASSWORD }}
           HORIZONS_API_URL=https://ssd.jpl.nasa.gov/api/horizons.api
           PUBLIC_SITE_URL=https://moon.okoro.me
+          EMAIL_SENDING_KEY=${{ secrets.EMAIL_SENDING_KEY }}
+          TOKEN_SIGNING_SECRET=${{ secrets.TOKEN_SIGNING_SECRET }}
+          EMAIL_FROM=Moon Status <moon@okoro.me>
           EOF
       - name: Build and restart
         run: |

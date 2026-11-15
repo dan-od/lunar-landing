@@ -47,6 +47,16 @@ export function apiErrorHandler(err: unknown, _req: Request, res: Response, _nex
     res.status(err.status).json(err.body);
     return;
   }
+  // A body the JSON reader could not take (raised before any route runs).
+  const type = (err as { type?: unknown } | null)?.type;
+  if (type === 'entity.parse.failed') {
+    res.status(400).json({ error: { message: 'The request body is not valid JSON.' } });
+    return;
+  }
+  if (type === 'entity.too.large') {
+    res.status(413).json({ error: { message: 'The request body is too large.' } });
+    return;
+  }
   // Unexpected: do not leak internals.
   res.status(500).json({ error: { message: 'Internal error' } });
 }

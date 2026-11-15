@@ -2,26 +2,44 @@
 // without opening a port.
 import express, { type Express } from 'express';
 import { healthRouter } from './health.js';
-import { config } from './config.js';
+import { config, watchMode } from './config.js';
 import { getPool } from './db/pool.js';
 import { createV1Router, type V1Deps } from './api/routes.js';
 import { apiErrorHandler, serviceUnavailable } from './api/errors.js';
 import { createRateLimiter } from './api/rateLimit.js';
 import { createMcpRouter } from './connector/http.js';
 import { appSeriesProvider, dbSitesRepo, dbTerrainRepo, staticSitesRepo } from './api/providers.js';
+import type { WatchDeps } from './watch/routes.js';
+import { pgWatchRepo } from './watch/repo.js';
+import { devLogSender, resendSender } from './watch/sender.js';
 
 /** Production wiring: database-backed when a database is configured. */
-function defaultDeps(): V1Deps {
+export function defaultDeps(): V1Deps {
   const pool = getPool();
   const rateLimit = { windowMs: 60_000, max: config.rateLimitPerMinute };
   const customLimit = { windowMs: 3_600_000, max: config.customSitesPerHour };
   if (pool) {
+    // Email alerts are on only with both secrets and a database (or, in
+    // development, with the sender that only logs). Otherwise they stay off.
+    const mode = watchMode(config, true);
+    const watch: WatchDeps | undefined =
+      mode === 'off'
+        ? undefined
+        : {
+            repo: pgWatchRepo(pool),
+            sender: mode === 'fake' ? devLogSender() : resendSender(config.emailSendingKey, config.emailFrom),
+            secret: config.tokenSigningSecret,
+            publicSiteUrl: config.publicSiteUrl,
+            perHour: config.watchesPerHour,
+            deleteAfter: config.watchDataDeleteAfter,
+          };
     return {
       sitesRepo: dbSitesRepo(pool),
       seriesProvider: appSeriesProvider(pool),
       terrainRepo: dbTerrainRepo(pool),
       rateLimit,
       customLimit,
+      watch,
     };
   }
   return {
