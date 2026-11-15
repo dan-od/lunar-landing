@@ -72,7 +72,7 @@ interface Part {
 function build(c: EmailContext, subject: string, parts: Part[]): EmailMessage {
   const all: Part[] = [
     ...parts,
-    { link: { label: 'Stop this alert and delete your address (one click)', url: c.unsubscribeUrl } },
+    { link: { label: 'Stop this alert and delete your address', url: c.unsubscribeUrl } },
     { text: KEEP_LINE },
   ];
   const text = all

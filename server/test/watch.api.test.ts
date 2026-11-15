@@ -413,14 +413,15 @@ describe('delete and unsubscribe', () => {
     expect(JSON.stringify(h.repo.dump())).not.toContain(ADDRESS);
   });
 
-  it('every email carries one-click unsubscribe headers and the link; GET deletes the watch and its address', async () => {
+  it('every email carries one-click unsubscribe headers and the link; opening the link deletes nothing, the Stop alerts button does', async () => {
     const h = makeWatchApp();
     const made = await createConfirmed(h);
     await recheck(h, [made.manage_token], BROKEN);
     expect(h.sender.sent.length).toBe(2);
     for (const mail of h.sender.sent) {
-      expect(mail.headers?.['List-Unsubscribe-Post']).toBe('List-Unsubscribe=One-Click');
       const url = unsubscribeUrlIn(mail);
+      expect(mail.headers?.['List-Unsubscribe']).toBe(`<${url.toString()}>`);
+      expect(mail.headers?.['List-Unsubscribe-Post']).toBe('List-Unsubscribe=One-Click');
       expect(url.origin + url.pathname).toBe(`${SITE_URL}/v1/watches/unsubscribe`);
       expect(mail.text).toContain(url.toString());
       expect(mail.html).toContain(url.toString().replace(/&/g, '&amp;'));
@@ -428,21 +429,36 @@ describe('delete and unsubscribe', () => {
     }
 
     const url = unsubscribeUrlIn(h.sender.sent[1]!);
-    const res = await request(h.app).get(url.pathname + url.search);
+    // Opening the link (as a person, or a mail scanner that follows links) only shows a page.
+    for (let i = 0; i < 3; i++) {
+      const page = await request(h.app).get(url.pathname + url.search);
+      expect(page.status).toBe(200);
+      expect(page.headers['content-type']).toMatch(/text\/html/);
+      expect(page.text).toContain('<html lang="en">');
+      expect(page.text).toMatch(/<form method="post" action="\/v1\/watches\/unsubscribe\?token=[^"]+">/);
+      expect(page.text).toContain('>Stop alerts</button>');
+      expect(page.text).not.toMatch(/<(img|script|link)\b/i);
+      expect(page.headers['content-security-policy']).toContain("form-action 'self'");
+    }
+    expect(await h.repo.get(made.id)).toBeDefined();
+
+    // Pressing the button posts the form, which deletes the watch and its address.
+    const action = /action="([^"]+)"/.exec((await request(h.app).get(url.pathname + url.search)).text)![1]!.replace(/&amp;/g, '&');
+    const res = await request(h.app).post(action).type('form').send('stop=1');
     expect(res.status).toBe(200);
-    expect(res.headers['content-type']).toMatch(/text\/html/);
-    expect(res.text).toContain('<html lang="en">');
     expect(res.text).toContain('You are unsubscribed. Your address has been deleted.');
-    expect(res.text).not.toMatch(/<(img|script|link)\b/i);
     expect(h.repo.size()).toBe(0);
     expect(JSON.stringify(h.repo.dump())).not.toContain(ADDRESS);
 
-    // Asking again, or with a made-up token, gets the same friendly page.
+    // Opening or posting again, or with a made-up token, gets the same friendly page and no button.
     for (const path of [url.pathname + url.search, '/v1/watches/unsubscribe?token=%3Cb%3Enope', '/v1/watches/unsubscribe']) {
-      const again = await request(h.app).get(path);
-      expect(again.status).toBe(200);
-      expect(again.text).toContain('There is nothing to remove.');
-      expect(again.text).not.toContain('<b>');
+      for (const method of ['get', 'post'] as const) {
+        const again = await request(h.app)[method](path);
+        expect(again.status).toBe(200);
+        expect(again.text).toContain('There is nothing to remove.');
+        expect(again.text).not.toContain('<b>');
+        expect(again.text).not.toContain('<form');
+      }
     }
   });
 
@@ -471,6 +487,7 @@ describe('delete and unsubscribe', () => {
     const token = unsubscribeUrlIn(h.sender.sent[1]!).searchParams.get('token')!;
     const forged = token.replace(/^\d+\./, `${a.id}.`);
     await request(h.app).get(`/v1/watches/unsubscribe?token=${forged}`);
+    await request(h.app).post(`/v1/watches/unsubscribe?token=${forged}`);
     expect(h.repo.size()).toBe(2);
   });
 });

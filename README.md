@@ -248,7 +248,7 @@ counted).
 | `GET /v1/miss` | `site`; `date`; `hour` (0); `east`, `north` (aim, 0); `accuracy` (250) | terrain model: landings out of 10 that would work at 100, 250 and 320 m, the safest aim, and the grid of prepared points. 409 for a site without prepared terrain |
 | `GET /v1/watches/config` | none | whether email alerts are on here, the four rules, and the privacy line |
 | `POST /v1/watches` | JSON: `site`, `date`, `hour`, `margin`, `accuracy`, optional `aim_east`+`aim_north`, `rule` (`power`, `link3`, `slip14`, `odds70`), `email` | the watch as waiting, and its private manage token; a confirmation email is sent. 404 when email alerts are off |
-| `POST /v1/watches/confirm`, `/lookup`, `/recheck`, `/:id/resend`; `DELETE /v1/watches/:id`; `GET`/`POST /v1/watches/unsubscribe` | confirmation token, or manage tokens | confirm (link valid 24 hours), list with event log, re-check after a scenario change, send a new link, delete, one-click unsubscribe (deletes the address) |
+| `POST /v1/watches/confirm`, `/lookup`, `/recheck`, `/:id/resend`; `DELETE /v1/watches/:id`; `GET`/`POST /v1/watches/unsubscribe` | confirmation token, or manage tokens | confirm (link valid 24 hours), list with event log, re-check after a scenario change, send a new link, delete; unsubscribe: `GET` shows a Stop alerts page, `POST` (the button, or a mail app's one-click) deletes the watch and its address |
 
 Dates run from 1960-01-01 to 2100-12-31 (UTC). Every reply names the model.
 Errors name the field at fault and the allowed range (400), the unknown site
@@ -271,8 +271,11 @@ are set** (and a database is configured). When off, the watch endpoints answer
   same calculator as the API (`slip14` reads the `/v1/slip` result, `odds70` the
   `/v1/miss` result). One alert per break, never one per check, at most 5 a day
   per watch.
-- Every email has a one-click unsubscribe (`List-Unsubscribe`, RFC 8058) that
-  deletes the watch and its address. All watch data is deleted after
+- Every email has an unsubscribe link and the `List-Unsubscribe` and
+  `List-Unsubscribe-Post` headers (RFC 8058), so a mail app's own unsubscribe
+  button works in one click. Opening the link only shows a page with a "Stop
+  alerts" button, so a mail scanner that follows links deletes nothing; the
+  button (or the mail app's one-click request) deletes the watch and its address. All watch data is deleted after
   `WATCH_DATA_DELETE_AFTER` (default 2026-12-15, 30 days after the event).
 - Tokens are stored only as keyed hashes and compared in constant time; logs and
   events show addresses masked (`d•••@example.org`).

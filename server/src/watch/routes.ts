@@ -127,8 +127,12 @@ const tooMany = (message: string, wait: number) =>
 const forbidden = () =>
   new ApiError(403, { error: { field: 'manage_token', message: 'That watch cannot be changed without its private link.' } });
 
-/** A tiny page for the unsubscribe link: no outside files, no logos, text escaped. */
-function unsubscribePage(message: string): string {
+/** A tiny page for the unsubscribe link: no outside files, no logos, text escaped.
+ * With `stopAction`, it shows a "Stop alerts" button that posts to that address. */
+function unsubscribePage(message: string, stopAction?: string): string {
+  const form = stopAction
+    ? `<form method="post" action="${escapeHtml(stopAction)}"><button type="submit" name="stop" value="1">Stop alerts</button></form>`
+    : '';
   return [
     '<!doctype html>',
     '<html lang="en">',
@@ -137,10 +141,10 @@ function unsubscribePage(message: string): string {
     '<meta name="viewport" content="width=device-width, initial-scale=1">',
     '<meta name="robots" content="noindex">',
     '<title>Moon Status alerts</title>',
-    '<style>body{font-family:Arial,Helvetica,sans-serif;font-size:18px;line-height:1.5;margin:0;padding:48px 24px;background:#fff;color:#111}main{max-width:36em;margin:0 auto}</style>',
+    '<style>body{font-family:Arial,Helvetica,sans-serif;font-size:18px;line-height:1.5;margin:0;padding:48px 24px;background:#fff;color:#111}main{max-width:36em;margin:0 auto}button{font:inherit;font-weight:700;min-height:44px;padding:0 20px;background:#07173f;color:#fff;border:0;cursor:pointer}button:focus-visible{outline:3px solid #0042a6;outline-offset:3px}</style>',
     '</head>',
     '<body>',
-    `<main><h1>Moon Status alerts</h1><p>${escapeHtml(message)}</p></main>`,
+    `<main><h1>Moon Status alerts</h1><p>${escapeHtml(message)}</p>${form}</main>`,
     '</body>',
     '</html>',
   ].join('\n');
@@ -466,49 +470,63 @@ export function createWatchRouter(calc: Calc, sitesRepo: SitesRepo, deps?: Watch
     }
   });
 
-  // GET or POST /v1/watches/unsubscribe?token=… — the one-click way out in every
-  // email (RFC 8058). Deletes the watch and its address at once.
-  const unsubscribe = async (req: Request, res: Response, next: (err?: unknown) => void) => {
+  // /v1/watches/unsubscribe?token=… is the way out in every email.
+  // GET only shows a page with a "Stop alerts" button, so a mail scanner or
+  // link preview that opens the link deletes nothing. POST deletes: the button
+  // posts the form, and mail apps' own unsubscribe button posts
+  // "List-Unsubscribe=One-Click" (RFC 8058) to the same address.
+  async function watchForUnsubscribe(req: Request): Promise<{ row?: WatchRow; token?: string }> {
+    const raw = req.query.token;
+    const token = typeof raw === 'string' && raw.length >= 20 && raw.length <= 200 ? raw : undefined;
+    if (!token) return {};
+    const id = unsubscribeTokenId(token);
+    if (id) {
+      const candidate = await repo.get(id);
+      if (candidate && isUnsubscribeTokenFor(token, candidate.id, candidate.manageHash, secret)) return { row: candidate, token };
+      return {};
+    }
+    const hash = hashToken(token, secret);
+    const candidate = await repo.findByManageHash(hash);
+    return candidate && sameHash(candidate.manageHash, hash) ? { row: candidate, token } : {};
+  }
+  const sendPage = (res: Response, html: string) => {
+    res.setHeader('Content-Security-Policy', "default-src 'none'; style-src 'unsafe-inline'; form-action 'self'");
+    res.setHeader('X-Content-Type-Options', 'nosniff');
+    res.setHeader('Referrer-Policy', 'no-referrer');
+    res.setHeader('Cache-Control', 'no-store');
+    res.status(200).type('html').send(html);
+  };
+  const NOTHING = 'There is nothing to remove. This alert has already been stopped and its address deleted.';
+
+  router.get('/unsubscribe', async (req: Request, res: Response, next) => {
     try {
-      const raw = req.query.token;
-      const token = typeof raw === 'string' && raw.length >= 20 && raw.length <= 200 ? raw : undefined;
-      let row: WatchRow | undefined;
-      if (token) {
-        const id = unsubscribeTokenId(token);
-        if (id) {
-          const candidate = await repo.get(id);
-          if (candidate && isUnsubscribeTokenFor(token, candidate.id, candidate.manageHash, secret)) row = candidate;
-        } else {
-          const hash = hashToken(token, secret);
-          const candidate = await repo.findByManageHash(hash);
-          if (candidate && sameHash(candidate.manageHash, hash)) row = candidate;
-        }
-      }
+      const { row, token } = await watchForUnsubscribe(req);
+      sendPage(
+        res,
+        row && token
+          ? unsubscribePage(
+              'Stop this Moon Status alert? Your email address will be deleted, and no more emails will be sent.',
+              `/v1/watches/unsubscribe?token=${encodeURIComponent(token)}`,
+            )
+          : unsubscribePage(NOTHING),
+      );
+    } catch (err) {
+      next(err);
+    }
+  });
+  router.post('/unsubscribe', async (req: Request, res: Response, next) => {
+    try {
+      const { row } = await watchForUnsubscribe(req);
       let removed = false;
       if (row) {
         removed = await repo.delete(row.id);
         if (removed) console.log(`[watch] watch ${row.id} unsubscribed and deleted (${maskEmail(row.address)})`);
       }
-      res.setHeader('Content-Security-Policy', "default-src 'none'; style-src 'unsafe-inline'");
-      res.setHeader('X-Content-Type-Options', 'nosniff');
-      res.setHeader('Referrer-Policy', 'no-referrer');
-      res.setHeader('Cache-Control', 'no-store');
-      res
-        .status(200)
-        .type('html')
-        .send(
-          unsubscribePage(
-            removed
-              ? 'You are unsubscribed. Your address has been deleted.'
-              : 'There is nothing to remove. This alert has already been stopped and its address deleted.',
-          ),
-        );
+      sendPage(res, unsubscribePage(removed ? 'You are unsubscribed. Your address has been deleted.' : NOTHING));
     } catch (err) {
       next(err);
     }
-  };
-  router.get('/unsubscribe', unsubscribe);
-  router.post('/unsubscribe', unsubscribe);
+  });
 
   // POST /v1/watches/:id/resend — a new confirmation link for a waiting or expired watch (5-3).
   router.post('/:id/resend', async (req: Request, res: Response, next) => {
