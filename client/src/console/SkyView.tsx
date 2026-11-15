@@ -2,7 +2,7 @@
 // shadow allowance marked, at the time shown by the marker. Left to right is
 // direction (north, east, south, west, north); up is height above the horizon.
 import { fmtDeg, skyFraction, skyScale, type Readout } from '../siteData';
-import { placeSkyLabels } from './skyLabels';
+import { boxesOverlap, placeSkyLabels, textBox } from './skyLabels';
 
 const W = 300;
 const H = 170;
@@ -38,12 +38,35 @@ export function SkyView({ readout, marginDeg, tDays, horizon }: Props) {
     { key: 'sun', name: 'SUN', elev: readout.sunElev, az: readout.sunAz, cls: 'sky-sun' },
     { key: 'earth', name: 'EARTH', elev: readout.earthElev, az: readout.earthAz, cls: 'sky-earth' },
   ].map((b) => ({ ...b, text: `${b.name} ${fmtDeg(b.elev)}${b.elev < scale.lo ? ' ▼' : ''}` }));
+  // The line's own label ("ALLOWANCE 2.0°" or "TERRAIN HORIZON") sits at the right
+  // end of its line; if a body label would still touch it there, it moves to the left end.
+  const lineText = horizon ? 'TERRAIN HORIZON' : `ALLOWANCE ${marginDeg.toFixed(1)}°`;
+  const lineY = horizon ? TOP + 9 : marginY - 3;
+  const ends = [
+    { x: LEFT + PLOT_W - 3, anchor: 'end' as const },
+    { x: LEFT + 3, anchor: 'start' as const },
+  ];
   // Labels are placed together so they never overlap when the two are close.
-  const labels = placeSkyLabels(
-    bodies.map((b) => ({ cx: x(b.az), cy: b.elev < scale.lo ? bottom - 7 : y(b.elev), text: b.text })),
-    // Keep labels off the frame edges, the horizon, and the allowance line.
-    { left: LEFT, right: LEFT + PLOT_W, top: TOP, bottom, lines: horizon ? [TOP, bottom, horizonY] : [TOP, bottom, horizonY, marginY] },
-  );
+  const place = (box: ReturnType<typeof textBox>) =>
+    placeSkyLabels(
+      bodies.map((b) => ({ cx: x(b.az), cy: b.elev < scale.lo ? bottom - 7 : y(b.elev), text: b.text })),
+      // Keep labels off the frame edges, the horizon, the allowance line and its label.
+      {
+        left: LEFT,
+        right: LEFT + PLOT_W,
+        top: TOP,
+        bottom,
+        lines: horizon ? [TOP, bottom, horizonY] : [TOP, bottom, horizonY, marginY],
+        avoid: [box],
+      },
+    );
+  const tries = ends.map((e) => {
+    const box = textBox(e.x, lineY, e.anchor, lineText);
+    const labels = place(box);
+    return { ...e, labels, clear: !labels.some((l) => boxesOverlap(l.box, box)) };
+  });
+  const pick = tries.find((t) => t.clear) ?? tries[0]!;
+  const labels = pick.labels;
 
   const describe = (name: string, elev: number, az: number) =>
     `${name} ${Math.abs(elev).toFixed(1)} degrees ${elev >= 0 ? 'above' : 'below'} the horizon, toward the ${compass(az)}`;
@@ -70,7 +93,7 @@ export function SkyView({ readout, marginDeg, tDays, horizon }: Props) {
         <>
           {/* terrain horizon in every direction */}
           <path className="sky-terrain" d={terrainPath} />
-          <text className="sky-t sky-margin-t" x={LEFT + PLOT_W - 3} y={TOP + 9} textAnchor="end">
+          <text className="sky-t sky-margin-t" x={pick.x} y={lineY} textAnchor={pick.anchor}>
             TERRAIN HORIZON
           </text>
         </>
@@ -78,7 +101,7 @@ export function SkyView({ readout, marginDeg, tDays, horizon }: Props) {
         <>
           {/* shadow allowance */}
           <line className="sky-margin" x1={LEFT} x2={LEFT + PLOT_W} y1={marginY} y2={marginY} />
-          <text className="sky-t sky-margin-t" x={LEFT + PLOT_W - 3} y={marginY - 3} textAnchor="end">
+          <text className="sky-t sky-margin-t" x={pick.x} y={lineY} textAnchor={pick.anchor} data-label="allowance">
             ALLOWANCE {marginDeg.toFixed(1)}°
           </text>
         </>

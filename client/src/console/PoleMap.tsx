@@ -1,7 +1,7 @@
 // South pole map: looking down on the pole, 0° longitude at the top, east to the
 // right. Pins show each site's state at the time marker. The Sun and Earth sit
 // at the longitude where each is overhead, derived from NASA positions.
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useId, useRef, useState, type ReactNode } from 'react';
 import type { SiteRow } from './types';
 import { placePinLabels } from './pinLabels';
 import { NO_DATA } from './types';
@@ -26,13 +26,27 @@ interface Props {
   onSelect: (id: string) => void;
   /** Longitudes (east) where the Sun and Earth are overhead; absent without data. */
   overhead?: { sun: number; earth: number };
+  /** Only these rows are drawn (the phone filter chips). */
+  visible?: (row: SiteRow) => boolean;
+  /** Draw each marker with its state symbol (phone). */
+  statusMarkers?: boolean;
+  /** Zoom in with this site at the centre (the phone site card). */
+  focusId?: string;
+  /** Replaces the note about sites north of the map. */
+  offMapNote?: (count: number) => ReactNode;
+  caption?: string;
 }
 
-export function PoleMap({ rows, selectedId, onSelect, overhead }: Props) {
+/** How far the map zooms in around one site. */
+const ZOOM = 3;
+
+export function PoleMap({ rows, selectedId, onSelect, overhead, visible, statusMarkers, focusId, offMapNote, caption }: Props) {
+  const titleId = useId();
   // The aim point sits within a few hundred metres of its target, so it shares
   // that pin; it is listed and charted as its own row.
-  const onMap = rows.filter((r) => r.site.lat <= EDGE_LAT && !r.site.aim);
-  const offMap = rows.filter((r) => r.site.lat > EDGE_LAT && !r.site.aim);
+  const shown = visible ? rows.filter(visible) : rows;
+  const onMap = shown.filter((r) => r.site.lat <= EDGE_LAT && !r.site.aim);
+  const offMap = shown.filter((r) => r.site.lat > EDGE_LAT && !r.site.aim);
   // The disc is the largest square that fits the pane, centred and padded. It is
   // measured rather than left to container-query units, which older Chrome
   // resolves to zero when the pane's height comes from its minimum height.
@@ -55,36 +69,61 @@ export function PoleMap({ rows, selectedId, onSelect, overhead }: Props) {
   }, []);
 
   const px = size ?? 520;
-  const pinPos = onMap.map((r) => {
-    const rr = ((90 + r.site.lat) / (90 + EDGE_LAT)) * RIM;
-    return { r, ...polar(r.site.lon, rr) };
-  });
+  const place = (lat: number, lon: number) => polar(lon, ((90 + lat) / (90 + EDGE_LAT)) * RIM);
+  // Zoomed on one site: that site sits at the centre and everything scales up.
+  const focusSite = focusId ? onMap.find((r) => r.site.id === focusId)?.site : undefined;
+  const f = focusSite ? place(focusSite.lat, focusSite.lon) : null;
+  const zoom = f ? ZOOM : 1;
+  const project = (p: { x: number; y: number }) => (f ? { x: C + (p.x - f.x) * zoom, y: C + (p.y - f.y) * zoom } : p);
+  const inView = (p: { x: number; y: number }) => Math.hypot(p.x - C, p.y - C) <= 47;
+  const pinPos = onMap
+    .map((r) => ({ r, ...project(place(r.site.lat, r.site.lon)) }))
+    .filter((p) => !f || inView(p));
+  const centre = project({ x: C, y: C });
+  const RINGS = [RIM, 27.8, 16.7, 8.3];
   // The rim and the three rings, so names are kept off their lines.
-  const circles = [RIM, 27.8, 16.7, 8.3].map((r) => ({ cx: px / 2, cy: px / 2, r: (r / 100) * px }));
+  const circles = RINGS.map((r) => ({ cx: (centre.x / 100) * px, cy: (centre.y / 100) * px, r: ((r * zoom) / 100) * px }));
+  const circleStyle = (r: number) => ({
+    left: pct(centre.x - r * zoom),
+    top: pct(centre.y - r * zoom),
+    width: pct(2 * r * zoom),
+    height: pct(2 * r * zoom),
+  });
   const labels = placePinLabels(
     pinPos.map((p) => ({ id: p.r.site.id, x: (p.x / 100) * px, y: (p.y / 100) * px, text: p.r.short })),
     selectedId,
     circles,
   );
 
-  const sun = overhead ? polar(overhead.sun, BODY) : null;
-  const earth = overhead ? polar(overhead.earth, BODY) : null;
+  // Zoomed in, the Sun and Earth sit on the edge of the view, in their direction from the site.
+  const body = (lon: number) => {
+    const full = polar(lon, BODY);
+    if (!f) return full;
+    const a = Math.atan2(full.y - f.y, full.x - f.x);
+    return { x: C + 44 * Math.cos(a), y: C + 44 * Math.sin(a) };
+  };
+  const sun = overhead ? body(overhead.sun) : null;
+  const earth = overhead ? body(overhead.earth) : null;
 
   return (
-    <section ref={wrap} className="mapwrap fill" aria-labelledby="map-title">
-      <h2 className="cap" id="map-title">
-        02 / SOUTH POLE · POLAR VIEW
+    <section ref={wrap} className="mapwrap fill" aria-labelledby={titleId}>
+      <h2 className="cap" id={titleId}>
+        {caption ?? '02 / SOUTH POLE · POLAR VIEW'}
       </h2>
       <div
-        className="disc"
+        className={`disc ${f ? 'zoom' : ''}`}
         style={size ? { width: size } : undefined}
         role="group"
-        aria-label="South pole map, from 65 degrees south to the pole. Zero longitude is at the top."
+        aria-label={
+          f && focusSite
+            ? `South pole map, zoomed in with ${focusSite.name} at the centre. Zero longitude is toward the top.`
+            : 'South pole map, from 65 degrees south to the pole. Zero longitude is at the top.'
+        }
       >
-        <div className="rim" />
-        <div className="ring" style={{ inset: '22.2%' }} />
-        <div className="ring" style={{ inset: '33.3%' }} />
-        <div className="ring" style={{ inset: '41.7%' }} />
+        <div className="rim" style={circleStyle(RIM)} />
+        {RINGS.slice(1).map((r) => (
+          <div key={r} className="ring" style={circleStyle(r)} />
+        ))}
         {earth && (
           <>
             <div
@@ -119,13 +158,14 @@ export function PoleMap({ rows, selectedId, onSelect, overhead }: Props) {
             <span key={r.site.id}>
               <button
                 type="button"
-                className={`pin ${ready ? 'ok' : ''} ${state ? '' : 'nodata'}`}
+                className={`pin ${ready ? 'ok' : ''} ${state ? '' : 'nodata'} ${statusMarkers ? 'status' : ''}`}
                 style={{ left: `calc(${pct(x)} - 22px)`, top: `calc(${pct(y)} - 22px)` }}
-                aria-pressed={selected}
+                aria-pressed={statusMarkers ? undefined : selected}
+                data-site={r.site.id}
                 aria-label={`${r.site.name}, ${word.toLowerCase()}`}
                 onClick={() => onSelect(r.site.id)}
               >
-                <span />
+                {statusMarkers ? <span aria-hidden="true">{state?.symbol ?? NO_DATA.symbol}</span> : <span />}
               </button>
               {label.side !== 'hidden' && (
                 <div
@@ -140,7 +180,8 @@ export function PoleMap({ rows, selectedId, onSelect, overhead }: Props) {
           );
         })}
       </div>
-      {offMap.length > 0 && (
+      {offMap.length > 0 && offMapNote && !f && offMapNote(offMap.length)}
+      {offMap.length > 0 && !offMapNote && !f && (
         <p className="mapnote mono">
           {offMap.length <= 3
             ? `NOT ON THIS MAP (NORTH OF 65° S): ${offMap.map((r) => r.short).join(', ')}. USE THE SITE LIST.`

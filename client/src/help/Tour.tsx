@@ -7,6 +7,7 @@ import { useLocation } from 'react-router-dom';
 import { useApp } from '../state';
 import { TOUR, TOUR_KEY } from './content';
 import { prefersReducedMotion, useDialogFocus } from './useDialogFocus';
+import { usePhone } from '../usePhone';
 
 function remembered(): boolean {
   try {
@@ -59,7 +60,9 @@ export function Tour({ ready }: { ready: boolean }) {
   });
 
   // Point at the current step's part of the page.
-  const current = TOUR[step]!;
+  const phone = usePhone();
+  const step0 = TOUR[step]!;
+  const current = phone ? { ...step0, ...step0.phone } : step0;
   useEffect(() => {
     if (!tourOpen) return;
     const el = document.querySelector<HTMLElement>(current.target);

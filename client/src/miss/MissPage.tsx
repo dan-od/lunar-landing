@@ -19,6 +19,10 @@ import { MissMap } from './MissMap';
 import { Term } from '../help/Term';
 import { tabFor } from '../tabs';
 import { usePageMeta } from '../meta';
+import { useSiteData } from '../useSiteData';
+import { resultFor } from '../siteData';
+import { hh } from '../components/WhenFields';
+import { differsNote, targetWorks } from './differs';
 
 const TAB = tabFor('/miss')!;
 
@@ -36,12 +40,14 @@ interface Terrain {
 }
 
 export function MissPage() {
-  const { scenario, update, started, start, sites, terrainSite, sitesStatus, search, say } = useApp();
+  const { scenario, update, started, start, sites, terrainSite, sitesStatus, search, say, force } = useApp();
   const navigate = useNavigate();
   const [terrain, setTerrain] = useState<Terrain | null>(null);
   const [failure, setFailure] = useState<{ key: string; error: ApiFailure } | null>(null);
   const [announce, setAnnounce] = useState('');
   const moved = useRef(false);
+  // "Safest place" is only claimed once Move to the safest spot has been pressed.
+  const [tookBest, setTookBest] = useState(false);
 
   usePageMeta(TAB.title, TAB.description, TAB.path);
   useEffect(() => {
@@ -53,6 +59,11 @@ export function MissPage() {
   const site = selected?.aim ? terrainSite : selected;
   const hasTerrain = Boolean(site?.has_terrain);
   const key = site ? `${site.id}|${scenario.date}|${scenario.hour}` : '';
+  // What the Console shows for the target, so a disagreement can be explained.
+  const one = useMemo(() => (site && hasTerrain ? [site] : []), [site, hasTerrain]);
+  const consoleData = useSiteData(started ? one : [], scenario.date, scenario.hour, force);
+  const consoleSeries = site ? consoleData.data[site.id] : undefined;
+  const consoleState = consoleSeries && !consoleSeries.horizon ? resultFor(consoleSeries, scenario.margin).landing : undefined;
 
   useEffect(() => {
     if (!started || !site || !hasTerrain) return;
@@ -191,6 +202,13 @@ export function MissPage() {
   }
 
   const onTarget = aim.east === 0 && aim.north === 0;
+  const atBest = tookBest && aim.east === best.east && aim.north === best.north;
+  const differs = differsNote(
+    consoleState,
+    targetWorks(current.grid, current.stepM),
+    shortName(site),
+    `${scenario.date} ${hh(scenario.hour)}`,
+  );
   const safer = best.share > chosen.share + 0.04;
   const view = (current.halfM * 2 + current.stepM) / 1000;
   const nudges: Array<{ de: number; dn: number; arrow: string; word: string }> = [
@@ -251,6 +269,11 @@ export function MissPage() {
         <p className="pad line miss-aim">
           {onTarget ? 'You are aiming at the original target.' : `You are aiming ${aimText(aim)}.`}
         </p>
+        {differs && (
+          <p className="pad line miss-differs" role="note">
+            <b>Why this differs from the Console.</b> {differs}
+          </p>
+        )}
 
         {odds.map((o) => {
           const n = outOfTen(o.share);
@@ -281,11 +304,20 @@ export function MissPage() {
         <p className="pad line miss-aim">
           {safer
             ? `There is a safer place to aim: ${aimText(best)}. There, ${outOfTen(best.share)} out of 10 landings would work.`
-            : 'This is the safest place to aim that keeps the whole ring inside the prepared terrain.'}
+            : atBest
+              ? 'This is the safest place to aim that keeps the whole ring inside the prepared terrain.'
+              : `No nearby aim is clearly safer. The safest spot gives ${outOfTen(best.share)} out of 10.`}
         </p>
 
         <div className="grid2 line">
-          <button type="button" className="btn" onClick={() => moveAim(best)}>
+          <button
+            type="button"
+            className="btn"
+            onClick={() => {
+              setTookBest(true);
+              moveAim(best);
+            }}
+          >
             MOVE TO THE SAFEST SPOT
           </button>
           <button type="button" className="miss-plain" onClick={() => moveAim({ east: 0, north: 0 })}>

@@ -15,6 +15,8 @@ import { Tour } from '../help/Tour';
 import { Incidents } from './IncidentList';
 import { groupSites, SEARCH_FROM } from './siteGroups';
 import { NO_DATA, type SiteRow } from './types';
+import { PhoneConsole } from './PhoneConsole';
+import { usePhone } from '../usePhone';
 
 const TAB = TABS[0]!;
 
@@ -41,6 +43,7 @@ export function ConsolePage() {
   const [query, setQuery] = useState('');
   const listRef = useRef<HTMLElement>(null);
   const focusList = useRef(false);
+  const phone = usePhone();
 
   usePageMeta(TAB.title, TAB.description, TAB.path);
 
@@ -154,6 +157,57 @@ export function ConsolePage() {
   const busy = sitesLoading || loading;
   const overhead = selected?.now ? overheadLongitudes(selected.site.lat, selected.site.lon, selected.now) : undefined;
 
+  const csvHref = selected
+    ? windowsCsvUrl(
+        selected.site.aim?.base ?? selected.site.id,
+        scenario.date,
+        scenario.hour,
+        DISPLAY_DAYS,
+        scenario.margin,
+        selected.site.aim,
+      )
+    : '';
+  const landingIso = `${scenario.date}T${String(scenario.hour).padStart(2, '0')}:00:00Z`;
+  const onPlay = () => {
+    setPlaying((p) => !p);
+    if (!playing && prefersReducedMotion()) say('Reduced motion is on: the marker jumps in 5-day steps.');
+  };
+
+  if (phone) {
+    return (
+      <>
+        <PhoneConsole
+          rows={rows}
+          busy={busy}
+          fetching={fetching}
+          selectedId={selected?.site.id ?? ''}
+          banner={
+            <>
+              {down && <DownBanner message={down.message} retries={retries} onRetry={() => { retry(); reloadSites(); }} />}
+              {partial && !down && (
+                <div className="ban" role="status">
+                  <span>Only part of these 30 days is saved, so some bars stop early.</span>
+                </div>
+              )}
+            </>
+          }
+          onSelect={(id) => update({ site: id, t: 0 })}
+          t={scenario.t}
+          marginDeg={scenario.margin}
+          playing={playing}
+          onPlay={onPlay}
+          onScrub={(t) => update({ t })}
+          csvHref={csvHref}
+          landingIso={landingIso}
+          onPickChange={(id, t) => update({ site: id, t: Math.min(DISPLAY_DAYS, Math.round(t * 2) / 2) })}
+          addBlocked={down ? addBlocked : null}
+          onAdd={add}
+        />
+        <Tour ready={rows.length > 0 && !busy} />
+      </>
+    );
+  }
+
   const side = (
     <aside className="side" ref={listRef} aria-labelledby="sites-title">
       <h2 className="lbl" id="sites-title">
@@ -263,14 +317,11 @@ export function ConsolePage() {
           t={scenario.t}
           playing={playing}
           onScrub={(t) => update({ t })}
-          onPlay={() => {
-            setPlaying((p) => !p);
-            if (!playing && prefersReducedMotion()) say('Reduced motion is on: the marker jumps in 5-day steps.');
-          }}
+          onPlay={onPlay}
         />
         <Incidents
           rows={rows}
-          landingIso={`${scenario.date}T${String(scenario.hour).padStart(2, '0')}:00:00Z`}
+          landingIso={landingIso}
           onPick={(id, t) => update({ site: id, t: Math.min(DISPLAY_DAYS, Math.round(t * 2) / 2) })}
         />
       </div>
@@ -282,14 +333,7 @@ export function ConsolePage() {
           t={scenario.t}
           marginDeg={scenario.margin}
           search={search}
-          csvHref={windowsCsvUrl(
-            selected.site.aim?.base ?? selected.site.id,
-            scenario.date,
-            scenario.hour,
-            DISPLAY_DAYS,
-            scenario.margin,
-            selected.site.aim,
-          )}
+          csvHref={csvHref}
         />
       )}
     </main>

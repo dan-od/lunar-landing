@@ -127,6 +127,8 @@ export interface TourStep {
   target: string;
   title: string;
   text: string;
+  /** On a phone (under 600 px) the page is laid out differently. */
+  phone: { target: string; text: string };
 }
 
 export const TOUR: TourStep[] = [
@@ -134,21 +136,37 @@ export const TOUR: TourStep[] = [
     target: '#sites-title',
     title: 'Places to land',
     text: 'Each row is a place a lander could touch down. The word on the right says whether it would work at the landing moment.',
+    phone: {
+      target: '#board-title',
+      text: 'Each tile is a place a lander could touch down. The symbol and word say whether it would work at the landing moment. Tap a tile for its card.',
+    },
   },
   {
     target: '.scn-when',
     title: 'When it lands',
     text: 'Set the landing date and hour here, in UTC, or press Now. The −1 d, +1 d and +10 d buttons move the date.',
+    phone: {
+      target: '.pdate',
+      text: 'Tap the date to change the landing date and hour (UTC), step it by days, months or years, or check slip. Now sets the current hour.',
+    },
   },
   {
     target: '.tl',
     title: 'The next 30 days',
     text: 'Yellow bars are sunlight for power; blue bars are Earth in view for contact. Drag the slider or press Play.',
+    phone: {
+      target: '.tiles',
+      text: 'The strip on each tile lights up where the Sun and Earth are both up in the next 30 days. The card shows them apart and plays them.',
+    },
   },
   {
     target: '#insp-title',
     title: 'The details',
     text: 'The numbers for the chosen place at the moment on the slider. Help, at the top, explains each one.',
+    phone: {
+      target: '.chips',
+      text: 'Show only the sites that are ready, or that lack power or a link. Map shows the same sites on the south pole map.',
+    },
   },
 ];
 

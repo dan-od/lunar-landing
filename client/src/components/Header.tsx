@@ -5,22 +5,15 @@ import { shortName, useApp } from '../state';
 import { shiftDate } from '../scenario';
 import { WhenFields, hh } from './WhenFields';
 import { Term } from '../help/Term';
-
-// The spoken name starts with the visible text, then says what it does.
-const SLIPS: Array<{ key: string; by: { days?: number; months?: number; years?: number }; text: string; more: string }> = [
-  { key: 'd-1', by: { days: -1 }, text: '−1 d', more: 'landing one day earlier' },
-  { key: 'd1', by: { days: 1 }, text: '+1 d', more: 'landing one day later' },
-  { key: 'd10', by: { days: 10 }, text: '+10 d', more: 'landing ten days later' },
-  { key: 'm-1', by: { months: -1 }, text: '−1 mo', more: 'landing one month earlier' },
-  { key: 'm1', by: { months: 1 }, text: '+1 mo', more: 'landing one month later' },
-  { key: 'y-1', by: { years: -1 }, text: '−1 y', more: 'landing one year earlier' },
-  { key: 'y1', by: { years: 1 }, text: '+1 y', more: 'landing one year later' },
-];
+import { usePhone } from '../usePhone';
+import { PhoneDateBar } from './DateSheet';
+import { SLIPS } from './slips';
 
 export function Header() {
   const { scenario, update, search, sites, started, drawerOpen, setDrawerOpen, helpOpen, setHelpOpen, say } = useApp();
   const [moreOpen, setMoreOpen] = useState(false);
   const site = sites.find((s) => s.id === scenario.site);
+  const phone = usePhone();
 
   return (
     <header>
@@ -65,6 +58,9 @@ export function Header() {
         </div>
       </div>
 
+      {phone ? (
+        <PhoneDateBar />
+      ) : (
       <div className="scn mono" role="group" aria-label="Scenario">
         <span className="lead">SCENARIO</span>
         <span>
@@ -124,6 +120,7 @@ export function Header() {
           ))}
         </span>
       </div>
+      )}
     </header>
   );
 }

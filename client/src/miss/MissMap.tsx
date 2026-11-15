@@ -4,6 +4,7 @@
 // from the keyboard.
 import type { MouseEvent } from 'react';
 import { MISS_RADII, type Aim, type GridPoint } from '@moon/core';
+import { missLabelSpots, type LabelSpot } from './missLabels';
 
 interface Props {
   grid: GridPoint[];
@@ -27,19 +28,16 @@ export function MissMap({ grid, stepM, halfM, aim, accuracy, onAim }: Props) {
     onAim({ east, north });
   };
 
-  const label = (x: number, y: number, text: string, cls: string) => {
-    const w = text.length * 15 + 16;
-    // Keep the label inside the picture.
-    const left = Math.min(reach - w - 8, Math.max(-reach + 8, x));
-    return (
-      <g className={cls}>
-        <rect x={left} y={y - 22} width={w} height={30} />
-        <text x={left + 8} y={y}>
-          {text}
-        </text>
-      </g>
-    );
-  };
+  // The two labels are placed together so AIM never covers ORIGINAL TARGET.
+  const spots = missLabelSpots(aim, reach);
+  const label = (s: LabelSpot, text: string, cls: string) => (
+    <g className={cls}>
+      <rect x={s.x} y={s.y - 22} width={s.w} height={30} />
+      <text x={s.x + 8} y={s.y}>
+        {text}
+      </text>
+    </g>
+  );
 
   return (
     <svg
@@ -86,12 +84,12 @@ export function MissMap({ grid, stepM, halfM, aim, accuracy, onAim }: Props) {
 
       {/* original target */}
       <path className="miss-target" d="M0,-12 L12,0 L0,12 L-12,0 Z" />
-      {label(18, 34, 'ORIGINAL TARGET', 'miss-label target')}
+      {label(spots.target, 'ORIGINAL TARGET', 'miss-label target')}
 
       {/* aim */}
       <line className="miss-cross" x1={aim.east - 22} x2={aim.east + 22} y1={-aim.north} y2={-aim.north} />
       <line className="miss-cross" x1={aim.east} x2={aim.east} y1={-aim.north - 22} y2={-aim.north + 22} />
-      {label(aim.east + 14, -aim.north - 16, 'AIM', 'miss-label aim')}
+      {label(spots.aim, 'AIM', 'miss-label aim')}
     </svg>
   );
 }

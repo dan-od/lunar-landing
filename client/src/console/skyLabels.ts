@@ -41,9 +41,10 @@ const overlaps = (a: SkyLabelBox, b: SkyLabelBox) =>
 
 export function placeSkyLabels(
   items: SkyLabelInput[],
-  bounds: { left: number; right: number; top: number; bottom: number; lines?: number[] },
+  bounds: { left: number; right: number; top: number; bottom: number; lines?: number[]; avoid?: SkyLabelBox[] },
 ): SkyLabel[] {
   const lines = bounds.lines ?? [];
+  const avoid = bounds.avoid ?? [];
   const crossesLine = (b: SkyLabelBox) => lines.some((y) => b.top < y && y < b.bottom);
   const inside = (b: SkyLabelBox) =>
     b.top >= bounds.top && b.bottom <= bounds.bottom + 12 && b.left >= bounds.left - 30 && b.right <= bounds.right;
@@ -63,7 +64,7 @@ export function placeSkyLabels(
         const y = it.cy + 4 + off;
         const box = boxFor(x, y, side, it.text);
         if (!inside(box)) continue;
-        const clearOfLabels = !placed.some((p) => overlaps(p.box, box));
+        const clearOfLabels = !placed.some((p) => overlaps(p.box, box)) && !avoid.some((a) => overlaps(a, box));
         if (clearOfLabels && !fallback) fallback = { x, y, anchor: side, box };
         if (clearOfLabels && !crossesLine(box)) {
           chosen = { x, y, anchor: side, box };
@@ -82,3 +83,10 @@ export function placeSkyLabels(
   }
   return placed;
 }
+
+/** The box of a fixed label (such as "ALLOWANCE 2.0°"), so body labels can keep clear of it. */
+export function textBox(x: number, y: number, anchor: 'start' | 'end', text: string): SkyLabelBox {
+  return boxFor(x, y, anchor, text);
+}
+
+export { overlaps as boxesOverlap };

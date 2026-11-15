@@ -16,6 +16,8 @@ import { hh } from '../components/WhenFields';
 import { confirmWatch, WatchFailure } from './watchApi';
 import { EmailWatchForm, EmailWatchList } from './EmailWatch';
 import { useWatches } from './WatchesProvider';
+import { usePhone } from '../usePhone';
+import { cardTime } from '../console/phoneBoard';
 
 const TAB = tabFor('/watch')!;
 
@@ -41,6 +43,8 @@ const CONFIRM = new URLSearchParams(window.location.search).get('confirm');
 export function WatchPage() {
   const { scenario, started, start, sites, force, search, say } = useApp();
   const { replace } = useWatches();
+  const phone = usePhone();
+  const [emailOpen, setEmailOpen] = useState(false);
   const [remind, setRemind] = useState(60);
   const [confirmMsg, setConfirmMsg] = useState('');
   const confirmed = useRef(false);
@@ -83,6 +87,119 @@ export function WatchPage() {
   const model = result?.model === 'terrain'
     ? 'Terrain model: judged against the horizon at this aim point, from the LOLA elevation map.'
     : `Smooth-Moon model with a ${scenario.margin.toFixed(1)}° shadow allowance; hills are not counted.`;
+
+  const reminder = (
+    <label className="fld">
+      <span>REMIND ME</span>
+      <Select width="short" value={remind} onChange={(e) => setRemind(Number(e.target.value))}>
+        {REMINDERS.map((r) => (
+          <option key={r.minutes} value={r.minutes}>
+            {r.label}
+          </option>
+        ))}
+      </Select>
+    </label>
+  );
+
+  // Phone (A, screen 5): one card per change, each with its own + calendar button.
+  if (phone) {
+    return (
+      <main id="content" tabIndex={-1} className="pbody">
+        <h1 className="sr">Watch a landing site</h1>
+        {confirmMsg && (
+          <div className="ban" role="status">
+            <span>{confirmMsg}</span>
+          </div>
+        )}
+        <h2 className="pboard-head mono" id="changes-title">
+          UPCOMING AT {site ? shortName(site).toUpperCase() : '…'} · 30 DAYS
+        </h2>
+        {failure && !series && (
+          <div className="ban" role="status">
+            <span>
+              <b>▲ {failure.message}</b> The changes cannot be listed until positions load.
+            </span>
+          </div>
+        )}
+        {loading || (!series && !failure) ? (
+          <div aria-busy="true">
+            <div className="lbl" role="status">
+              ASKING NASA HORIZONS FOR SUN AND EARTH POSITIONS
+            </div>
+            {Array.from({ length: 5 }, (_, i) => (
+              <div key={i} className="sk" />
+            ))}
+          </div>
+        ) : result && changes.length === 0 ? (
+          <p className="pad">
+            Nothing changes in the 30 days after landing: the Sun stays {result.landing.powerUp ? 'up' : 'down'} and Earth
+            stays {result.landing.linkUp ? 'in view' : 'out of view'} the whole time.
+          </p>
+        ) : result ? (
+          <ul className="wcards" aria-labelledby="changes-title">
+            {changes.map((c) => (
+              <li key={`${c.kind}-${c.time}`} className="wcard">
+                <span aria-hidden="true" className={`wcard-sym ${MARKS[c.kind].cls}`}>
+                  {MARKS[c.kind].symbol}
+                </span>
+                <span className="wcard-text">
+                  <b>
+                    {c.label} <span className="c-sun">· {fmtDuration(c.hoursAfterLanding)} after landing</span>
+                  </b>
+                  <span className="mono hint">{cardTime(c.time)}</span>
+                </span>
+                <a
+                  className="wcard-add"
+                  href={icsUrl({ at: c.time, kind: c.kind })}
+                  download
+                  aria-label={`Add ${c.label}, ${when(c.time)} UTC, to your calendar`}
+                >
+                  <span aria-hidden="true">+</span>
+                </a>
+              </li>
+            ))}
+          </ul>
+        ) : null}
+        <div className="pad wphone-all">
+          {reminder}
+          {changes.length > 0 ? (
+            <a className="btn as-button watch-all" href={icsUrl()} download>
+              ADD ALL {changes.length} TO CALENDAR
+            </a>
+          ) : (
+            <button type="button" className="btn watch-all" disabled>
+              ADD ALL TO CALENDAR
+            </button>
+          )}
+          <p className="hint">Each + downloads a calendar file with a reminder. Nothing is stored here.</p>
+        </div>
+        <section className={`fold ${emailOpen ? 'open' : ''}`}>
+          <h2 className="wfold-h">
+            <button
+              type="button"
+              className="fold-head"
+              aria-expanded={emailOpen}
+              aria-controls="email-fold"
+              onClick={() => setEmailOpen((o) => !o)}
+            >
+              <span className="fold-title">EMAIL ME IF IT STOPS WORKING</span>
+              <span className="fold-sum" />
+              <span aria-hidden="true" className="fold-caret">
+                {emailOpen ? '▾' : '▸'}
+              </span>
+            </button>
+          </h2>
+          <div id="email-fold" hidden={!emailOpen}>
+            {emailOpen && <EmailWatchForm />}
+          </div>
+        </section>
+        <EmailWatchList />
+        <p className="pad hint">
+          {model} Positions from NASA JPL Horizons, hourly, so each time is to the hour.
+        </p>
+      </main>
+    );
+  }
 
   return (
     <main id="content" tabIndex={-1} className="body">
@@ -171,16 +288,7 @@ export function WatchPage() {
           02 / ADD TO YOUR CALENDAR
         </h2>
         <div className="pad line">
-          <label className="fld">
-            <span>REMIND ME</span>
-            <Select width="short" value={remind} onChange={(e) => setRemind(Number(e.target.value))}>
-              {REMINDERS.map((r) => (
-                <option key={r.minutes} value={r.minutes}>
-                  {r.label}
-                </option>
-              ))}
-            </Select>
-          </label>
+          {reminder}
           {changes.length > 0 ? (
             <a className="btn as-button watch-all" href={icsUrl()} download>
               ADD ALL {changes.length} TO CALENDAR

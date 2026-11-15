@@ -1,7 +1,8 @@
 // Flow 3: compare two cases. Two equal panes, each with its own place, date and
 // hour, and a change report built from the same calculator results shown on
 // each side. Behaviour and wording follow the flow prototype.
-import { useEffect, useId } from 'react';
+import { useEffect, useId, useState, type KeyboardEvent } from 'react';
+import { usePhone } from '../usePhone';
 import { Select } from '../components/Select';
 import { Link } from 'react-router-dom';
 import { buildReport, reportText, shownDays, type WindowResult } from '@moon/core';
@@ -20,6 +21,11 @@ import { QUICK_SETUPS, sideA, sideB } from './sides';
 import { useCase, type CaseData, type CaseSource } from './useCase';
 
 const TAB = tabFor('/compare')!;
+
+/** Short chip words on a phone; the full setup name is still spoken. */
+const SHORT: Record<string, string> = { date: '+10 DAYS', time: '+12 HOURS', site: 'TWO SITES', aim: 'MY AIM' };
+/** Report lines shown under the pinned verdict before "more". */
+const PINNED_LINES = 2;
 
 interface PaneProps {
   letter: 'A' | 'B';
@@ -145,6 +151,9 @@ export function ComparePage() {
   const a = sideA(scenario);
   const b = sideB(scenario, ids);
   const ready = started && sites.length > 0;
+  const phone = usePhone();
+  const [tab, setTab] = useState<'A' | 'B'>('A');
+  const [allLines, setAllLines] = useState(false);
 
   usePageMeta(TAB.title, TAB.description, TAB.path);
 
@@ -194,13 +203,10 @@ export function ComparePage() {
     }
   };
 
-  return (
-    <main id="content" tabIndex={-1} className="cmp-page">
-      <h1 className="sr">Compare two cases</h1>
-
+  const setups = (
       <div className="cmp-setups" role="group" aria-labelledby="setups-title">
         <h2 className="lbl" id="setups-title">
-          01 / QUICK SETUPS
+          {phone ? 'TRY:' : '01 / QUICK SETUPS'}
         </h2>
         {QUICK_SETUPS.map((q) => {
           // "Target vs my aim" needs an aim that has been moved on the Miss tab.
@@ -220,7 +226,14 @@ export function ComparePage() {
                 )
               }
             >
-              {q.label}
+              {phone ? (
+                <>
+                  {SHORT[q.key]}
+                  <span className="sr">: {q.label.toLowerCase()}</span>
+                </>
+              ) : (
+                q.label
+              )}
             </button>
           );
         })}
@@ -234,6 +247,112 @@ export function ComparePage() {
           </span>
         )}
       </div>
+  );
+
+  const actions = (
+    <div className="grid2 exits cmp-actions">
+      <button type="button" className="btn" disabled={!report} onClick={copy}>
+        COPY REPORT
+      </button>
+      <Link to={{ pathname: '/watch', search }}>WATCH THIS</Link>
+    </div>
+  );
+
+  // Phone (A, screen 4): setup chips, the verdict pinned at the top, and A and B as two tabs.
+  if (phone) {
+    const sides = { A: { side: a, data: dataA, result: resultA }, B: { side: b, data: dataB, result: resultB } };
+    const tabKey = (e: KeyboardEvent<HTMLButtonElement>) => {
+      if (!['ArrowLeft', 'ArrowRight', 'Home', 'End'].includes(e.key)) return;
+      e.preventDefault();
+      const next = e.key === 'Home' ? 'A' : e.key === 'End' ? 'B' : tab === 'A' ? 'B' : 'A';
+      setTab(next);
+      document.getElementById(`side-tab-${next}`)?.focus();
+    };
+    const lines = report ? (allLines ? report.lines : report.lines.slice(0, PINNED_LINES)) : [];
+    const cur = sides[tab];
+    return (
+      <main id="content" tabIndex={-1} className="cmp-page pcmp">
+        <h1 className="sr">Compare two cases</h1>
+        {setups}
+        <section className="pverdict" aria-labelledby="report-title">
+          <h2 className="mono pverdict-k" id="report-title">
+            VERDICT
+          </h2>
+          {report ? (
+            <>
+              <div className="pverdict-v">{report.verdict}</div>
+              {report.note && <p className="cmp-note">{report.note}</p>}
+              <ul className="pverdict-lines">
+                {lines.map((l) => (
+                  <li key={l.text}>
+                    <span aria-hidden="true">{l.symbol} </span>
+                    <span className="sr">{l.label}: </span>
+                    {l.text}
+                  </li>
+                ))}
+              </ul>
+              {report.lines.length > PINNED_LINES && (
+                <button type="button" className="inline-btn pverdict-more" aria-expanded={allLines} onClick={() => setAllLines((v) => !v)}>
+                  {allLines ? 'FEWER LINES' : `+ ${report.lines.length - PINNED_LINES} MORE LINES`}
+                </button>
+              )}
+            </>
+          ) : (
+            <p className="hint">
+              {dataA.loading || dataB.loading || !ready ? 'Asking for positions for both sides…' : 'The report needs positions for both sides.'}
+            </p>
+          )}
+        </section>
+        <div className="pside-tabs" role="tablist" aria-label="Side">
+          {(['A', 'B'] as const).map((k) => {
+            const l = sides[k].result?.landing;
+            return (
+              <button
+                key={k}
+                type="button"
+                role="tab"
+                id={`side-tab-${k}`}
+                aria-selected={tab === k}
+                aria-controls="side-panel"
+                tabIndex={tab === k ? 0 : -1}
+                onClick={() => setTab(k)}
+                onKeyDown={tabKey}
+              >
+                <span className="mono">SIDE {k}</span>
+                <b>{sides[k].side.date}</b>
+                <span className="mono pside-st">
+                  {sides[k].data.loading ? '… LOADING' : l ? `${l.symbol} ${l.word}` : `${NO_DATA.symbol} ${NO_DATA.word}`}
+                </span>
+              </button>
+            );
+          })}
+        </div>
+        <div role="tabpanel" id="side-panel" aria-labelledby={`side-tab-${tab}`}>
+          <SidePane
+            key={tab}
+            letter={tab}
+            side={cur.side}
+            sites={sites}
+            data={cur.data}
+            result={cur.result}
+            onChange={(next) =>
+              tab === 'A'
+                ? update({ site: next.site, date: next.date, hour: next.hour, t: 0 })
+                : update({ setup: 'custom', b: next })
+            }
+          />
+        </div>
+        {actions}
+        <p className="pad hint">{context}</p>
+      </main>
+    );
+  }
+
+  return (
+    <main id="content" tabIndex={-1} className="cmp-page">
+      <h1 className="sr">Compare two cases</h1>
+
+      {setups}
 
       <div className="body">
       <SidePane
@@ -282,12 +401,7 @@ export function ComparePage() {
               : 'The report needs positions for both sides.'}
           </p>
         )}
-        <div className="grid2 exits cmp-actions">
-          <button type="button" className="btn" disabled={!report} onClick={copy}>
-            COPY REPORT
-          </button>
-          <Link to={{ pathname: '/watch', search }}>WATCH THIS</Link>
-        </div>
+        {actions}
       </aside>
       </div>
     </main>

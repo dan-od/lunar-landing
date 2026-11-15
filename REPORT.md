@@ -2,7 +2,7 @@
 
 Written 2026-11-15, end of the second unattended session (started about
 06:30 EST). Every step of your list, and both later additions, was done and pushed to
-`staging` after each step. `main` and production were deployed twice with the owner's approval (see Production deploys). All commits
+`staging` after each step. `main` and production were deployed twice with the owner's approval (see Production deploys). The later phone redesign is on `staging` only, not deployed. All commits
 are dan-od with no tool lines; nothing was force-pushed.
 
 The full requirement-by-requirement result is in
@@ -49,6 +49,24 @@ screen reader.
 | Phone | The scenario bar shows only date, hour and Now; the seven step buttons open from a More toggle, and the slip "?" sits beside it, not in the grid. |
 | Labels | Pole-map names avoid the rim and the rings as well as each other (and have a dark backing); the Sun and Earth names sit on the outer side of their dots. Sky-view labels avoid the horizon, the allowance line and the frame edges, with a dark halo. |
 
+## Phone redesign (on staging, not deployed)
+
+Built from "Moon Status: phone redesign": direction B as the Console front
+screen, direction A's card as the site detail. Only under 600 px; desktop and
+the 600–899 px stacked layout are unchanged. Screenshots: `docs/screens/phone-*.png`.
+
+| Part | Result |
+| --- | --- |
+| Date bar | One line: date, hour, Now. Tapping the date opens a sheet (modal, focus trapped, Escape and Close return focus) with the date field and calendar, the seven step buttons, and Slip: ready or not at the landing hour on each of the next 14 days for the chosen site, from `/v1/slip`, with a slip-proof line; tapping a day moves the landing there. |
+| Board | Chips All, Ready, No power, No link, Dark with counts (toggle buttons, state at landing). Board / Map switch is a tab list (arrow keys, Home, End). Two-column tiles grouped South pole, Apollo, Other landers: full name, symbol and word, and a strip lit where the Sun and Earth are both up over 30 days; ready tiles tinted. The incident list and Add coordinates follow. |
+| Map | Polar view full width; markers show the state symbol; the chips filter it; "N sites are north of this map" with a button to the board. |
+| Site card | Big status with a one-sentence reason (heights against the allowance or terrain), Sun and Earth, next change with what follows ("THEN READY"), the 30-day sun and Earth strip, then Map (zoomed in with the site at the centre), Timeline (play and scrub), Sky, All sites (the soonest change anywhere), Download, and the source link. ‹ › step through the filtered sites. Back returns to the board at the same scroll position with focus on the tile of the site shown. |
+| Watch | One card per change with a + calendar button (spoken as "Add Sunrise, date, to your calendar"); Remind and Add all; email sign-up in a section that opens. |
+| Compare | Setup chips (+10 DAYS, +12 HOURS, TWO SITES, MY AIM, each speaking the full name); the verdict is pinned at the top with two lines and "+ N more lines"; A and B are two tabs showing date and state. |
+| Miss | When the Console's state for the target and the terrain verdict at the target disagree, a note says why: smooth Moon at that one hour against terrain at touchdown and 90% of the first 10 days. "This is the safest place to aim" only appears after Move to the safest spot. The AIM label never covers ORIGINAL TARGET. |
+| Sky view | Sun and Earth labels keep clear of the "ALLOWANCE" (or "TERRAIN HORIZON") label; if they cannot, that label moves to the left end of its line. |
+| Also | The tour points at the phone parts on a phone. Fixed missing spaces in Compare's "needs an aim" line on every width. |
+
 ## What changed
 
 | Step | Result |
@@ -72,8 +90,19 @@ screen reader.
 
 ## Verified by automated test
 
-- 272 tests pass: 57 core, 140 server, 75 client (`npm test`), plus typecheck,
-  lint and build. New tests this session cover: Now uses UTC; seed spans;
+- 287 tests pass: 57 core, 140 server, 90 client (`npm test`), plus typecheck,
+  lint and build. Phone redesign tests: filter counts and matching, card
+  stepping, the reason sentence for every state and the terrain wording, ready
+  strips, the soonest change across sites, time labels, sky labels clear of the
+  allowance label, AIM clear of ORIGINAL TARGET across a 400 m square, the Miss
+  difference note, and every phone tour step's target existing.
+- Phone, by script at 320 and 390 px: axe clean and no sideways scroll on board,
+  Ready filter, map, card, card with Map, Timeline and Sky open, date sheet,
+  Watch, Watch email, Compare A and B, Miss and API; every control at least
+  44 px except one link inside a sentence on the API tab (allowed). Keyboard:
+  tab-list arrows and Home, chips with Enter and Space, a tile opens the card
+  with focus on the name, ‹ › then Back returns focus to the right tile at the
+  same scroll, the sheet traps Tab and Escape returns focus to the date. New tests this session cover: Now uses UTC; seed spans;
   sky label layout never overlaps; the 1960–2100 range at every endpoint;
   the new-period limit (counted once per date, saved dates free, applies to sky,
   slip and report); upcoming changes and the calendar file (escaping, folding,
@@ -101,7 +130,8 @@ screen reader.
 - Add coordinates: 95 refused with focus back on latitude; a real point
   (−85.5, 31.2) showed "fetching", then loaded (Sun +2.3°); Escape closes and
   returns focus.
-- Phone layout at 390 px on all tabs.
+- Phone layout at 390 px on all tabs. Phone redesign screenshots at 390 and
+  320 px compared against the mockups; desktop Console checked unchanged.
 - Help on Console and Compare, the tour's four steps, "Don't show again"
   remembered, the term hint opening and closing with Escape.
 - Watch: four changes for the 2025 case (sunrise T+7 h, as the Console says);
@@ -126,6 +156,8 @@ screen reader.
   the full local stack. Setting up staging needs DNS and host changes.
 - **Calendar import** into a calendar app (it would change your calendar), and
   opening the spreadsheet file in a spreadsheet app.
+- **The phone redesign on a real phone** and with VoiceOver or TalkBack: checked
+  only in Chromium's phone emulation (touch on, 320 and 390 px).
 - **A screen-reader run** (A-7, A-8), the preview card in a chat app (E-2), a
   question through a real assistant (8-1).
 - **The daily timer wrapper** (`startScheduler`) has no test; the daily check it

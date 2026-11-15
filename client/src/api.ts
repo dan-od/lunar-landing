@@ -176,3 +176,28 @@ export function windowsIcsUrl(
   }
   return `/v1/windows.ics?${q.toString()}`;
 }
+
+export interface SlipDay {
+  slip_days: number;
+  date: string;
+  ready: boolean | null;
+  word: string | null;
+  symbol: string | null;
+}
+
+export interface SlipReply {
+  model: string;
+  known: number;
+  slip_proof_0_to_14: boolean | null;
+  slips: SlipDay[];
+}
+
+/** Ready or not at the landing hour for each whole-day slip, 30 days either way (7-5). */
+export function getSlip(site: string, date: string, hour: number, margin: number, signal?: AbortSignal): Promise<SlipReply> {
+  const q = new URLSearchParams();
+  setPlace(q, site);
+  q.set('date', date);
+  q.set('hour', String(hour));
+  q.set('margin', String(margin));
+  return getJson<SlipReply>(`/v1/slip?${q.toString()}`, signal);
+}

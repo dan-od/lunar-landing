@@ -1208,9 +1208,9 @@ table.t th {
   box-shadow: inset 0 -3px 0 var(--yel);
 }
 .cmp-why {
-  display: flex;
-  align-items: center;
-  padding: 0 14px;
+  display: block;
+  align-self: center;
+  padding: 6px 14px;
 }
 
 .cmp-side {
@@ -1889,4 +1889,608 @@ main.main {
     animation: none !important;
     transition: none !important;
   }
+}
+
+/* ---------- phone (under 600 px): date bar, board, site card ---------- */
+.pdate {
+  display: flex;
+  align-items: stretch;
+  background: var(--pane);
+  border-bottom: 1px solid var(--line);
+}
+.app button.pdate-when {
+  flex: 1 1 auto;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  min-height: 52px;
+  padding: 0 14px;
+  text-align: left;
+  font-size: 13px;
+  letter-spacing: 0.06em;
+  white-space: nowrap;
+}
+.pdate-when b {
+  color: var(--yel);
+  font-weight: 500;
+}
+.pdate-caret {
+  margin-left: 6px;
+  color: var(--mut);
+}
+.app button.pdate-now {
+  flex: 0 0 auto;
+  padding: 0 18px;
+  border-left: 1px solid var(--line);
+  font-weight: 700;
+  font-size: 12px;
+  letter-spacing: 0.08em;
+}
+.sheet-back {
+  position: fixed;
+  inset: 0;
+  background: rgba(5, 15, 44, 0.7);
+  z-index: 8;
+}
+.sheet {
+  position: fixed;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  max-height: 88vh;
+  overflow-y: auto;
+  background: var(--pane);
+  border-top: 2px solid var(--yel);
+  z-index: 9;
+}
+.sheet:focus {
+  outline: none;
+}
+.sheet-head {
+  display: flex;
+  align-items: stretch;
+  justify-content: space-between;
+  border-bottom: 1px solid var(--line);
+}
+.sheet-head .lbl {
+  border: 0;
+  display: flex;
+  align-items: center;
+}
+.sheet-head .lbl:focus {
+  outline: none;
+}
+.app button.sheet-close {
+  padding: 0 14px;
+  font-weight: 700;
+  font-size: 12px;
+  letter-spacing: 0.06em;
+  border-left: 1px solid var(--line);
+}
+.sheet-steps {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+}
+.app .sheet-steps button {
+  border-right: 1px solid var(--line);
+  border-bottom: 1px solid var(--line);
+  font-family: 'Fira Code', monospace;
+  font-size: 12px;
+}
+.slip-sum {
+  margin-bottom: 10px;
+}
+.slip-days {
+  list-style: none;
+  margin: 0 0 10px;
+  padding: 0;
+  display: grid;
+  grid-template-columns: repeat(5, 1fr);
+  gap: 4px;
+}
+.app .slip-days button {
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 2px;
+  min-height: 48px;
+  border: 1px solid var(--red);
+  font-size: 11px;
+}
+.app .slip-days button.ok {
+  background: var(--elec);
+  border-color: var(--yel);
+}
+.app .slip-days button[aria-current='date'] {
+  box-shadow: inset 0 -3px 0 var(--yel);
+}
+.sheet .cal {
+  bottom: 8px;
+}
+
+.pbody {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+}
+.pboard-head {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 10px 14px;
+  font-size: 11px;
+  letter-spacing: 0.1em;
+  color: var(--mut);
+  border-bottom: 1px solid var(--line);
+}
+.pboard-head h2 {
+  font: inherit;
+}
+.pboard-head h2:focus {
+  outline: none;
+}
+.pboard-head > span {
+  color: var(--white);
+}
+.chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  padding: 10px 14px;
+  border-bottom: 1px solid var(--line);
+}
+.app button.chip {
+  border: 1px solid var(--line);
+  padding: 0 10px;
+  font: 400 11px 'Fira Code', monospace;
+  letter-spacing: 0.06em;
+}
+.app button.chip[aria-pressed='true'] {
+  background: var(--yel);
+  color: var(--deep);
+  border-color: var(--yel);
+}
+.chip-n {
+  font-weight: 700;
+}
+.pswitch {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  border-bottom: 1px solid var(--line);
+}
+.app .pswitch button {
+  font-weight: 700;
+  font-size: 12px;
+  letter-spacing: 0.08em;
+}
+.app .pswitch button + button {
+  border-left: 1px solid var(--line);
+}
+.app .pswitch button[aria-selected='true'] {
+  background: var(--elec);
+  box-shadow: inset 0 -3px 0 var(--yel);
+}
+.pfilter-note {
+  padding: 8px 14px;
+  font-size: 12px;
+  color: var(--mut);
+  border-bottom: 1px solid var(--line);
+}
+.app button.inline-btn {
+  color: var(--yel);
+  text-decoration: underline;
+  padding: 0 4px;
+  font-size: 12px;
+  font-weight: 700;
+}
+.ppanel {
+  display: flex;
+  flex-direction: column;
+}
+.tgroup-title {
+  padding: 14px 14px 6px;
+  font-size: 11px;
+  letter-spacing: 0.12em;
+  color: var(--mut);
+  font-weight: 400;
+  margin: 0;
+}
+.tiles {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 8px;
+  padding: 0 14px 6px;
+}
+.app button.tile {
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+  gap: 6px;
+  min-height: 96px;
+  padding: 10px;
+  text-align: left;
+  border: 1px solid var(--line);
+  background: var(--pane);
+}
+.app button.tile.ok {
+  background: var(--elec);
+  border-color: var(--edge);
+}
+.tile.sk {
+  min-height: 96px;
+}
+.tile-name {
+  font-size: 13px;
+  line-height: 1.25;
+  flex: 1 1 auto;
+  overflow-wrap: anywhere;
+}
+.tile-st {
+  font-size: 11px;
+  letter-spacing: 0.06em;
+}
+.tile.ok .tile-st {
+  color: var(--yel);
+}
+.tile-strip {
+  position: relative;
+  display: block;
+  height: 6px;
+}
+.tile-strip .track {
+  position: absolute;
+  inset: 0;
+  height: 6px;
+}
+.tile-strip.none {
+  border-top: 1px dashed var(--mut);
+  height: 0;
+}
+.padd {
+  border-top: 1px solid var(--line);
+  margin-top: 10px;
+}
+.pmapnote {
+  margin-top: 10px;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  font-size: 12px;
+  text-align: center;
+}
+.pin.status span {
+  width: 22px;
+  height: 22px;
+  transform: none;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 11px;
+  line-height: 1;
+  color: var(--white);
+}
+.pin.status.ok span {
+  color: var(--deep);
+}
+.disc.zoom {
+  overflow: hidden;
+  clip-path: circle(50%);
+}
+
+/* site card */
+.pcard {
+  display: flex;
+  flex-direction: column;
+}
+.pcard-top {
+  display: flex;
+  align-items: stretch;
+  justify-content: space-between;
+  border-bottom: 1px solid var(--line);
+}
+.app button.pcard-back {
+  padding: 0 14px;
+  font-weight: 700;
+  font-size: 12px;
+  letter-spacing: 0.08em;
+  border-right: 1px solid var(--line);
+}
+.pcard-pos {
+  display: flex;
+  align-items: center;
+  padding: 0 14px;
+  font-size: 10px;
+  letter-spacing: 0.1em;
+  color: var(--mut);
+  text-align: right;
+}
+.pcard-head {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 14px;
+  border-bottom: 1px solid var(--line);
+}
+.app button.pcard-step {
+  flex: 0 0 44px;
+  border: 1px solid var(--line);
+  font-size: 18px;
+}
+.pcard-name {
+  flex: 1 1 auto;
+  font: 700 17px 'Fira Sans', sans-serif;
+  line-height: 1.2;
+  text-align: center;
+}
+.pcard-name:focus {
+  outline: none;
+}
+.pcard-name:focus-visible {
+  outline: 3px solid var(--white);
+}
+.pcard-at {
+  font-size: 10px;
+  letter-spacing: 0.1em;
+  color: var(--mut);
+  margin-bottom: 6px;
+}
+.pstate {
+  display: inline-block;
+  padding: 8px 14px;
+  font: 400 24px 'Fira Code', monospace;
+  letter-spacing: 0.08em;
+  border: 2px solid var(--red);
+}
+.pstate.ok {
+  background: var(--yel);
+  color: var(--deep);
+  border-color: var(--yel);
+}
+.pstate.wait {
+  border-color: var(--mut);
+  color: var(--mut);
+}
+.pcard-reason {
+  margin-top: 10px;
+  font-size: 15px;
+}
+.pcard-status {
+  border-bottom: 1px solid var(--line);
+}
+.pnext {
+  background: var(--elec);
+  padding: 12px 14px;
+}
+.pnext-k,
+.pnext-t {
+  font-size: 10px;
+  letter-spacing: 0.1em;
+  color: var(--white);
+}
+.pnext-v {
+  font: 700 17px 'Fira Sans', sans-serif;
+  margin: 2px 0;
+}
+.pstrip-k {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 4px;
+  font-size: 10px;
+  letter-spacing: 0.08em;
+  margin-bottom: 8px;
+}
+.pstrip-bars {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+}
+.pstrip-bars .track {
+  position: relative;
+  height: 10px;
+}
+.ptl-bars .ph {
+  position: absolute;
+  top: -3px;
+  bottom: -3px;
+  width: 2px;
+  background: var(--white);
+}
+.ptl .scrub {
+  margin-top: 10px;
+}
+.ptl-at {
+  margin-top: 10px;
+  padding: 10px;
+  border: 1px solid var(--line);
+}
+.fold {
+  border-bottom: 1px solid var(--line);
+}
+.fold h3 {
+  margin: 0;
+  font: inherit;
+}
+.app .fold-head,
+.app button.fold-head {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  width: 100%;
+  min-height: 52px;
+  padding: 0 14px;
+  text-align: left;
+  color: var(--white);
+  text-decoration: none;
+}
+.fold-link {
+  border-bottom: 1px solid var(--line) !important;
+}
+.fold.open > h3 > .fold-head {
+  background: var(--elec);
+}
+.fold-title {
+  font-weight: 700;
+  font-size: 12px;
+  letter-spacing: 0.1em;
+}
+.fold-sum {
+  flex: 1 1 auto;
+  text-align: right;
+  font-size: 12px;
+  color: var(--mut);
+}
+.fold.open .fold-sum {
+  color: var(--white);
+}
+.fold-caret {
+  flex: 0 0 auto;
+}
+.fold-body .mapwrap {
+  min-height: 0;
+  padding-top: 34px;
+}
+.pcard-src {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+/* phone Watch */
+.wcards {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+.wcard {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 12px 14px;
+  border-bottom: 1px solid var(--line);
+}
+.wcard-sym {
+  font-size: 18px;
+  flex: 0 0 auto;
+}
+.wcard-text {
+  flex: 1 1 auto;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+.wcard-text .hint {
+  font-size: 11px;
+  letter-spacing: 0.06em;
+}
+.app a.wcard-add {
+  flex: 0 0 44px;
+  height: 44px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border: 1px solid var(--edge);
+  color: var(--white);
+  font-size: 20px;
+  text-decoration: none;
+}
+.wphone-all {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  border-bottom: 1px solid var(--line);
+}
+.wfold-h {
+  margin: 0;
+  font: inherit;
+}
+
+/* phone Compare */
+.pcmp .cmp-setups {
+  gap: 6px;
+  padding: 8px 14px;
+}
+.pcmp .cmp-setups .lbl {
+  padding: 0 4px 0 0;
+}
+.app .pcmp .cmp-setups button {
+  border: 1px solid var(--line);
+  padding: 0 10px;
+  font-size: 11px;
+}
+.pcmp .cmp-why {
+  padding: 4px 0;
+  flex: 1 1 100%;
+}
+.pverdict {
+  position: sticky;
+  top: 0;
+  z-index: 2;
+  background: var(--elec);
+  padding: 12px 14px;
+}
+.pverdict-k {
+  font-size: 10px;
+  letter-spacing: 0.12em;
+  font-weight: 400;
+}
+.pverdict-v {
+  font: 900 20px 'Fira Sans', sans-serif;
+  text-transform: uppercase;
+  margin: 2px 0 6px;
+}
+.pverdict-lines {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  font-size: 13px;
+}
+.app .pverdict .inline-btn {
+  color: var(--white);
+  padding: 0;
+}
+.pside-tabs {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  border-bottom: 1px solid var(--line);
+}
+.app .pside-tabs button {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 2px;
+  padding: 10px 14px;
+  text-align: left;
+  font-size: 10px;
+  letter-spacing: 0.08em;
+}
+.pside-tabs b {
+  font-size: 15px;
+  letter-spacing: 0;
+}
+.app .pside-tabs button + button {
+  border-left: 1px solid var(--line);
+}
+.app .pside-tabs button[aria-selected='true'] {
+  background: var(--yel);
+  color: var(--deep);
+}
+.pcmp .cmp-side {
+  border-right: 0;
+}
+.ptl .scrub {
+  padding: 6px 0;
+}
+.ptl .scrub input {
+  min-width: 0;
+}
+.ptl .tplus {
+  flex: 0 0 auto;
 }

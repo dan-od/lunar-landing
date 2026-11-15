@@ -93,3 +93,15 @@ describe('sky view labels stay off the lines (polish)', () => {
     for (const l of labels) for (const y of lines) expect(crosses(l.box, y)).toBe(false);
   });
 });
+
+describe('body labels keep clear of the allowance label (phone polish)', () => {
+  it('never puts EARTH on top of "ALLOWANCE 2.0°"', async () => {
+    const { textBox } = await import('./skyLabels');
+    const allowance = textBox(289, 60, 'end', 'ALLOWANCE 2.0°');
+    // Earth just under the allowance line, at the right-hand end where its label sits.
+    for (const cx of [230, 250, 270, 285]) {
+      const [earth] = placeSkyLabels([{ cx, cy: 66, text: 'EARTH +1.6°' }], { ...BOUNDS, lines: [12, 134, 70, 63], avoid: [allowance] });
+      expect(overlap(earth!.box, allowance)).toBe(false);
+    }
+  });
+});
