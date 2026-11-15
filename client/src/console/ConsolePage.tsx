@@ -10,6 +10,7 @@ import { DISPLAY_DAYS, overheadLongitudes, readoutAt, resultFor } from '../siteD
 import { PoleMap } from './PoleMap';
 import { Timeline } from './Timeline';
 import { Inspector } from './Inspector';
+import { AddCoordinates } from './AddCoordinates';
 import { NO_DATA, type SiteRow } from './types';
 
 const TAB = TABS[0]!;
@@ -26,8 +27,8 @@ function sourceLabel(source: string): string {
 
 export function ConsolePage() {
   const app = useApp();
-  const { scenario, update, started, start, sites, sitesStatus, sitesFailure, reloadSites, force, search, say } = app;
-  const { data, loading, failure, partial, retries, retry } = useSiteData(
+  const { scenario, update, started, start, sites, sitesStatus, sitesFailure, reloadSites, force, search, say, addCustomSite } = app;
+  const { data, loading, fetching, failures, failure, partial, retries, retry } = useSiteData(
     started ? sites : [],
     scenario.date,
     scenario.hour,
@@ -113,6 +114,12 @@ export function ConsolePage() {
 
   const sitesLoading = sitesStatus === 'loading';
   const down = failure ?? sitesFailure;
+  const addBlocked = 'New coordinates cannot be added while NASA’s position service is not answering.';
+  const add = (name: string, lat: number, lon: number) => {
+    const id = addCustomSite(name, lat, lon);
+    update({ site: id, t: 0 });
+    say('Site added. Asking NASA for its positions.');
+  };
 
   // Empty list (1-7).
   if (!sitesLoading && sites.length === 0) {
@@ -122,12 +129,15 @@ export function ConsolePage() {
           {down && <DownBanner message={down.message} retries={retries} onRetry={() => { retry(); reloadSites(); }} />}
           <div className="empty">
             <h1 className="h2">No sites yet</h1>
-            <p>Load the starter list of past and planned landing sites.</p>
+            <p>Add coordinates of your own, or load the starter list of past and planned landing sites.</p>
             <p className="choices">
               <button type="button" className="btn" onClick={reloadSites}>
                 LOAD STARTER LIST
               </button>
             </p>
+            <div className="side add-empty">
+              <AddCoordinates disabledReason={down ? addBlocked : null} onAdd={add} />
+            </div>
           </div>
         </div>
       </main>
@@ -145,8 +155,10 @@ export function ConsolePage() {
         01 / SITES · {busy ? '…' : `${ready} OF ${rows.length} READY`}
       </h2>
       {rows.map((r) => {
-        const word = busy ? 'LOADING' : (r.landing?.word ?? NO_DATA.word);
-        const symbol = busy ? '…' : (r.landing?.symbol ?? NO_DATA.symbol);
+        const isFetching = !busy && fetching.has(r.site.id);
+        const refused = failures[r.site.id];
+        const word = busy ? 'LOADING' : isFetching ? 'FETCHING' : (r.landing?.word ?? NO_DATA.word);
+        const symbol = busy || isFetching ? '…' : (r.landing?.symbol ?? NO_DATA.symbol);
         return (
           <button
             key={r.site.id}
@@ -162,12 +174,17 @@ export function ConsolePage() {
               <b>{r.site.name}</b>
               <small>
                 {r.site.lat.toFixed(2)}, {r.site.lon.toFixed(2)} · {sourceLabel(r.site.source)}
+                {r.site.custom ? ' · yours' : ''}
               </small>
+              {refused && !r.series && (refused.kind === 'rate' || refused.kind === 'bad') && (
+                <small className="row-err">▲ {refused.message}</small>
+              )}
             </span>
             <span className="mono word">{word}</span>
           </button>
         );
       })}
+      {!busy && <AddCoordinates disabledReason={down ? addBlocked : null} onAdd={add} />}
     </aside>
   );
 
@@ -227,6 +244,7 @@ export function ConsolePage() {
       {selected && (
         <Inspector
           row={selected}
+          fetching={fetching.has(selected.site.id)}
           t={scenario.t}
           marginDeg={scenario.margin}
           search={search}

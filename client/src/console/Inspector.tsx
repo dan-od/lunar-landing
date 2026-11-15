@@ -7,6 +7,8 @@ import { NO_DATA, type SiteRow } from './types';
 
 interface Props {
   row: SiteRow;
+  /** True while this site's positions are still being fetched. */
+  fetching?: boolean;
   t: number;
   marginDeg: number;
   search: string;
@@ -21,7 +23,7 @@ function splitSource(source: string): { label: string; url?: string } {
   return { label: source.slice(0, i).replace(/,\s*$/, '').trim(), url: source.slice(i).trim() };
 }
 
-export function Inspector({ row, t, marginDeg, search, csvHref }: Props) {
+export function Inspector({ row, fetching, t, marginDeg, search, csvHref }: Props) {
   const { now, result, landing } = row;
   const state = now?.state;
   const src = splitSource(row.site.source);
@@ -36,7 +38,7 @@ export function Inspector({ row, t, marginDeg, search, csvHref }: Props) {
       <div className="pad line">
         <div className="h2 site-name">{row.site.name}</div>
         <span className={`tag ${state?.word === 'READY' ? 'ok' : ''} ${state ? '' : 'wait'}`}>
-          {state ? `${state.symbol} ${state.word}` : `${NO_DATA.symbol} ${NO_DATA.word}`}
+          {state ? `${state.symbol} ${state.word}` : fetching ? '… FETCHING' : `${NO_DATA.symbol} ${NO_DATA.word}`}
         </span>
         <div className="mono coords">
           {row.site.lat.toFixed(2)}, {row.site.lon.toFixed(2)}
@@ -75,7 +77,7 @@ export function Inspector({ row, t, marginDeg, search, csvHref }: Props) {
         {now ? (
           <SkyView readout={now} marginDeg={marginDeg} tDays={t} horizon={row.series?.horizon} />
         ) : (
-          <p className="hint">No saved positions for this moment.</p>
+          <p className="hint">{fetching ? 'Asking NASA for this site’s positions…' : 'No saved positions for this moment.'}</p>
         )}
       </div>
 

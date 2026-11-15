@@ -297,6 +297,30 @@ p {
   font: 400 11px 'Fira Code', monospace;
 }
 
+.row .row-err {
+  font-family: Overpass, system-ui, sans-serif;
+  font-size: 12px;
+  margin-top: 2px;
+}
+.add-open {
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+}
+.add-actions {
+  display: flex;
+  gap: 8px;
+  margin-top: 10px;
+}
+.add-note {
+  margin-top: 4px;
+}
+.add-empty {
+  max-width: none;
+  margin-top: 16px;
+  text-align: left;
+  border: 1px solid var(--line);
+}
 .row .word {
   font-size: 10px;
   white-space: nowrap;
