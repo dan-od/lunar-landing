@@ -192,8 +192,11 @@ p {
   align-items: stretch;
 }
 
+.scn .sp {
+  flex-wrap: wrap;
+}
 .scn .sp button {
-  min-width: 56px;
+  min-width: 52px;
   border: 1px solid var(--line);
   margin-left: -1px;
   padding: 0 10px;
@@ -925,14 +928,156 @@ table.t th {
   cursor: not-allowed;
 }
 
-/* Width caps: a place name never stretches past 420 px, a date or hour past 220 px. */
-.fld select {
+/* Width caps, set by the shared Select's width prop: a place name never
+   stretches past 420 px, a date part, hour or short choice past 220 px. */
+.app select.sel {
+  width: 100%;
+}
+.app select.sel-place {
   max-width: 420px;
 }
-.when-date input,
-.when-hour select {
+.app select.sel-short {
+  max-width: 220px;
+}
+.when-date input {
   width: 100%;
   max-width: 220px;
+}
+
+
+/* ---------- typable date with our calendar button and popup ---------- */
+.datebox {
+  position: relative;
+  max-width: 220px;
+}
+.app .datebox input {
+  width: 100%;
+  height: 44px;
+  padding: 0 44px 0 10px;
+  background: var(--deep);
+  color: var(--white);
+  border: 1px solid var(--edge);
+  font: 400 13px 'Fira Code', ui-monospace, monospace;
+}
+.app .datebox input[aria-invalid='true'] {
+  border-color: var(--red);
+}
+.app button.cal-open {
+  position: absolute;
+  top: 0;
+  right: 0;
+  width: 44px;
+  height: 44px;
+  padding: 0 12px 0 0;
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+}
+.fld .cal-open span {
+  display: block;
+  width: 12px;
+  height: 12px;
+  margin: 0;
+  background: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 12 12'%3E%3Cpath d='M1 2.5h10v8.5H1zM1 5h10M3.5 0.5v3M8.5 0.5v3' fill='none' stroke='%23B9C6E4' stroke-width='1.5' stroke-linecap='square' stroke-linejoin='miter'/%3E%3C/svg%3E") no-repeat center / 12px 12px;
+}
+.cal {
+  position: absolute;
+  top: calc(100% + 4px);
+  left: 0;
+  z-index: 8;
+  width: 324px;
+  padding: 8px;
+  background: var(--pane);
+  border: 1px solid var(--edge);
+  font-family: Overpass, system-ui, sans-serif;
+  letter-spacing: 0;
+  text-transform: none;
+}
+.cal-head {
+  display: flex;
+  gap: 4px;
+  margin-bottom: 6px;
+}
+.cal-pick {
+  flex: 1 1 0;
+  min-width: 0;
+}
+.cal-pick select {
+  font-size: 12px;
+}
+.app .cal-nav button {
+  width: 44px;
+  height: 44px;
+  border: 1px solid var(--line);
+}
+.cal-grid {
+  border-collapse: collapse;
+  width: 100%;
+}
+.cal-grid th {
+  font: 400 10px 'Fira Code', monospace;
+  color: var(--mut);
+  padding: 4px 0;
+  text-align: center;
+}
+.cal-grid td {
+  padding: 0;
+  text-align: center;
+}
+.app button.cal-day {
+  position: relative;
+  width: 100%;
+  min-width: 44px;
+  height: 44px;
+  font: 400 13px 'Fira Code', monospace;
+}
+.app button.cal-day:hover:not(:disabled) {
+  background: var(--elec);
+}
+.app button.cal-day.today {
+  box-shadow: inset 0 0 0 1px var(--edge);
+}
+.app button.cal-day.sel {
+  background: var(--yel);
+  color: var(--deep);
+  font-weight: 700;
+}
+/* The popup sits inside a field, so undo the field-label style on its text. */
+.fld .cal span {
+  display: inline;
+  margin: 0;
+  font: inherit;
+  letter-spacing: inherit;
+  color: inherit;
+}
+.fld .cal .cal-mark {
+  position: absolute;
+  font-size: 10px;
+}
+.cal-mark {
+  position: absolute;
+  top: 2px;
+  right: 5px;
+  font-size: 10px;
+  line-height: 1;
+}
+.cal-key {
+  margin-top: 6px;
+  font-size: 11px;
+}
+@media (max-width: 899px) {
+  .cal {
+    position: fixed;
+    top: auto;
+    left: 2px;
+    right: 2px;
+    bottom: 60px;
+    width: auto;
+    padding: 4px;
+  }
+  .app button.cal-day {
+    min-width: 0;
+  }
 }
 
 /* ---------- landing date, hour and Now (scenario bar, Compare) ---------- */
@@ -1645,7 +1790,13 @@ main.main {
   .scn .sp {
     flex: 1 1 100%;
     display: grid;
-    grid-template-columns: repeat(3, 1fr);
+    grid-template-columns: repeat(4, 1fr);
+  }
+  .scn .sp .sp-term {
+    justify-content: center;
+    padding: 0;
+    border: 1px solid var(--line);
+    border-right-width: 0;
   }
   .scn .sp button {
     margin-left: 0;

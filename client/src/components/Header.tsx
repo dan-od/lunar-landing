@@ -1,15 +1,19 @@
 import { NavLink } from 'react-router-dom';
 import { TABS } from '../tabs';
 import { shortName, useApp } from '../state';
-import { slipDate } from '../scenario';
+import { shiftDate } from '../scenario';
 import { WhenFields, hh } from './WhenFields';
 import { Term } from '../help/Term';
 
 // The spoken name starts with the visible text, then says what it does.
-const SLIPS: Array<{ days: number; text: string; more: string }> = [
-  { days: -1, text: '−1 d', more: 'landing one day earlier' },
-  { days: 1, text: '+1 d', more: 'landing one day later' },
-  { days: 10, text: '+10 d', more: 'landing ten days later' },
+const SLIPS: Array<{ key: string; by: { days?: number; months?: number; years?: number }; text: string; more: string }> = [
+  { key: 'd-1', by: { days: -1 }, text: '−1 d', more: 'landing one day earlier' },
+  { key: 'd1', by: { days: 1 }, text: '+1 d', more: 'landing one day later' },
+  { key: 'd10', by: { days: 10 }, text: '+10 d', more: 'landing ten days later' },
+  { key: 'm-1', by: { months: -1 }, text: '−1 mo', more: 'landing one month earlier' },
+  { key: 'm1', by: { months: 1 }, text: '+1 mo', more: 'landing one month later' },
+  { key: 'y-1', by: { years: -1 }, text: '−1 y', more: 'landing one year earlier' },
+  { key: 'y1', by: { years: 1 }, text: '+1 y', more: 'landing one year later' },
 ];
 
 export function Header() {
@@ -89,11 +93,11 @@ export function Header() {
           </span>
           {SLIPS.map((s) => (
             <button
-              key={s.days}
+              key={s.key}
               type="button"
-              data-slip={s.days}
+              data-slip={s.key}
               disabled={!started}
-              onClick={() => update({ date: slipDate(scenario.date, s.days), t: 0 })}
+              onClick={() => update({ date: shiftDate(scenario.date, s.by), t: 0 })}
             >
               {s.text}
               <span className="sr">, {s.more}</span>

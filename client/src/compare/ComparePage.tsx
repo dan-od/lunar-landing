@@ -2,6 +2,7 @@
 // hour, and a change report built from the same calculator results shown on
 // each side. Behaviour and wording follow the flow prototype.
 import { useEffect, useId } from 'react';
+import { Select } from '../components/Select';
 import { Link } from 'react-router-dom';
 import { buildReport, reportText, shownDays, type WindowResult } from '@moon/core';
 import type { ApiSite } from '../api';
@@ -50,13 +51,13 @@ function SidePane({ letter, side, sites, data, result, onChange }: PaneProps) {
       <div className="pad line">
         <label className="fld">
           <span>PLACE</span>
-          <select value={side.site} onChange={(e) => onChange({ ...side, site: e.target.value })}>
+          <Select width="place" value={side.site} onChange={(e) => onChange({ ...side, site: e.target.value })}>
             {sites.map((s) => (
               <option key={s.id} value={s.id}>
                 {s.name}
               </option>
             ))}
-          </select>
+          </Select>
         </label>
         <WhenFields
           label={`Side ${letter}`}

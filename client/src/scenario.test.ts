@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { DEFAULT_SCENARIO, nowUtc, parseScenario, scenarioToQuery, slipDate, type Scenario } from './scenario';
+import { DEFAULT_SCENARIO, nowUtc, parseScenario, scenarioToQuery, shiftDate, slipDate, type Scenario } from './scenario';
 
 describe('the Now button (A)', () => {
   it('gives the current UTC date and hour, not local time', () => {
@@ -111,5 +111,25 @@ describe('wider allowed dates (G)', () => {
     expect(parseScenario(new URLSearchParams('date=1969-07-20')).scenario.date).toBe('1969-07-20');
     expect(parseScenario(new URLSearchParams('date=2099-06-01')).scenario.date).toBe('2099-06-01');
     expect(parseScenario(new URLSearchParams('date=2101-01-01')).notices[0]).toContain('1960-01-01 to 2100-12-31');
+  });
+});
+
+describe('month and year steps (C)', () => {
+  it('moves by calendar months and years, keeping the day where it exists', () => {
+    expect(shiftDate('2025-03-06', { months: 1 })).toBe('2025-04-06');
+    expect(shiftDate('2025-03-06', { months: -1 })).toBe('2025-02-06');
+    expect(shiftDate('2025-12-15', { months: 1 })).toBe('2026-01-15');
+    expect(shiftDate('2025-03-06', { years: 1 })).toBe('2026-03-06');
+    expect(shiftDate('2025-03-06', { years: -1 })).toBe('2024-03-06');
+  });
+
+  it('lands on the last day of a shorter month', () => {
+    expect(shiftDate('2025-01-31', { months: 1 })).toBe('2025-02-28');
+    expect(shiftDate('2024-02-29', { years: 1 })).toBe('2025-02-28');
+  });
+
+  it('stays inside the allowed dates', () => {
+    expect(shiftDate('2100-12-15', { months: 1 })).toBe('2100-12-31');
+    expect(shiftDate('1960-01-15', { years: -1 })).toBe('1960-01-01');
   });
 });

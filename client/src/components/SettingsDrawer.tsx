@@ -1,6 +1,7 @@
 // Settings: a right drawer, so the timeline stays visible and changes behind it.
 // Escape or the scrim closes it and focus returns to the control that opened it.
 import { useEffect, useRef } from 'react';
+import { Select } from './Select';
 import { useApp } from '../state';
 import { ACCURACIES } from '../scenario';
 
@@ -71,13 +72,13 @@ export function SettingsDrawer() {
           </p>
           <label className="fld">
             <span>LANDING ACCURACY</span>
-            <select value={scenario.accuracy} onChange={(e) => update({ accuracy: Number(e.target.value) })}>
+            <Select width="place" value={scenario.accuracy} onChange={(e) => update({ accuracy: Number(e.target.value) })}>
               {ACCURACIES.map((v) => (
                 <option key={v} value={v}>
                   Can miss by up to {v} m
                 </option>
               ))}
-            </select>
+            </Select>
           </label>
           <p className="hint">Times are always shown in UTC.</p>
         </div>

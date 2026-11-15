@@ -3,6 +3,7 @@
 // confirms (5-2); every email has a one-click unsubscribe that deletes the
 // address. The privacy line sits above the Start button (P-1).
 import { useEffect, useRef, useState, type FormEvent } from 'react';
+import { Select } from '../components/Select';
 import { useApp } from '../state';
 import { useDialogFocus } from '../help/useDialogFocus';
 import { createWatch, deleteWatch, resendWatch, WatchFailure, type WatchSummary } from './watchApi';
@@ -85,7 +86,8 @@ export function EmailWatchForm() {
           )}
           <label className="fld">
             <span>TELL ME WHEN</span>
-            <select
+            <Select
+              width="place"
               ref={ruleRef}
               value={rule}
               aria-invalid={error?.field === 'rule' ? true : undefined}
@@ -97,7 +99,7 @@ export function EmailWatchForm() {
                   {r.label}
                 </option>
               ))}
-            </select>
+            </Select>
           </label>
           {error?.field === 'email' && (
             <p className="err" role="alert" id="watch-email-err">

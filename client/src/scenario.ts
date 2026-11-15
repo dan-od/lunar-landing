@@ -162,6 +162,26 @@ export function nowUtc(ms: number = Date.now()): { date: string; hour: number } 
   return { date: iso.slice(0, 10), hour: Number(iso.slice(11, 13)) };
 }
 
+/** Days in a month (month 1..12). */
+export function daysInMonth(year: number, month: number): number {
+  return new Date(Date.UTC(year, month, 0)).getUTCDate();
+}
+
+/**
+ * Move a date by calendar months and years (and days). A day that does not
+ * exist in the new month becomes that month's last day (31 Jan + 1 month =
+ * 28 Feb). The result stays inside the allowed dates.
+ */
+export function shiftDate(date: string, by: { days?: number; months?: number; years?: number }): string {
+  const [y, m, d] = date.split('-').map(Number) as [number, number, number];
+  const total = y * 12 + (m - 1) + (by.months ?? 0) + (by.years ?? 0) * 12;
+  const ny = Math.floor(total / 12);
+  const nm = (total % 12) + 1;
+  const nd = Math.min(d, daysInMonth(ny, nm));
+  const base = `${String(ny).padStart(4, '0')}-${String(nm).padStart(2, '0')}-${String(nd).padStart(2, '0')}`;
+  return slipDate(base, by.days ?? 0);
+}
+
 /** Move a date by whole days, staying inside the allowed dates. */
 export function slipDate(date: string, days: number): string {
   const next = new Date(Date.parse(`${date}T00:00:00Z`) + days * 86_400_000).toISOString().slice(0, 10);

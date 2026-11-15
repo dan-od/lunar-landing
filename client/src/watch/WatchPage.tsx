@@ -3,6 +3,7 @@
 // Earth set) over the next 30 days, read from the one calculator, each with an
 // "Add to calendar" button that downloads a calendar file with a reminder.
 import { useEffect, useMemo, useRef, useState } from 'react';
+import { Select } from '../components/Select';
 import { Link } from 'react-router-dom';
 import { changesFrom, type ChangeKind } from '@moon/core';
 import { windowsIcsUrl } from '../api';
@@ -172,13 +173,13 @@ export function WatchPage() {
         <div className="pad line">
           <label className="fld">
             <span>REMIND ME</span>
-            <select value={remind} onChange={(e) => setRemind(Number(e.target.value))}>
+            <Select width="short" value={remind} onChange={(e) => setRemind(Number(e.target.value))}>
               {REMINDERS.map((r) => (
                 <option key={r.minutes} value={r.minutes}>
                   {r.label}
                 </option>
               ))}
-            </select>
+            </Select>
           </label>
           {changes.length > 0 ? (
             <a className="btn as-button watch-all" href={icsUrl()} download>
