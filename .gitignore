@@ -1,5 +1,6 @@
-# data: the 181 MB LOLA elevation map and prepared terrain are never committed
-data/
+# data: the 181 MB LOLA elevation map is never committed. "/data" covers both
+# the folder and a symlink of that name (a worktree links to the one copy).
+/data
 
 # dependencies
 node_modules/
