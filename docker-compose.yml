@@ -85,8 +85,11 @@ services:
 networks:
   web:
     external: true
+  # The stack's own private network. It is not on the shared proxy network, but
+  # it must allow outbound traffic: the server calls NASA Horizons from here.
+  # (Docker's "internal: true" would block that.)
   internal:
-    internal: true
+    name: moon-internal
 
 volumes:
   db-data:
