@@ -2,6 +2,7 @@ import { NavLink } from 'react-router-dom';
 import { TABS } from '../tabs';
 import { shortName, useApp } from '../state';
 import { slipDate } from '../scenario';
+import { WhenFields, hh } from './WhenFields';
 
 // The spoken name starts with the visible text, then says what it does.
 const SLIPS: Array<{ days: number; text: string; more: string }> = [
@@ -11,7 +12,7 @@ const SLIPS: Array<{ days: number; text: string; more: string }> = [
 ];
 
 export function Header() {
-  const { scenario, update, search, sites, started, drawerOpen, setDrawerOpen } = useApp();
+  const { scenario, update, search, sites, started, drawerOpen, setDrawerOpen, say } = useApp();
   const site = sites.find((s) => s.id === scenario.site);
 
   return (
@@ -50,11 +51,16 @@ export function Header() {
           <span className="lead">PLACE </span>
           <b>{started && site ? shortName(site) : 'none yet'}</b>
         </span>
-        <span>
+        <span className="scn-when">
           <span className="lead">LANDING </span>
-          <b>
-            {scenario.date} {String(scenario.hour).padStart(2, '0')}:00 UTC
-          </b>
+          <WhenFields
+            label="Landing"
+            date={scenario.date}
+            hour={scenario.hour}
+            disabled={!started}
+            onChange={(next) => update({ ...next, t: 0 })}
+            onNow={(next) => say(`Landing set to now: ${next.date} ${hh(next.hour)} UTC`)}
+          />
         </span>
         <span>
           MARGIN <b>{scenario.margin.toFixed(1)}°</b>

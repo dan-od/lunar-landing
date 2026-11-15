@@ -1,14 +1,15 @@
 // Flow 3: compare two cases. Two equal panes, each with its own place, date and
 // hour, and a change report built from the same calculator results shown on
 // each side. Behaviour and wording follow the flow prototype.
-import { useEffect, useId, useState } from 'react';
+import { useEffect, useId } from 'react';
 import { Link } from 'react-router-dom';
 import { buildReport, reportText, shownDays, type WindowResult } from '@moon/core';
 import type { ApiSite } from '../api';
 import { tabFor } from '../tabs';
 import { usePageMeta } from '../meta';
 import { useApp } from '../state';
-import { AIM_SITE_ID, DATE_MAX, DATE_MIN, isAllowedDate, type CompareSide } from '../scenario';
+import { AIM_SITE_ID, type CompareSide } from '../scenario';
+import { WhenFields, hh } from '../components/WhenFields';
 import { fmtDeg, resultFor, type SiteSeries } from '../siteData';
 import { Track } from '../console/Timeline';
 import { NO_DATA } from '../console/types';
@@ -16,8 +17,6 @@ import { QUICK_SETUPS, sideA, sideB } from './sides';
 import { useCase, type CaseData, type CaseSource } from './useCase';
 
 const TAB = tabFor('/compare')!;
-const HOURS = Array.from({ length: 24 }, (_, h) => h);
-const hh = (h: number) => `${String(h).padStart(2, '0')}:00`;
 
 interface PaneProps {
   letter: 'A' | 'B';
@@ -30,7 +29,6 @@ interface PaneProps {
 
 function SidePane({ letter, side, sites, data, result, onChange }: PaneProps) {
   const id = useId();
-  const [dateError, setDateError] = useState('');
   const series: SiteSeries | undefined = data.series;
   const landing = result?.landing;
   const landingMs = series?.sun[0] ? Date.parse(series.sun[0].time) : 0;
@@ -59,43 +57,12 @@ function SidePane({ letter, side, sites, data, result, onChange }: PaneProps) {
             ))}
           </select>
         </label>
-        {dateError && (
-          <p className="err" role="alert" id={`${id}-err`}>
-            {dateError}
-          </p>
-        )}
-        <div className="grid2 gap">
-          <label className="fld">
-            <span>DATE (UTC)</span>
-            <input
-              type="date"
-              min={DATE_MIN}
-              max={DATE_MAX}
-              value={side.date}
-              aria-invalid={dateError ? true : undefined}
-              aria-describedby={dateError ? `${id}-err` : undefined}
-              onChange={(e) => {
-                const v = e.target.value;
-                if (isAllowedDate(v)) {
-                  setDateError('');
-                  onChange({ ...side, date: v });
-                } else if (v) {
-                  setDateError(`The date must be between ${DATE_MIN} and ${DATE_MAX}.`);
-                }
-              }}
-            />
-          </label>
-          <label className="fld">
-            <span>HOUR (UTC)</span>
-            <select value={side.hour} onChange={(e) => onChange({ ...side, hour: Number(e.target.value) })}>
-              {HOURS.map((h) => (
-                <option key={h} value={h}>
-                  {hh(h)}
-                </option>
-              ))}
-            </select>
-          </label>
-        </div>
+        <WhenFields
+          label={`Side ${letter}`}
+          date={side.date}
+          hour={side.hour}
+          onChange={(next) => onChange({ ...side, ...next })}
+        />
       </div>
 
       {data.failure && (

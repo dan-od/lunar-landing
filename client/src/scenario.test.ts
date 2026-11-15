@@ -1,5 +1,17 @@
 import { describe, it, expect } from 'vitest';
-import { DEFAULT_SCENARIO, parseScenario, scenarioToQuery, slipDate, type Scenario } from './scenario';
+import { DEFAULT_SCENARIO, nowUtc, parseScenario, scenarioToQuery, slipDate, type Scenario } from './scenario';
+
+describe('the Now button (A)', () => {
+  it('gives the current UTC date and hour, not local time', () => {
+    // 23:30 on 15 Nov in UTC is still the 15th, whatever the browser's time zone.
+    expect(nowUtc(Date.parse('2026-11-15T23:30:00Z'))).toEqual({ date: '2026-11-15', hour: 23 });
+    expect(nowUtc(Date.parse('2026-11-16T00:05:00Z'))).toEqual({ date: '2026-11-16', hour: 0 });
+  });
+
+  it('keeps the 2025 IM-2 case as the opening default', () => {
+    expect(DEFAULT_SCENARIO).toMatchObject({ site: 'im2', date: '2025-03-06', hour: 0 });
+  });
+});
 
 describe('scenario in the page address (1-6)', () => {
   it('round-trips every field', () => {

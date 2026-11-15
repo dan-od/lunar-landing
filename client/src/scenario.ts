@@ -156,6 +156,12 @@ export function scenarioToQuery(s: Scenario): string {
   return p.toString();
 }
 
+/** The current date and hour in UTC (the Now button). Times are always UTC. */
+export function nowUtc(ms: number = Date.now()): { date: string; hour: number } {
+  const iso = new Date(ms).toISOString();
+  return { date: iso.slice(0, 10), hour: Number(iso.slice(11, 13)) };
+}
+
 /** Move a date by whole days, staying inside the allowed dates. */
 export function slipDate(date: string, days: number): string {
   const next = new Date(Date.parse(`${date}T00:00:00Z`) + days * 86_400_000).toISOString().slice(0, 10);
