@@ -3,6 +3,7 @@ import { TABS } from '../tabs';
 import { shortName, useApp } from '../state';
 import { slipDate } from '../scenario';
 import { WhenFields, hh } from './WhenFields';
+import { Term } from '../help/Term';
 
 // The spoken name starts with the visible text, then says what it does.
 const SLIPS: Array<{ days: number; text: string; more: string }> = [
@@ -12,7 +13,7 @@ const SLIPS: Array<{ days: number; text: string; more: string }> = [
 ];
 
 export function Header() {
-  const { scenario, update, search, sites, started, drawerOpen, setDrawerOpen, say } = useApp();
+  const { scenario, update, search, sites, started, drawerOpen, setDrawerOpen, helpOpen, setHelpOpen, say } = useApp();
   const site = sites.find((s) => s.id === scenario.site);
 
   return (
@@ -33,6 +34,17 @@ export function Header() {
           ))}
         </nav>
         <div className="right">
+          <button
+            type="button"
+            id="help-open"
+            aria-label="Help"
+            aria-haspopup="dialog"
+            aria-expanded={helpOpen}
+            onClick={() => setHelpOpen(true)}
+          >
+            <span aria-hidden="true">? </span>
+            <span className="hd-word">HELP</span>
+          </button>
           <button
             type="button"
             id="settings-open"
@@ -65,12 +77,16 @@ export function Header() {
           />
         </span>
         <span className="xtra">
-          MARGIN <b>{scenario.margin.toFixed(1)}°</b>
+          MARGIN <b>{scenario.margin.toFixed(1)}°</b> <Term id="margin" />
         </span>
         <span className="xtra">
-          ACCURACY <b>±{scenario.accuracy} m</b>
+          ACCURACY <b>±{scenario.accuracy} m</b> <Term id="accuracy" />
         </span>
         <span className="sp">
+          <span className="sp-term">
+            <span className="lead">SLIP </span>
+            <Term id="slip" />
+          </span>
           {SLIPS.map((s) => (
             <button
               key={s.days}

@@ -10,6 +10,7 @@ import { usePageMeta } from '../meta';
 import { useApp } from '../state';
 import { AIM_SITE_ID, type CompareSide } from '../scenario';
 import { WhenFields, hh } from '../components/WhenFields';
+import { Term } from '../help/Term';
 import { fmtDeg, resultFor, type SiteSeries } from '../siteData';
 import { Track } from '../console/Timeline';
 import { NO_DATA } from '../console/types';
@@ -83,11 +84,11 @@ function SidePane({ letter, side, sites, data, result, onChange }: PaneProps) {
           <b className="c-earth">{series ? fmtDeg(series.earth[0]!.elevationDeg) : '—'}</b>
         </div>
         <div className="ro">
-          <i>POWER UP</i>
+          <i>POWER UP <Term id="power" /></i>
           <b>{result ? `${result.power.uptimePct}%` : '—'}</b>
         </div>
         <div className="ro">
-          <i>LINK UP</i>
+          <i>LINK UP <Term id="link" /></i>
           <b>{result ? `${result.contact.uptimePct}%` : '—'}</b>
         </div>
         <div className="ro">

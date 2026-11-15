@@ -3,6 +3,7 @@
 import { Link } from 'react-router-dom';
 import { fmtDeg, fmtDuration } from '../siteData';
 import { SkyView } from './SkyView';
+import { Term } from '../help/Term';
 import { NO_DATA, type SiteRow } from './types';
 
 interface Props {
@@ -63,11 +64,11 @@ export function Inspector({ row, fetching, t, marginDeg, search, csvHref }: Prop
           <b className="c-earth">{now ? fmtDeg(now.earthElev) : '—'}</b>
         </div>
         <div className="ro">
-          <i>POWER UP · 30 D</i>
+          <i>POWER UP · 30 D <Term id="power" /></i>
           <b>{result ? `${result.power.uptimePct}%` : '—'}</b>
         </div>
         <div className="ro">
-          <i>LINK UP · 30 D</i>
+          <i>LINK UP · 30 D <Term id="link" /></i>
           <b>{result ? `${result.contact.uptimePct}%` : '—'}</b>
         </div>
       </div>

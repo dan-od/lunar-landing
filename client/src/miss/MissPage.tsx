@@ -16,6 +16,7 @@ import {
 import { ApiFailure, getMiss } from '../api';
 import { AIM_SITE_ID, shortName, useApp } from '../state';
 import { MissMap } from './MissMap';
+import { Term } from '../help/Term';
 import { tabFor } from '../tabs';
 import { usePageMeta } from '../meta';
 
@@ -220,7 +221,9 @@ export function MissPage() {
             WHERE SHOULD WE AIM? · {shortName(site).toUpperCase()} · REAL TERRAIN
           </h2>
           <div className="miss-intro">
-            <div className="h2">Landers never hit the exact spot</div>
+            <div className="h2">
+              Landers never hit the exact spot <Term id="miss" />
+            </div>
             <p>
               Light ground works. Dark ground is in shadow.{' '}
               <span className="c-sun">Click the map to move the aim.</span>
@@ -257,6 +260,7 @@ export function MissPage() {
               <div className="miss-kind">{o.name}</div>
               <div className="hint">
                 Lands within {o.radius} m of where it aims{mine ? ' · chosen in Settings' : ''}
+                {mine && <Term id="accuracy" />}
               </div>
               <div className="miss-odds">
                 <span className="miss-n">{n}</span> out of 10 landings would work

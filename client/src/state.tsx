@@ -52,6 +52,11 @@ interface AppState {
   say: (message: string) => void;
   drawerOpen: boolean;
   setDrawerOpen: (open: boolean) => void;
+  helpOpen: boolean;
+  setHelpOpen: (open: boolean) => void;
+  /** The first-visit tour on the Console; also started from Help. */
+  tourOpen: boolean;
+  setTourOpen: (open: boolean) => void;
 }
 
 const Ctx = createContext<AppState | null>(null);
@@ -113,6 +118,8 @@ export function AppProvider({ children }: { children: ReactNode }) {
   const [force, setForce] = useState<ForceState>(() => readForce(window.location.search));
   const [toast, setToast] = useState('');
   const [drawerOpen, setDrawerOpen] = useState(false);
+  const [helpOpen, setHelpOpen] = useState(false);
+  const [tourOpen, setTourOpen] = useState(false);
 
   const [fetchedSites, setSites] = useState<ApiSite[]>([]);
   const [sitesStatus, setSitesStatus] = useState<SitesStatus>('loading');
@@ -275,6 +282,10 @@ export function AppProvider({ children }: { children: ReactNode }) {
     say,
     drawerOpen,
     setDrawerOpen,
+    helpOpen,
+    setHelpOpen,
+    tourOpen,
+    setTourOpen,
   };
   return <Ctx.Provider value={value}>{children}</Ctx.Provider>;
 }

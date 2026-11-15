@@ -2,6 +2,7 @@ import { Routes, Route, Link } from 'react-router-dom';
 import { Header, BottomTabs } from './components/Header';
 import { Page } from './components/Page';
 import { SettingsDrawer } from './components/SettingsDrawer';
+import { HelpPanel } from './help/HelpPanel';
 import { ConsolePage } from './console/ConsolePage';
 import { ComparePage } from './compare/ComparePage';
 import { MissPage } from './miss/MissPage';
@@ -78,6 +79,7 @@ function Shell() {
       </footer>
       <BottomTabs />
       <SettingsDrawer />
+      <HelpPanel />
       <div className="live" aria-live="polite">
         {toast && (
           <div className="toast" role="status">

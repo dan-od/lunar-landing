@@ -1323,6 +1323,168 @@ main.main {
   padding: 24px;
 }
 
+
+/* ---------- help: "?" beside a term ---------- */
+.term {
+  position: relative;
+  display: inline-block;
+  vertical-align: middle;
+}
+/* A 44 px target around a small square mark. */
+.app button.term-q {
+  min-height: 44px;
+  min-width: 44px;
+  margin: -12px -10px;
+  padding: 0;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+.term-q > span[aria-hidden] {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 16px;
+  height: 16px;
+  border: 1px solid var(--mut);
+  color: var(--mut);
+  font: 700 10px 'Fira Code', monospace;
+  letter-spacing: 0;
+}
+.term-q[aria-expanded='true'] > span[aria-hidden] {
+  background: var(--yel);
+  border-color: var(--yel);
+  color: var(--deep);
+}
+.term-pop {
+  position: absolute;
+  z-index: 6;
+  top: calc(100% + 6px);
+  left: -8px;
+  width: max-content;
+  max-width: min(280px, 80vw);
+  padding: 8px 10px;
+  background: var(--white);
+  color: var(--deep);
+  border-left: 4px solid var(--elec);
+  font: 400 13px/1.4 Overpass, system-ui, sans-serif;
+  letter-spacing: 0;
+  text-transform: none;
+  white-space: normal;
+  text-align: left;
+}
+.insp .term-pop,
+.cmp-side .ro:nth-child(3n) .term-pop,
+.scn .xtra .term-pop {
+  left: auto;
+  right: -8px;
+}
+.sp-term {
+  display: inline-flex;
+  align-items: center;
+  padding: 0 10px 0 0;
+}
+
+/* ---------- help panel ---------- */
+.drawer.help {
+  width: 400px;
+}
+.help-body {
+  overflow-y: auto;
+  flex: 1;
+}
+.help-h {
+  font: 400 11px 'Fira Code', monospace;
+  letter-spacing: 0.12em;
+  color: var(--mut);
+  text-transform: uppercase;
+  margin: 0 0 8px;
+}
+.help-steps {
+  margin: 0;
+  padding-left: 20px;
+}
+.help-steps li {
+  margin-bottom: 6px;
+}
+.help-terms {
+  margin: 0 0 8px;
+}
+.help-terms dt {
+  font-weight: 700;
+}
+.help-terms dd {
+  margin: 0 0 8px;
+  color: var(--white);
+}
+
+/* ---------- first-visit tour ---------- */
+.tour {
+  position: fixed;
+  z-index: 6;
+  right: 16px;
+  bottom: 16px;
+  width: min(340px, calc(100vw - 32px));
+  background: var(--pane);
+  border: 1px solid var(--yel);
+  padding: 14px;
+  animation: tour-in 180ms ease-out;
+}
+@keyframes tour-in {
+  from {
+    opacity: 0;
+    transform: translateY(8px);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+.tour-count {
+  font-size: 10px;
+  letter-spacing: 0.12em;
+  color: var(--mut);
+}
+.tour-title {
+  font: 900 18px 'Fira Sans', sans-serif;
+  text-transform: uppercase;
+  margin: 4px 0 6px;
+}
+.tour-title:focus {
+  outline: none;
+}
+.tour-check {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  min-height: 44px;
+  font-size: 13px;
+}
+.tour-check input {
+  width: 20px;
+  height: 20px;
+  accent-color: var(--yel);
+}
+.tour-actions {
+  display: flex;
+  justify-content: space-between;
+  gap: 8px;
+}
+.tour-nav {
+  display: flex;
+  gap: 8px;
+}
+/* The part of the page the tour is pointing at. */
+.tour-on {
+  outline: 3px solid var(--yel) !important;
+  outline-offset: -3px;
+}
+@media (max-width: 899px) {
+  .tour {
+    bottom: 72px;
+  }
+}
+
 /* Bottom tab bar: only on narrow screens (1-9). */
 .tabbar {
   display: none;

@@ -11,6 +11,7 @@ import { PoleMap } from './PoleMap';
 import { Timeline } from './Timeline';
 import { Inspector } from './Inspector';
 import { AddCoordinates } from './AddCoordinates';
+import { Tour } from '../help/Tour';
 import { NO_DATA, type SiteRow } from './types';
 
 const TAB = TABS[0]!;
@@ -241,6 +242,7 @@ export function ConsolePage() {
           }}
         />
       </div>
+      <Tour ready={rows.length > 0} />
       {selected && (
         <Inspector
           row={selected}
