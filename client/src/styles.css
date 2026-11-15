@@ -470,14 +470,10 @@ p {
 /* Where supported, the disc fills the map pane: the largest square that fits,
    centred, with padding for the caption above and the note below. The pane's
    height comes from the row (the site list and inspector), not from the disc. */
-@supports (container-type: size) {
-  .mapwrap.fill {
-    container-type: size;
-    min-height: 420px;
-  }
-  .mapwrap.fill .disc {
-    width: min(calc(100cqw - 40px), calc(100cqh - 84px));
-  }
+.mapwrap.fill {
+  /* The pane's height comes from the row, never from the disc (no feedback loop). */
+  contain: size;
+  min-height: clamp(420px, 60vh, 720px);
 }
 .disc .rim {
   position: absolute;
@@ -1682,14 +1678,9 @@ main.main {
   .scn .sp {
     margin-left: 0;
   }
-  @supports (container-type: size) {
-    .mapwrap.fill {
-      container-type: inline-size;
-      min-height: 0;
-    }
-    .mapwrap.fill .disc {
-      width: min(calc(100cqw - 24px), 560px);
-    }
+  .mapwrap.fill {
+    contain: none;
+    min-height: 0;
   }
 }
 

@@ -1,6 +1,7 @@
 // South pole map: looking down on the pole, 0° longitude at the top, east to the
 // right. Pins show each site's state at the time marker. The Sun and Earth sit
 // at the longitude where each is overhead, derived from NASA positions.
+import { useEffect, useRef, useState } from 'react';
 import type { SiteRow } from './types';
 import { NO_DATA } from './types';
 
@@ -31,16 +32,38 @@ export function PoleMap({ rows, selectedId, onSelect, overhead }: Props) {
   // that pin; it is listed and charted as its own row.
   const onMap = rows.filter((r) => r.site.lat <= EDGE_LAT && !r.site.aim);
   const offMap = rows.filter((r) => r.site.lat > EDGE_LAT && !r.site.aim);
+  // The disc is the largest square that fits the pane, centred and padded. It is
+  // measured rather than left to container-query units, which older Chrome
+  // resolves to zero when the pane's height comes from its minimum height.
+  const wrap = useRef<HTMLElement>(null);
+  const [size, setSize] = useState<number | null>(null);
+  useEffect(() => {
+    const el = wrap.current;
+    if (!el || typeof ResizeObserver === 'undefined') return;
+    const measure = () => {
+      const narrow = window.matchMedia('(max-width: 899px)').matches;
+      const w = el.clientWidth;
+      const h = el.clientHeight;
+      const next = narrow ? Math.min(w - 24, 560) : Math.min(w - 40, h - 84);
+      setSize(next > 120 ? Math.floor(next) : null);
+    };
+    measure();
+    const ro = new ResizeObserver(measure);
+    ro.observe(el);
+    return () => ro.disconnect();
+  }, []);
+
   const sun = overhead ? polar(overhead.sun, BODY) : null;
   const earth = overhead ? polar(overhead.earth, BODY) : null;
 
   return (
-    <section className="mapwrap fill" aria-labelledby="map-title">
+    <section ref={wrap} className="mapwrap fill" aria-labelledby="map-title">
       <h2 className="cap" id="map-title">
         02 / SOUTH POLE · POLAR VIEW
       </h2>
       <div
         className="disc"
+        style={size ? { width: size } : undefined}
         role="group"
         aria-label="South pole map, from 65 degrees south to the pole. Zero longitude is at the top."
       >
