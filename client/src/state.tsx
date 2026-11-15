@@ -2,9 +2,9 @@
 // first-open, notices and the short status message.
 import { createContext, useCallback, useContext, useEffect, useMemo, useRef, useState, type ReactNode } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
-import { getCuratedSite } from '@moon/core';
+import { aimText, getCuratedSite } from '@moon/core';
 import { ApiFailure, getSites, type ApiSite } from './api';
-import { DEFAULT_SCENARIO, parseScenario, scenarioToQuery, type Scenario } from './scenario';
+import { AIM_SITE_ID, DEFAULT_SCENARIO, parseScenario, scenarioToQuery, type Scenario } from './scenario';
 
 /** States that can be forced in a development or test build (1-7). */
 export type ForceState = 'loading' | 'down' | 'empty' | null;
@@ -29,7 +29,10 @@ interface AppState {
   start: (message?: string) => void;
   notices: string[];
   dismissNotices: () => void;
+  /** The site list, plus the aim point from the Miss tab when the aim has been moved. */
   sites: ApiSite[];
+  /** The site with prepared terrain (the Miss demo site), if any. */
+  terrainSite: ApiSite | undefined;
   sitesStatus: SitesStatus;
   /** Set when the site list could not be fetched; saved sites are shown if any. */
   sitesFailure: ApiFailure | null;
@@ -49,9 +52,31 @@ export function useApp(): AppState {
   return v;
 }
 
+export { AIM_SITE_ID };
+
+const short = (id: string, name: string) => getCuratedSite(id)?.short ?? name.slice(0, 12);
+
 /** Short name for the scenario bar and timeline. */
 export function shortName(site: ApiSite): string {
-  return getCuratedSite(site.id)?.short ?? site.name.slice(0, 12);
+  return site.aim ? `${short(site.aim.base, site.name)} aim` : short(site.id, site.name);
+}
+
+const MOON_RADIUS_M = 1_737_400;
+
+/** The aim as a site: the terrain site's name plus where the aim sits, at its own coordinates. */
+function aimSite(base: ApiSite, east: number, north: number): ApiSite {
+  const where = aimText({ east, north }).replace(' of the original target', '').replace(' and ', ', ');
+  const lat = base.lat + (north / MOON_RADIUS_M) * (180 / Math.PI);
+  const lon = base.lon + (east / (MOON_RADIUS_M * Math.cos((base.lat * Math.PI) / 180))) * (180 / Math.PI);
+  return {
+    id: AIM_SITE_ID,
+    name: `${short(base.id, base.name)} aim, ${where}`,
+    lat,
+    lon,
+    source: 'Aim point from the Miss tab, terrain from the LOLA elevation map',
+    has_terrain: true,
+    aim: { base: base.id, east, north },
+  };
 }
 
 export function AppProvider({ children }: { children: ReactNode }) {
@@ -66,10 +91,21 @@ export function AppProvider({ children }: { children: ReactNode }) {
   const [toast, setToast] = useState('');
   const [drawerOpen, setDrawerOpen] = useState(false);
 
-  const [sites, setSites] = useState<ApiSite[]>([]);
+  const [fetchedSites, setSites] = useState<ApiSite[]>([]);
   const [sitesStatus, setSitesStatus] = useState<SitesStatus>('loading');
   const [sitesFailure, setSitesFailure] = useState<ApiFailure | null>(null);
   const [sitesAttempt, setSitesAttempt] = useState(0);
+
+  const terrainSite = useMemo(() => fetchedSites.find((x) => x.has_terrain), [fetchedSites]);
+  const aimEast = scenario.aim.east;
+  const aimNorth = scenario.aim.north;
+  const sites = useMemo(
+    () =>
+      terrainSite && (aimEast !== 0 || aimNorth !== 0)
+        ? [...fetchedSites, aimSite(terrainSite, aimEast, aimNorth)]
+        : fetchedSites,
+    [fetchedSites, terrainSite, aimEast, aimNorth],
+  );
 
   const query = scenarioToQuery(scenario) + (force ? `&force=${force}` : '');
   const search = started ? `?${query}` : force ? `?force=${force}` : '';
@@ -165,13 +201,18 @@ export function AppProvider({ children }: { children: ReactNode }) {
   useEffect(() => {
     if (!started || sitesStatus !== 'ready' || sites.length === 0) return;
     if (sites.some((s) => s.id === scenario.site)) return;
+    if (scenario.site === AIM_SITE_ID && terrainSite) {
+      // The aim went back to the target: show the target itself, without a notice.
+      setScenario((s) => ({ ...s, site: terrainSite.id, t: 0 }));
+      return;
+    }
     const first = sites[0]!;
     setNotices((n) => [
       ...n,
       `The link named a site that is not in the list (“${scenario.site}”). Showing ${first.name} instead.`,
     ]);
     setScenario((s) => ({ ...s, site: first.id, t: 0 }));
-  }, [started, sitesStatus, sites, scenario.site]);
+  }, [started, sitesStatus, sites, scenario.site, terrainSite]);
 
   const reloadSites = useCallback(() => {
     setForce((f) => (f === 'empty' ? null : f));
@@ -187,6 +228,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
     notices,
     dismissNotices: () => setNotices([]),
     sites,
+    terrainSite,
     sitesStatus,
     sitesFailure,
     reloadSites,

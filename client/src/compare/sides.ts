@@ -1,7 +1,7 @@
 // The two sides of Compare. Side A is the shared scenario's place, date and hour
 // (so slips and site picks elsewhere carry over). Side B is either derived from
 // side A by a quick setup, or set by hand.
-import { slipDate, type CompareSetup, type CompareSide, type Scenario } from '../scenario';
+import { AIM_SITE_ID, slipDate, type CompareSetup, type CompareSide, type Scenario } from '../scenario';
 
 export interface QuickSetup {
   key: Exclude<CompareSetup, 'custom'>;
@@ -13,6 +13,7 @@ export const QUICK_SETUPS: QuickSetup[] = [
   { key: 'date', label: 'SAME PLACE, 10 DAYS LATER' },
   { key: 'time', label: 'SAME DAY, 12 HOURS LATER' },
   { key: 'site', label: 'TWO SITES' },
+  { key: 'aim', label: 'TARGET VS MY AIM' },
 ];
 
 export function sideA(s: Scenario): CompareSide {
@@ -27,7 +28,14 @@ export function quickSideB(key: QuickSetup['key'], a: CompareSide, siteIds: stri
     case 'time':
       return { site: a.site, date: a.date, hour: (a.hour + 12) % 24 };
     case 'site':
-      return { site: siteIds.find((id) => id !== a.site) ?? a.site, date: a.date, hour: a.hour };
+      return {
+        site: siteIds.find((id) => id !== a.site && id !== AIM_SITE_ID) ?? a.site,
+        date: a.date,
+        hour: a.hour,
+      };
+    case 'aim':
+      // Side A is the target; side B is the aim point from the Miss tab.
+      return { site: AIM_SITE_ID, date: a.date, hour: a.hour };
   }
 }
 

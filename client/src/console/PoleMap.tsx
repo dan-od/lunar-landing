@@ -24,8 +24,10 @@ interface Props {
 }
 
 export function PoleMap({ rows, selectedId, onSelect, overhead }: Props) {
-  const onMap = rows.filter((r) => r.site.lat <= EDGE_LAT);
-  const offMap = rows.filter((r) => r.site.lat > EDGE_LAT);
+  // The aim point sits within a few hundred metres of its target, so it shares
+  // that pin; it is listed and charted as its own row.
+  const onMap = rows.filter((r) => r.site.lat <= EDGE_LAT && !r.site.aim);
+  const offMap = rows.filter((r) => r.site.lat > EDGE_LAT && !r.site.aim);
   const sun = overhead ? polar(overhead.sun, RIM + 14) : null;
   const earth = overhead ? polar(overhead.earth, RIM + 14) : null;
 

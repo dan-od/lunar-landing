@@ -4,11 +4,11 @@ import { Page } from './components/Page';
 import { SettingsDrawer } from './components/SettingsDrawer';
 import { ConsolePage } from './console/ConsolePage';
 import { ComparePage } from './compare/ComparePage';
+import { MissPage } from './miss/MissPage';
 import { AppProvider, useApp } from './state';
 import { TABS } from './tabs';
 
 const HEADINGS: Record<string, string> = {
-  '/miss': 'What if we miss?',
   '/watch': 'Watch and be alerted',
   '/api': 'API',
 };
@@ -38,7 +38,8 @@ function Shell() {
       <Routes>
         <Route path="/" element={<ConsolePage />} />
         <Route path="/compare" element={<ComparePage />} />
-        {TABS.filter((t) => t.path !== '/' && t.path !== '/compare').map((t) => (
+        <Route path="/miss" element={<MissPage />} />
+        {TABS.filter((t) => !['/', '/compare', '/miss'].includes(t.path)).map((t) => (
           <Route
             key={t.path}
             path={t.path}
@@ -58,7 +59,7 @@ function Shell() {
       </Routes>
       <footer className="ft">
         <span>● SOURCE JPL HORIZONS</span>
-        <span>SMOOTH-MOON MODEL</span>
+        <span>SMOOTH-MOON MODEL · TERRAIN ON THE MISS TAB AND AIM POINTS</span>
         <span>TIMES IN UTC</span>
       </footer>
       <SettingsDrawer />

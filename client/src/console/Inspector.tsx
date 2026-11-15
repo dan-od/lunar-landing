@@ -72,7 +72,7 @@ export function Inspector({ row, t, marginDeg, search, csvHref }: Props) {
       <div className="pad line">
         <div className="mono sub">SKY AT T+{t.toFixed(1)} d</div>
         {now ? (
-          <SkyView readout={now} marginDeg={marginDeg} tDays={t} />
+          <SkyView readout={now} marginDeg={marginDeg} tDays={t} horizon={row.series?.horizon} />
         ) : (
           <p className="hint">No saved positions for this moment.</p>
         )}
@@ -112,8 +112,9 @@ export function Inspector({ row, t, marginDeg, search, csvHref }: Props) {
       )}
 
       <p className="pad hint">
-        Smooth-Moon model. Hills and crater rims are only counted on the Miss tab, where terrain is
-        prepared.
+        {row.series?.horizon
+          ? 'Terrain model: this aim point is judged against its own horizon from the LOLA elevation map. The shadow allowance is not used here.'
+          : 'Smooth-Moon model. Hills and crater rims are only counted on the Miss tab, where terrain is prepared.'}
       </p>
     </aside>
   );

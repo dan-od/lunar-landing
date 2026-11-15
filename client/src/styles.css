@@ -636,6 +636,12 @@ p {
   stroke-width: 1;
   stroke-dasharray: 4 3;
 }
+.sky-terrain {
+  fill: none;
+  stroke: var(--white);
+  stroke-width: 1.5;
+  stroke-dasharray: 4 3;
+}
 .sky-t {
   font: 400 9px 'Fira Code', monospace;
   fill: var(--mut);
@@ -883,6 +889,150 @@ p {
 }
 .cmp-actions a {
   border-left: 1px solid var(--line);
+}
+
+/* ---------- miss ---------- */
+.miss-wrap {
+  padding-top: 40px;
+}
+.miss-intro {
+  text-align: center;
+  max-width: 560px;
+  margin-bottom: 12px;
+}
+.miss-intro p {
+  font-size: 16px;
+}
+.miss-map {
+  width: min(100%, 620px);
+  height: auto;
+  aspect-ratio: 1;
+  cursor: crosshair;
+  flex: 0 0 auto;
+}
+.miss-shadow {
+  fill: var(--pane);
+}
+.miss-lit {
+  fill: var(--edge);
+  stroke: var(--edge);
+  stroke-width: 1;
+}
+.miss-edge {
+  fill: none;
+  stroke: var(--white);
+  stroke-width: 4;
+}
+.miss-ring {
+  fill: none;
+  stroke: var(--white);
+  stroke-width: 3;
+  stroke-dasharray: 12 9;
+  pointer-events: none;
+}
+.miss-ring.chosen {
+  stroke: var(--yel);
+  stroke-width: 5;
+  stroke-dasharray: none;
+}
+.miss-ring-t {
+  font: 500 20px 'Fira Code', monospace;
+  fill: var(--white);
+  paint-order: stroke;
+  stroke: var(--deep);
+  stroke-width: 6px;
+  pointer-events: none;
+}
+.miss-target {
+  fill: var(--white);
+  stroke: var(--deep);
+  stroke-width: 3;
+  pointer-events: none;
+}
+.miss-cross {
+  stroke: var(--yel);
+  stroke-width: 5;
+  pointer-events: none;
+}
+.miss-label {
+  pointer-events: none;
+}
+.miss-label text {
+  font: 500 22px 'Fira Code', monospace;
+  fill: var(--deep);
+}
+.miss-label.target rect {
+  fill: var(--white);
+}
+.miss-label.aim rect {
+  fill: var(--yel);
+}
+.miss-caption {
+  margin-top: 10px;
+  font-size: 11px;
+  letter-spacing: 0.08em;
+  text-align: center;
+}
+.miss-aim {
+  font-size: 15px;
+}
+.miss-row.mine {
+  background: var(--sel);
+}
+.miss-kind {
+  font-weight: 700;
+  font-size: 15px;
+}
+.miss-odds {
+  margin-top: 4px;
+  font-size: 15px;
+}
+.miss-n {
+  font: 900 36px 'Fira Sans', sans-serif;
+  color: var(--yel);
+}
+.miss-cover {
+  margin-top: 6px;
+}
+.bar {
+  height: 8px;
+  background: var(--off);
+  margin-top: 6px;
+}
+.bar div {
+  height: 8px;
+  background: var(--yel);
+}
+.miss-plain {
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+}
+.miss-nudge {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+}
+.miss-nudge button + button {
+  border-left: 1px solid var(--line);
+}
+.miss-use {
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+}
+.insp h3.lbl {
+  margin: 0;
+}
+a.as-row {
+  color: var(--white);
+  text-decoration: none;
+}
+a.as-button {
+  display: inline-flex;
+  align-items: center;
+  min-height: 44px;
+  color: var(--white);
+  text-decoration: none;
 }
 
 /* Placeholder tabs */

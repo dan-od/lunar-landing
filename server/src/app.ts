@@ -6,14 +6,19 @@ import { config } from './config.js';
 import { getPool } from './db/pool.js';
 import { createV1Router, type V1Deps } from './api/routes.js';
 import { apiErrorHandler, serviceUnavailable } from './api/errors.js';
-import { appSeriesProvider, dbSitesRepo, staticSitesRepo } from './api/providers.js';
+import { appSeriesProvider, dbSitesRepo, dbTerrainRepo, staticSitesRepo } from './api/providers.js';
 
 /** Production wiring: database-backed when a database is configured. */
 function defaultDeps(): V1Deps {
   const pool = getPool();
   const rateLimit = { windowMs: 60_000, max: config.rateLimitPerMinute };
   if (pool) {
-    return { sitesRepo: dbSitesRepo(pool), seriesProvider: appSeriesProvider(pool), rateLimit };
+    return {
+      sitesRepo: dbSitesRepo(pool),
+      seriesProvider: appSeriesProvider(pool),
+      terrainRepo: dbTerrainRepo(pool),
+      rateLimit,
+    };
   }
   return {
     sitesRepo: staticSitesRepo(),

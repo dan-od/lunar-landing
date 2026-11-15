@@ -3,8 +3,9 @@
 // and exported files cannot disagree.
 import {
   computeResult,
-  stateFor,
+  stateForThresholds,
   subPoint,
+  thresholdFor,
   type PositionRow,
   type SiteState,
   type WindowResult,
@@ -18,13 +19,18 @@ export const DISPLAY_HOURS = DISPLAY_DAYS * 24;
 export interface SiteSeries {
   sun: PositionRow[];
   earth: PositionRow[];
+  /**
+   * Terrain horizon for this point (360 heights, index = degrees clockwise from
+   * north). When present it replaces the shadow allowance: the terrain model.
+   */
+  horizon?: number[];
 }
 
 /**
  * Cut the fetched hourly points so index 0 is the landing moment.
  * `points` starts at 00:00 UTC on the landing date.
  */
-export function toSeries(points: SeriesPoint[], date: string, hour: number): SiteSeries {
+export function toSeries(points: SeriesPoint[], date: string, hour: number, horizon?: number[]): SiteSeries {
   const landing = `${date}T${String(hour).padStart(2, '0')}:00:00Z`;
   const from = points.findIndex((p) => p.t === landing);
   const cut = from < 0 ? [] : points.slice(from, from + DISPLAY_HOURS + 1);
@@ -37,12 +43,16 @@ export function toSeries(points: SeriesPoint[], date: string, hour: number): Sit
       azimuthDeg: p.earth_az as number,
       elevationDeg: p.earth_elev as number,
     })),
+    ...(horizon ? { horizon } : {}),
   };
 }
 
 /** The 30-day result for a site at a shadow allowance. */
 export function resultFor(series: SiteSeries, marginDeg: number): WindowResult {
-  return computeResult(series.sun.slice(0, DISPLAY_HOURS), series.earth.slice(0, DISPLAY_HOURS), { marginDeg });
+  return computeResult(series.sun.slice(0, DISPLAY_HOURS), series.earth.slice(0, DISPLAY_HOURS), {
+    marginDeg,
+    horizon: series.horizon,
+  });
 }
 
 /** Row index for a marker position in days after landing. */
@@ -56,6 +66,9 @@ export interface Readout {
   sunAz: number;
   earthElev: number;
   earthAz: number;
+  /** What each body has to clear at this moment: the allowance, or the terrain in its direction. */
+  sunThreshold: number;
+  earthThreshold: number;
   state: SiteState;
 }
 
@@ -65,13 +78,17 @@ export function readoutAt(series: SiteSeries, marginDeg: number, tDays: number):
   const s = series.sun[i];
   const e = series.earth[i];
   if (!s || !e) return undefined;
+  const sunThreshold = thresholdFor(s, marginDeg, series.horizon);
+  const earthThreshold = thresholdFor(e, marginDeg, series.horizon);
   return {
     time: s.time,
     sunElev: s.elevationDeg,
     sunAz: s.azimuthDeg,
     earthElev: e.elevationDeg,
     earthAz: e.azimuthDeg,
-    state: stateFor(s.elevationDeg, e.elevationDeg, marginDeg),
+    sunThreshold,
+    earthThreshold,
+    state: stateForThresholds(s.elevationDeg, e.elevationDeg, sunThreshold, earthThreshold),
   };
 }
 

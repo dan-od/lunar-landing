@@ -15,8 +15,11 @@ change turns a good site bad.
   computed server-side and cached.
 - By default the app uses a **smooth-Moon model**: the reference sphere plus a
   *shadow allowance* that stands in for hills the smooth model cannot see.
-- **Real terrain** (crater rims, ridges) is used only on the **Miss** view, for the
-  one demo site where horizon profiles are prepared from the LOLA elevation map.
+- **Real terrain** is used on the **Miss** view and for an aim point carried from
+  it, for the one demo site where horizon profiles are prepared from the LOLA
+  elevation map: 441 points on a 40 m grid reaching 400 m from the target. The map
+  is 80 m per pixel, so craters smaller than that are not seen. Odds count only
+  prepared points, and the screen says when a ring reaches past them.
 - Every reply and exported file names the model it used (smooth Moon or terrain).
 - Not modelled: radio link quality, thermal/battery behaviour, disc size of the
   Sun or Earth (centre of body only).
@@ -102,9 +105,10 @@ The cache seed fetches 60 days hourly from 2025-02-04 for the five curated sites
 | --- | --- | --- |
 | `GET /v1/sites` | none | id, name, lat, lon, source, has_terrain |
 | `GET /v1/sky` | `site` or `lat`+`lon`; `date`; `hour` (0), `margin` (2) | Sun and Earth direction and height; state word and symbol |
-| `GET /v1/windows` | `site` or `lat`+`lon`; `start`; `hour` (0); `days` (30, up to 60); `margin` (2) | power and contact windows, uptime, longest gap, next change, hourly series |
+| `GET /v1/windows` | `site` or `lat`+`lon`; `start`; `hour` (0); `days` (30, up to 60); `margin` (2); optional `aim_east`+`aim_north` for an aim point on prepared terrain | power and contact windows, uptime, longest gap, next change, hourly series |
 | `GET /v1/windows.csv` | as `/v1/windows` | spreadsheet file: scenario and model in the first lines, then one row per window |
 | `GET /v1/report` | `a_site` (or `a_lat`+`a_lon`), `a_date`, `a_hour` (0); the same for `b_`; `days` (30); `margin` (2) | verdict and five sentences, each marked better, worse or same, plus each side's numbers |
+| `GET /v1/miss` | `site`; `date`; `hour` (0); `east`, `north` (aim, 0); `accuracy` (250) | terrain model: landings out of 10 that would work at 100, 250 and 320 m, the safest aim, and the grid of prepared points. 409 for a site without prepared terrain |
 
 Every reply names the model. Errors name the field at fault and the allowed range
 (400), the unknown site (404), the seconds to wait (429), or say that nothing is

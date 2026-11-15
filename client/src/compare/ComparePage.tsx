@@ -6,12 +6,12 @@ import { Link } from 'react-router-dom';
 import { buildReport, reportText, shownDays, type WindowResult } from '@moon/core';
 import type { ApiSite } from '../api';
 import { useApp } from '../state';
-import { DATE_MAX, DATE_MIN, isAllowedDate, type CompareSide } from '../scenario';
+import { AIM_SITE_ID, DATE_MAX, DATE_MIN, isAllowedDate, type CompareSide } from '../scenario';
 import { fmtDeg, resultFor, type SiteSeries } from '../siteData';
 import { Track } from '../console/Timeline';
 import { NO_DATA } from '../console/types';
 import { QUICK_SETUPS, sideA, sideB } from './sides';
-import { useCase, type CaseData } from './useCase';
+import { useCase, type CaseData, type CaseSource } from './useCase';
 
 const TITLE = 'Moon Status: compare two landing cases';
 const HOURS = Array.from({ length: 24 }, (_, h) => h);
@@ -162,7 +162,7 @@ function SidePane({ letter, side, sites, data, result, onChange }: PaneProps) {
 }
 
 export function ComparePage() {
-  const { scenario, update, started, start, sites, search, say } = useApp();
+  const { scenario, update, started, start, sites, terrainSite, search, say } = useApp();
   const ids = sites.map((s) => s.id);
   const a = sideA(scenario);
   const b = sideB(scenario, ids);
@@ -177,8 +177,28 @@ export function ComparePage() {
     if (!started) start();
   }, [started, start]);
 
-  const dataA = useCase(a, ready);
-  const dataB = useCase(b, ready);
+  // Where each side's positions come from. The aim point is always judged on its
+  // terrain; when it is being compared with its own target, the target is judged
+  // on terrain too, so both sides use one model.
+  const aimMoved = scenario.aim.east !== 0 || scenario.aim.north !== 0;
+  const sourceOf = (side: CompareSide, other: CompareSide): CaseSource => {
+    if (terrainSite && side.site === AIM_SITE_ID) return { site: terrainSite.id, aim: scenario.aim };
+    if (terrainSite && side.site === terrainSite.id && other.site === AIM_SITE_ID) {
+      return { site: terrainSite.id, aim: { east: 0, north: 0 } };
+    }
+    return { site: side.site };
+  };
+  const sourceA = sourceOf(a, b);
+  const sourceB = sourceOf(b, a);
+  const dataA = useCase(a, sourceA, ready);
+  const dataB = useCase(b, sourceB, ready);
+  const modelOf = (source: CaseSource) => (source.aim ? 'terrain' : 'smooth Moon');
+  const models =
+    modelOf(sourceA) === modelOf(sourceB)
+      ? modelOf(sourceA) === 'terrain'
+        ? 'Terrain model on both sides (LOLA elevation map); the shadow allowance is not used.'
+        : `Smooth-Moon model, shadow allowance ${scenario.margin.toFixed(1)}°.`
+      : `A uses the ${modelOf(sourceA)} model and B uses the ${modelOf(sourceB)} model, so this compares two different models.`;
   const resultA = dataA.series ? resultFor(dataA.series, scenario.margin) : undefined;
   const resultB = dataB.series ? resultFor(dataB.series, scenario.margin) : undefined;
   const report = resultA && resultB ? buildReport(resultA, resultB) : undefined;
@@ -186,8 +206,7 @@ export function ComparePage() {
   const nameOf = (id: string) => sites.find((s) => s.id === id)?.name ?? id;
   const context =
     `A: ${nameOf(a.site)}, ${a.date} ${hh(a.hour)} UTC. B: ${nameOf(b.site)}, ${b.date} ${hh(b.hour)} UTC. ` +
-    `30 days from landing, shadow allowance ${scenario.margin.toFixed(1)}°. ` +
-    'Smooth-Moon model, positions from NASA JPL Horizons.';
+    `30 days from landing. ${models} Positions from NASA JPL Horizons.`;
 
   const copy = async () => {
     if (!report) return;
@@ -207,22 +226,34 @@ export function ComparePage() {
         <h2 className="lbl" id="setups-title">
           01 / QUICK SETUPS
         </h2>
-        {QUICK_SETUPS.map((q) => (
-          <button
-            key={q.key}
-            type="button"
-            aria-pressed={scenario.setup === q.key}
-            onClick={() => update({ setup: q.key, b: null })}
-          >
-            {q.label}
-          </button>
-        ))}
-        <button type="button" disabled aria-describedby="aim-why">
-          TARGET VS MY AIM
-        </button>
-        <span className="hint cmp-why" id="aim-why">
-          Target vs my aim needs an aim from the Miss tab, which is not built yet.
-        </span>
+        {QUICK_SETUPS.map((q) => {
+          // "Target vs my aim" needs an aim that has been moved on the Miss tab.
+          const needsAim = q.key === 'aim' && !(aimMoved && terrainSite);
+          return (
+            <button
+              key={q.key}
+              type="button"
+              aria-pressed={scenario.setup === q.key}
+              disabled={needsAim}
+              aria-describedby={needsAim ? 'aim-why' : undefined}
+              onClick={() =>
+                update(
+                  q.key === 'aim' && terrainSite
+                    ? { site: terrainSite.id, setup: 'aim', b: null, t: 0 }
+                    : { setup: q.key, b: null },
+                )
+              }
+            >
+              {q.label}
+            </button>
+          );
+        })}
+        {!(aimMoved && terrainSite) && (
+          <span className="hint cmp-why" id="aim-why">
+            Target vs my aim needs an aim: move it on the{' '}
+            <Link to={{ pathname: '/miss', search }}>Miss tab</Link> first.
+          </span>
+        )}
       </div>
 
       <div className="body">

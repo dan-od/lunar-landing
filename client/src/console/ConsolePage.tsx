@@ -231,7 +231,14 @@ export function ConsolePage() {
           t={scenario.t}
           marginDeg={scenario.margin}
           search={search}
-          csvHref={windowsCsvUrl(selected.site.id, scenario.date, scenario.hour, DISPLAY_DAYS, scenario.margin)}
+          csvHref={windowsCsvUrl(
+            selected.site.aim?.base ?? selected.site.id,
+            scenario.date,
+            scenario.hour,
+            DISPLAY_DAYS,
+            scenario.margin,
+            selected.site.aim,
+          )}
         />
       )}
     </main>
