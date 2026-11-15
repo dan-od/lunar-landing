@@ -103,6 +103,7 @@ export const TAB_HELP: Record<string, TabHelp> = {
       { name: 'Sunrise and sunset', meaning: 'When the Sun climbs above the margin, or drops below it, at that place.' },
       { name: 'Earth rise and Earth set', meaning: 'When Earth comes into view for radio contact, or goes out of view.' },
       { name: 'Times', meaning: 'All in UTC, to the hour, because NASA’s positions are hourly.' },
+      { name: 'Email watch (when offered)', meaning: 'Pick a rule and an address; after you confirm by email, you get one email each time the rule breaks. Every email has a one-click unsubscribe that deletes your address.' },
     ],
   },
   '/api': {
