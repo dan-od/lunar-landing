@@ -8,6 +8,7 @@ import { ComparePage } from './compare/ComparePage';
 import { MissPage } from './miss/MissPage';
 import { ApiPage } from './apiPage/ApiPage';
 import { WatchPage } from './watch/WatchPage';
+import { WatchesProvider } from './watch/WatchesProvider';
 import { AppProvider, useApp } from './state';
 import { TABS } from './tabs';
 
@@ -83,7 +84,9 @@ function Shell() {
 export function App() {
   return (
     <AppProvider>
-      <Shell />
+      <WatchesProvider>
+        <Shell />
+      </WatchesProvider>
     </AppProvider>
   );
 }

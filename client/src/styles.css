@@ -1280,6 +1280,40 @@ a.as-button {
   margin: 4px 0 10px;
 }
 
+.watch-item-head {
+  display: flex;
+  justify-content: space-between;
+  gap: 8px;
+  margin-bottom: 4px;
+}
+.watch-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-top: 8px;
+}
+.modal {
+  position: fixed;
+  left: 50%;
+  top: 30%;
+  transform: translateX(-50%);
+  width: 380px;
+  max-width: 92%;
+  background: var(--pane);
+  border: 1px solid var(--edge);
+  z-index: 6;
+}
+.modal-actions {
+  border-top: 1px solid var(--line);
+}
+.modal-actions button + button {
+  border-left: 1px solid var(--line);
+}
+.app button.danger {
+  background: #5a1600;
+  font-weight: 700;
+}
+
 /* ---------- API tab ---------- */
 .api-path {
   font-weight: 500;

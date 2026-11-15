@@ -2,7 +2,7 @@
 // landing time it lists the upcoming changes (sunrise, sunset, Earth rise,
 // Earth set) over the next 30 days, read from the one calculator, each with an
 // "Add to calendar" button that downloads a calendar file with a reminder.
-import { useEffect, useMemo, useState, type ReactNode } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { changesFrom, type ChangeKind } from '@moon/core';
 import { windowsIcsUrl } from '../api';
@@ -12,6 +12,9 @@ import { shortName, useApp } from '../state';
 import { useSiteData } from '../useSiteData';
 import { DISPLAY_DAYS, DISPLAY_HOURS, fmtDuration, resultFor } from '../siteData';
 import { hh } from '../components/WhenFields';
+import { confirmWatch, WatchFailure } from './watchApi';
+import { EmailWatchForm, EmailWatchList } from './EmailWatch';
+import { useWatches } from './WatchesProvider';
 
 const TAB = tabFor('/watch')!;
 
@@ -31,10 +34,33 @@ const REMINDERS = [
 
 const when = (iso: string) => `${iso.slice(0, 10)} ${iso.slice(11, 16)}`;
 
-export function WatchPage({ emailSection }: { emailSection?: ReactNode }) {
-  const { scenario, started, start, sites, force, search } = useApp();
+/** The confirmation link's token, read once before the scenario is written to the address. */
+const CONFIRM = new URLSearchParams(window.location.search).get('confirm');
+
+export function WatchPage() {
+  const { scenario, started, start, sites, force, search, say } = useApp();
+  const { replace } = useWatches();
   const [remind, setRemind] = useState(60);
+  const [confirmMsg, setConfirmMsg] = useState('');
+  const confirmed = useRef(false);
   usePageMeta(TAB.title, TAB.description, TAB.path);
+
+  // Opened from the confirmation email: confirm the watch once (5-2, 5-3).
+  useEffect(() => {
+    if (!CONFIRM || confirmed.current) return;
+    confirmed.current = true;
+    confirmWatch(CONFIRM)
+      .then((w) => {
+        replace(w);
+        const msg =
+          w.status === 'tripped'
+            ? `Watch is active. Its first check found the rule already broken, so one alert was emailed.`
+            : 'Watch is active. You will get one email if its rule breaks.';
+        setConfirmMsg(msg);
+        say(msg);
+      })
+      .catch((err) => setConfirmMsg(err instanceof WatchFailure ? err.message : 'The watch could not be confirmed.'));
+  }, [replace, say]);
 
   // Opened cold with no scenario in the address: use the default case.
   useEffect(() => {
@@ -61,6 +87,11 @@ export function WatchPage({ emailSection }: { emailSection?: ReactNode }) {
     <main id="content" tabIndex={-1} className="body">
       <h1 className="sr">Watch a landing site</h1>
       <div className="main">
+        {confirmMsg && (
+          <div className="ban" role="status">
+            <span>{confirmMsg}</span>
+          </div>
+        )}
         <h2 className="lbl" id="changes-title">
           01 / UPCOMING CHANGES · {site ? shortName(site).toUpperCase() : '…'} · 30 DAYS FROM {scenario.date}{' '}
           {hh(scenario.hour)} UTC
@@ -131,6 +162,7 @@ export function WatchPage({ emailSection }: { emailSection?: ReactNode }) {
           {model} Positions from NASA JPL Horizons, hourly, so each time is to the hour. Change the place
           or landing time in the bar at the top, or on the <Link to={{ pathname: '/', search }}>Console</Link>.
         </p>
+        <EmailWatchList />
       </div>
 
       <aside className="insp" aria-labelledby="keep-title">
@@ -162,7 +194,7 @@ export function WatchPage({ emailSection }: { emailSection?: ReactNode }) {
             stored here.
           </p>
         </div>
-        {emailSection}
+        <EmailWatchForm />
       </aside>
     </main>
   );
