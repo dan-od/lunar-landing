@@ -1,0 +1,91 @@
+# Deploys Moon Status production (moon.okoro.me) to the homelab.
+# Runs on a push to main, or by hand. Nothing is deployed from any other branch.
+#
+# Repository secrets this workflow expects (names only; values live in GitHub):
+#   TS_OAUTH_CLIENT_ID   Tailscale OAuth client id, to join the tailnet as tag:ci
+#   TS_OAUTH_SECRET      Tailscale OAuth secret
+#   DEPLOY_HOST          tailnet address of the homelab host
+#   DEPLOY_USER          SSH user on that host
+#   DEPLOY_SSH_KEY       private ed25519 key for that user
+#   DEPLOY_KNOWN_HOSTS   the host's public key line(s), from `ssh-keyscan -t ed25519 <host>`
+#   MOON_DB_PASSWORD     PostgreSQL password. Letters and digits only: it is also
+#                        written into DATABASE_URL, where other characters would
+#                        need escaping. PostgreSQL only reads it the first time the
+#                        database volume is created; changing it later does not
+#                        change the password of an existing database.
+#
+# One-time step on the host, not done by this workflow: copy nginx/moon.conf to
+# /opt/docker-homelab/nginx/sites/moon.conf and reload nginx-proxy.
+
+name: Deploy moon
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+concurrency: deploy-moon
+permissions:
+  contents: read
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Join tailnet
+        uses: tailscale/github-action@v2
+        with:
+          oauth-client-id: ${{ secrets.TS_OAUTH_CLIENT_ID }}
+          oauth-secret: ${{ secrets.TS_OAUTH_SECRET }}
+          tags: tag:ci
+      - name: SSH setup
+        run: |
+          mkdir -p ~/.ssh
+          echo "${{ secrets.DEPLOY_SSH_KEY }}" > ~/.ssh/id_ed25519
+          chmod 600 ~/.ssh/id_ed25519
+          echo "${{ secrets.DEPLOY_KNOWN_HOSTS }}" > ~/.ssh/known_hosts
+      - name: Sync code
+        run: |
+          rsync -az --delete \
+            --exclude='.git' --exclude='node_modules' --exclude='.env' \
+            --exclude='data' --exclude='tools/terrain/.venv' \
+            ./ ${{ secrets.DEPLOY_USER }}@${{ secrets.DEPLOY_HOST }}:/opt/docker-homelab/sites/moon/
+      # Every variable docker-compose.yml reads. Only the password is a secret.
+      - name: Write .env
+        run: |
+          ssh ${{ secrets.DEPLOY_USER }}@${{ secrets.DEPLOY_HOST }} "umask 077; cat > /opt/docker-homelab/sites/moon/.env" <<'EOF'
+          POSTGRES_USER=moon
+          POSTGRES_DB=moonstatus
+          POSTGRES_PASSWORD=${{ secrets.MOON_DB_PASSWORD }}
+          DATABASE_URL=postgres://moon:${{ secrets.MOON_DB_PASSWORD }}@moon-db:5432/moonstatus
+          HORIZONS_API_URL=https://ssd.jpl.nasa.gov/api/horizons.api
+          PUBLIC_SITE_URL=https://moon.okoro.me
+          EOF
+      - name: Build and restart
+        run: |
+          ssh ${{ secrets.DEPLOY_USER }}@${{ secrets.DEPLOY_HOST }} <<'DEPLOY'
+            set -e
+            cd /opt/docker-homelab/sites/moon
+            docker compose up -d --build --remove-orphans
+            docker image prune -f
+            docker ps --filter name=moon --format 'table {{.Names}}\t{{.Status}}'
+          DEPLOY
+      # The server does not create its own tables. Each of these is safe to run
+      # on every deploy: migrations apply once, sites are upserted, and the cache
+      # seed asks NASA Horizons (one request at a time) only for hours not saved.
+      - name: Migrate and seed
+        run: |
+          ssh ${{ secrets.DEPLOY_USER }}@${{ secrets.DEPLOY_HOST }} <<'DEPLOY'
+            set -e
+            cd /opt/docker-homelab/sites/moon
+            for i in $(seq 1 30); do
+              [ "$(docker inspect -f '{{.State.Health.Status}}' moon-server)" = "healthy" ] && break
+              sleep 2
+            done
+            docker compose exec -T server node server/dist/db/migrate.js
+            docker compose exec -T server node server/dist/sites/seed.js
+            docker compose exec -T server node server/dist/cache/seedCache.js
+          DEPLOY
+      - name: Smoke test
+        run: |
+          sleep 10
+          curl -fsS -o /dev/null -w '%{http_code}\n' https://moon.okoro.me/api/health
+          curl -fsS -o /dev/null -w '%{http_code}\n' https://moon.okoro.me/v1/sites

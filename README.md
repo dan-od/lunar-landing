@@ -123,6 +123,15 @@ client joins the shared `web` proxy network; the database is on an internal
 network only; no ports are published. The server's health check answers at
 `/api/health` on `127.0.0.1`.
 
+## Deploy
+
+`.github/workflows/deploy.yml` deploys production (moon.okoro.me) on a push to
+`main`, or by hand. It syncs the code to the host, writes `.env` from repository
+secrets, builds and restarts the stack, runs the migrations, seeds the sites and
+the position cache, then checks `/api/health` and `/v1/sites`. The secret names
+it expects are listed at the top of that file. The proxy site file is
+`nginx/moon.conf`; copying it to the host is a one-time manual step.
+
 ## Credits
 
 Every data source, library, font and asset is listed with its link and licence in

@@ -77,4 +77,11 @@ Loaded from Google Fonts (https://fonts.google.com/).
 | PostgreSQL (`postgres:16-alpine` image) | Database | https://www.postgresql.org/ | PostgreSQL License |
 | nginx (`nginx:1.27-alpine` image) | Serves the built front end | https://nginx.org/ | BSD-2-Clause |
 
+## Deployment tools
+
+| Tool | Used as | Link | Licence |
+| --- | --- | --- | --- |
+| `actions/checkout` | Checks out the code in the deploy workflow | https://github.com/actions/checkout | MIT |
+| `tailscale/github-action` | Joins the private network to reach the host | https://github.com/tailscale/github-action | BSD-3-Clause |
+
 Moon Status itself is released under the MIT licence (see [LICENSE](LICENSE)).
