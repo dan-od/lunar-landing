@@ -27,6 +27,10 @@ describe('endpointUrl: each endpoint is called for the current scenario', () => 
     );
   });
 
+  it('slip carries place, date, hour and allowance', () => {
+    expect(endpointUrl('slip', s, 'im2')).toBe('/v1/slip?site=shk&date=2025-03-10&hour=9&margin=1.5');
+  });
+
   it('miss always asks about the site that has terrain, with the aim and accuracy', () => {
     const withAim = { ...s, aim: { east: -160, north: 120 } };
     expect(endpointUrl('miss', withAim, 'im2')).toBe(

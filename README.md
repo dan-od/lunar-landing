@@ -181,6 +181,7 @@ The cache seed fetches 60 days hourly from 2025-02-04 for the five curated sites
 | `GET /v1/windows` | `site` or `lat`+`lon`; `start`; `hour` (0); `days` (30, up to 60); `margin` (2); optional `aim_east`+`aim_north` for an aim point on prepared terrain | power and contact windows, uptime, longest gap, next change, hourly series |
 | `GET /v1/windows.csv` | as `/v1/windows` | spreadsheet file: scenario and model in the first lines, then one row per window |
 | `GET /v1/report` | `a_site` (or `a_lat`+`a_lon`), `a_date`, `a_hour` (0); the same for `b_`; `days` (30); `margin` (2) | verdict and five sentences, each marked better, worse or same, plus each side's numbers |
+| `GET /v1/slip` | `site` or `lat`+`lon`; `date`; `hour` (0); `margin` (2) | ready or not ready at the landing hour for each whole-day slip from −30 to +30; unknown where no positions are saved |
 | `GET /v1/miss` | `site`; `date`; `hour` (0); `east`, `north` (aim, 0); `accuracy` (250) | terrain model: landings out of 10 that would work at 100, 250 and 320 m, the safest aim, and the grid of prepared points. 409 for a site without prepared terrain |
 
 Every reply names the model. Errors name the field at fault and the allowed range

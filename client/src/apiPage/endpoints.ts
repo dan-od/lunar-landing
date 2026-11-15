@@ -51,6 +51,13 @@ export const ENDPOINTS: EndpointDef[] = [
     returns: 'A verdict and five sentences, each marked better, worse or same.',
   },
   {
+    key: 'slip',
+    method: 'GET',
+    path: '/v1/slip',
+    summary: 'Ready or not for each day the landing slips',
+    returns: 'The state at the landing hour for every whole-day slip from 30 days earlier to 30 days later.',
+  },
+  {
     key: 'miss',
     method: 'GET',
     path: '/v1/miss',
@@ -102,6 +109,12 @@ export function endpointUrl(key: string, s: Scenario, terrainSiteId: string | un
       q.set('b_hour', String(s.hour));
       q.set('margin', String(s.margin));
       return `/v1/report?${q.toString()}`;
+    case 'slip':
+      q.set('site', site);
+      q.set('date', s.date);
+      q.set('hour', String(s.hour));
+      q.set('margin', String(s.margin));
+      return `/v1/slip?${q.toString()}`;
     case 'miss':
       q.set('site', terrainSiteId ?? site);
       q.set('date', s.date);
