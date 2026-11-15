@@ -4,11 +4,13 @@ Computes the 360-direction horizon for the IM-2 target: 2 m observer, out to
 150 km, curvature-corrected, bilinear elevation. Prints the run time and a
 summary, and saves the profile so it can be inspected.
 """
+import os
 import time
 import numpy as np
 from terrain import Terrain, MAX_RANGE_M
 
 LAT, LON = -84.78, 29.13  # IM-2 target
+OUT = "out"               # generated artifacts (git-ignored)
 
 
 def main():
@@ -35,9 +37,10 @@ def main():
     print("At az 250     : horizon %.3f deg, ray reached %.1f km" %
           (horizon[250], reach[250] / 1000))
 
-    np.savez("profiles/im2_target.npz", lat=LAT, lon=LON,
+    os.makedirs(OUT, exist_ok=True)
+    np.savez(os.path.join(OUT, "im2_target.npz"), lat=LAT, lon=LON,
              horizon=horizon, reach=reach, azimuth=az)
-    print("saved         : profiles/im2_target.npz")
+    print("saved         : %s/im2_target.npz" % OUT)
 
 
 if __name__ == "__main__":

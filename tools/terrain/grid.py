@@ -7,6 +7,7 @@ satisfies requirement 4-1 (grid covers at least 320 m in every direction).
 Each point stores its 360-direction horizon and per-direction reach. Output
 goes to profiles/im2_grid.npz, which is generated data and is not committed.
 """
+import os
 import time
 import numpy as np
 from terrain import Terrain
@@ -14,6 +15,7 @@ from terrain import Terrain
 LAT, LON = -84.78, 29.13
 HALF_M = 400.0
 STEP_M = 40.0
+OUT = "out"               # generated artifacts (git-ignored)
 
 
 def main():
@@ -54,13 +56,14 @@ def main():
     print("Rays off-map : %d of %d points had any ray leave before 150 km" %
           (left_any, total))
 
-    np.savez_compressed("profiles/im2_grid.npz",
+    os.makedirs(OUT, exist_ok=True)
+    np.savez_compressed(os.path.join(OUT, "im2_grid.npz"),
                         lat0=LAT, lon0=LON, offsets=offsets,
                         offset_east=oe.astype(np.float32),
                         offset_north=on.astype(np.float32),
                         lon=lon_g, lat=lat_g,
                         horizon=horizon_g, reach=reach_g)
-    print("saved         : profiles/im2_grid.npz")
+    print("saved         : %s/im2_grid.npz" % OUT)
 
 
 if __name__ == "__main__":

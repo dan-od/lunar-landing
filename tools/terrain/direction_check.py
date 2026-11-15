@@ -13,6 +13,7 @@ from any stated formula, that:
 Then it pairs the fixture's Sun azimuth at one hour with the terrain horizon in
 that direction and saves a compass plot as proof.
 """
+import os
 import re
 import numpy as np
 import matplotlib
@@ -112,7 +113,8 @@ def main():
                  "Sun at %s UTC (NASA Horizons)" % DEMO_ROW, fontsize=10)
     ax.legend(loc="lower center", bbox_to_anchor=(0.5, -0.18), fontsize=8)
     fig.tight_layout()
-    out = "plots/direction_check.png"
+    os.makedirs("out", exist_ok=True)
+    out = "out/direction_check.png"
     fig.savefig(out, dpi=130)
     print("\nsaved plot     : %s" % out)
 

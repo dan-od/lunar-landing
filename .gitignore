@@ -21,3 +21,5 @@ npm-debug.log*
 
 # test/coverage
 coverage/
+tools/terrain/.venv/
+tools/terrain/out/
