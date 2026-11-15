@@ -87,7 +87,7 @@ export function createV1Router(deps: V1Deps): Router {
         stop: `${addDays(date, 1)} 00:00`,
         step: '1h',
       };
-      const { sun, earth, saved } = await deps.seriesProvider.get(site, span);
+      const { sun, earth, saved } = await calc.seriesFor(site, span, visitorOf(req));
       const target = isoAt(date, hour);
       const s = sun.find((r) => r.time === target);
       const e = earth.find((r) => r.time === target);
@@ -275,6 +275,7 @@ export function createV1Router(deps: V1Deps): Router {
       // Asked first, so a site without terrain is told so before anything else.
       await terrainFor(site);
       const miss = await calc.computeMiss({
+        visitor: visitorOf(req),
         site,
         date,
         hour,
@@ -330,7 +331,7 @@ export function createV1Router(deps: V1Deps): Router {
       const hour = parseInteger(query.hour, 'hour', 0, 23, 0);
       const margin = parseNumber(query.margin, 'margin', 0, 5, 2);
 
-      const { saved, known, slipProof, slips } = await calc.computeSlip({ site, date, hour, margin });
+      const { saved, known, slipProof, slips } = await calc.computeSlip({ visitor: visitorOf(req), site, date, hour, margin });
 
       res.json({
         model: 'smooth Moon',

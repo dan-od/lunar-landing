@@ -6,7 +6,7 @@
 import type { Aim, ModelName } from '@moon/core';
 import { aimText, thresholdFor } from '@moon/core';
 import { ApiError } from '../api/errors.js';
-import type { Calc } from '../api/calc.js';
+import { SYSTEM_VISITOR, type Calc } from '../api/calc.js';
 
 export const RULES = [
   { id: 'power', label: 'No power at landing' },
@@ -60,7 +60,7 @@ const deg = (n: number): string => n.toFixed(1);
 const days = (n: number): string => n.toFixed(1);
 
 export function createEvaluator(calc: Calc): Evaluator {
-  const place = (siteId: string) => ({ visitor: 'watch', place: { site: siteId } });
+  const place = (siteId: string) => ({ visitor: SYSTEM_VISITOR, place: { site: siteId } });
 
   async function power(siteId: string, s: WatchScenario): Promise<Evaluation> {
     const w = await calc.computeWindows({ ...place(siteId), start: s.date, hour: s.hour, days: 1, margin: s.margin, aim: s.aim });
@@ -117,7 +117,7 @@ export function createEvaluator(calc: Calc): Evaluator {
   }
 
   async function slip14(siteId: string, s: WatchScenario): Promise<Evaluation> {
-    const site = await calc.resolveSite({ site: siteId }, 'watch');
+    const site = await calc.resolveSite({ site: siteId }, SYSTEM_VISITOR);
     // The same list GET /v1/slip returns, and the same slip-proof answer (7-6).
     const { slipProof, slips } = await calc.computeSlip({ site, date: s.date, hour: s.hour, margin: s.margin });
     const model: ModelName = 'smooth Moon';
@@ -147,7 +147,7 @@ export function createEvaluator(calc: Calc): Evaluator {
   }
 
   async function odds70(siteId: string, s: WatchScenario): Promise<Evaluation> {
-    const site = await calc.resolveSite({ site: siteId }, 'watch');
+    const site = await calc.resolveSite({ site: siteId }, SYSTEM_VISITOR);
     // The same odds GET /v1/miss returns (F-7).
     const miss = await calc.computeMiss({
       site,

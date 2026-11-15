@@ -19,7 +19,8 @@ export interface SeriesResult {
 }
 
 export interface PositionService {
-  getSeries(site: Site, body: Body, span: HorizonsSpan): Promise<SeriesResult>;
+  /** `beforeFetch` runs only when NASA must be asked; it may throw to refuse (the new-period limit). */
+  getSeries(site: Site, body: Body, span: HorizonsSpan, beforeFetch?: () => void): Promise<SeriesResult>;
 }
 
 const HOUR_MS = 3_600_000;
@@ -50,9 +51,10 @@ export function createPositionService(
   }
 
   return {
-    async getSeries(site, body, span) {
+    async getSeries(site, body, span, beforeFetch) {
       const first = await cached(site, body, span);
       if (first.covered) return { rows: first.rows, fromCache: true, complete: true };
+      beforeFetch?.();
 
       return queue.enqueue(async () => {
         // Another request may have filled the cache while this one waited.

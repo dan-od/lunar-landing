@@ -26,6 +26,8 @@ export interface SeriesProvider {
   get(
     site: Site,
     span: HorizonsSpan,
+    /** `beforeFetch` runs only when NASA must be asked, and may throw to refuse. */
+    opts?: { beforeFetch?: () => void },
   ): Promise<{ sun: PositionRow[]; earth: PositionRow[]; saved: boolean; complete?: boolean }>;
 }
 
@@ -137,11 +139,11 @@ export function appSeriesProvider(pool: pg.Pool): SeriesProvider {
   const adhocService: PositionService = createPositionService(new MemoryPositionCache(), queue, fetchHorizons);
 
   return {
-    async get(site, span) {
+    async get(site, span, opts) {
       const service = site.custom ? adhocService : dbService;
       try {
-        const sun = await service.getSeries(site, 'sun' as Body, span);
-        const earth = await service.getSeries(site, 'earth' as Body, span);
+        const sun = await service.getSeries(site, 'sun' as Body, span, opts?.beforeFetch);
+        const earth = await service.getSeries(site, 'earth' as Body, span, opts?.beforeFetch);
         return {
           sun: sun.rows,
           earth: earth.rows,

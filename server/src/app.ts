@@ -18,6 +18,7 @@ export function defaultDeps(): V1Deps {
   const pool = getPool();
   const rateLimit = { windowMs: 60_000, max: config.rateLimitPerMinute };
   const customLimit = { windowMs: 3_600_000, max: config.customSitesPerHour };
+  const periodLimit = { windowMs: 3_600_000, max: config.newPeriodsPerHour };
   if (pool) {
     // Email alerts are on only with both secrets and a database (or, in
     // development, with the sender that only logs). Otherwise they stay off.
@@ -39,6 +40,7 @@ export function defaultDeps(): V1Deps {
       terrainRepo: dbTerrainRepo(pool),
       rateLimit,
       customLimit,
+      periodLimit,
       watch,
     };
   }

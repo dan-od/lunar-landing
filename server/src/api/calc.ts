@@ -26,6 +26,8 @@ export interface CalcDeps {
   terrainRepo?: TerrainRepo;
   /** How many new custom coordinates a visitor may use per window (2-3). */
   customLimit?: RateLimitOptions;
+  /** How many dates not saved yet a visitor may open per window (each costs NASA requests). */
+  periodLimit?: RateLimitOptions;
 }
 
 export const isoAt = (date: string, hour: number): string => `${date}T${String(hour).padStart(2, '0')}:00:00Z`;
@@ -60,7 +62,12 @@ export interface WindowsQuery {
   aim?: Aim;
 }
 
+/** The daily watch check: never limited, because no visitor is waiting on it. */
+export const SYSTEM_VISITOR = 'watch';
+
 export interface SlipQuery {
+  /** Who is asking, for the limit on new dates. */
+  visitor?: string;
   site: Site;
   date: string;
   hour: number;
@@ -68,6 +75,8 @@ export interface SlipQuery {
 }
 
 export interface MissQuery {
+  /** Who is asking, for the limit on new dates. */
+  visitor?: string;
   site: Site;
   date: string;
   hour: number;
@@ -107,6 +116,46 @@ export function createCalc(deps: CalcDeps) {
       );
     }
     entry.ids.add(pointId);
+  }
+
+  // A date not saved yet costs NASA requests, so a visitor may open only a few
+  // an hour. One date and hour counts once, however many sites ask for it.
+  const newPeriods = new Map<string, { resetAt: number; keys: Set<string> }>();
+  function allowNewPeriod(visitor: string, periodKey: string): void {
+    const limit = deps.periodLimit;
+    if (!limit) return;
+    const now = (limit.now ?? Date.now)();
+    let entry = newPeriods.get(visitor);
+    if (!entry || now >= entry.resetAt) {
+      entry = { resetAt: now + limit.windowMs, keys: new Set() };
+      newPeriods.set(visitor, entry);
+    }
+    if (entry.keys.has(periodKey)) return;
+    if (entry.keys.size >= limit.max) {
+      const wait = Math.max(1, Math.ceil((entry.resetAt - now) / 1000));
+      throw new ApiError(
+        429,
+        {
+          error: {
+            message: `Too many new dates. A visitor can open ${limit.max} dates that are not saved yet each hour. Saved dates still work. Try again in ${wait} seconds.`,
+            retryAfterSeconds: wait,
+          },
+        },
+        { 'Retry-After': String(wait) },
+      );
+    }
+    entry.keys.add(periodKey);
+  }
+
+  /** Positions for a span, counting it against the visitor's new dates only if NASA must be asked. */
+  function seriesFor(site: Site, span: HorizonsSpan, visitor?: string) {
+    // Custom points have their own hourly limit; the daily watch check is never limited.
+    const limited = visitor && visitor !== SYSTEM_VISITOR && !site.custom;
+    return deps.seriesProvider.get(
+      site,
+      span,
+      limited ? { beforeFetch: () => allowNewPeriod(visitor, `${span.start}|${span.stop}`) } : undefined,
+    );
   }
 
   async function resolveSite(place: PlaceQuery, visitor: string): Promise<Site> {
@@ -165,7 +214,7 @@ export function createCalc(deps: CalcDeps) {
       stop: spanTime(stopMs),
       step: '1h',
     };
-    const { sun, earth, saved, complete } = await deps.seriesProvider.get(site, span);
+    const { sun, earth, saved, complete } = await seriesFor(site, span, q.visitor);
 
     const within = (iso: string) => {
       const t = Date.parse(iso);
@@ -221,7 +270,7 @@ export function createCalc(deps: CalcDeps) {
       stop: spanTime(stopMs),
       step: '1h',
     };
-    const { sun, earth, saved } = await deps.seriesProvider.get(q.site, span);
+    const { sun, earth, saved } = await seriesFor(q.site, span, q.visitor);
     const within = (iso: string) => {
       const t = Date.parse(iso);
       return t >= startMs && t < stopMs;
@@ -274,7 +323,7 @@ export function createCalc(deps: CalcDeps) {
       stop: spanTime(moments[moments.length - 1]!.ms),
       step: '1h',
     };
-    const { sun, earth, saved } = await deps.seriesProvider.get(q.site, span);
+    const { sun, earth, saved } = await seriesFor(q.site, span, q.visitor);
     const sunAt = new Map(sun.map((r) => [Date.parse(r.time), r]));
     const earthAt = new Map(earth.map((r) => [Date.parse(r.time), r]));
 
@@ -305,5 +354,5 @@ export function createCalc(deps: CalcDeps) {
     return { saved, known, slipProof, slips };
   }
 
-  return { resolveSite, terrainFor, checkAim, computeWindows, computeMiss, computeSlip };
+  return { resolveSite, terrainFor, checkAim, computeWindows, computeMiss, computeSlip, seriesFor };
 }

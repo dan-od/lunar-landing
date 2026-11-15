@@ -114,3 +114,25 @@ describe('PositionService', () => {
     ).rejects.toThrow('down');
   });
 });
+
+describe('new-period hook (G)', () => {
+  it('runs only when NASA must be asked, and a refusal stops the fetch', async () => {
+    let calls = 0;
+    const fetcher: Fetcher = async (_s, body, span) => {
+      calls++;
+      return rowsFor(body, span);
+    };
+    const svc = createPositionService(new MemoryPositionCache(), new RequestQueue(), fetcher);
+    let hooks = 0;
+    await svc.getSeries(SITE, 'sun', SPAN, () => hooks++);
+    await svc.getSeries(SITE, 'sun', SPAN, () => hooks++);
+    expect(hooks).toBe(1);
+    const other: HorizonsSpan = { start: '2030-01-01 00:00', stop: '2030-01-01 06:00', step: '1h' };
+    await expect(
+      svc.getSeries(SITE, 'sun', other, () => {
+        throw new Error('over the limit');
+      }),
+    ).rejects.toThrow('over the limit');
+    expect(calls).toBe(1);
+  });
+});
