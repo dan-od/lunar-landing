@@ -33,6 +33,22 @@ dropdown picks, keyboard moves, Escape, typed errors, the popup as a sheet at
 Vikram. Not checked: the popup in Firefox (it would not launch here) and with a
 screen reader.
 
+## Production deploys (approved by the owner)
+
+| Deploy | Commit | Result |
+| --- | --- | --- |
+| 1 | `ed6a47b` (items 1–3) | Run 43715782417: every step green. Migration `002_watches.sql` applied; 21 sites seeded; position seed 80.6 s; 125,166 cached hours; 441 terrain profiles; smoke tests 200 and 200. Checked after: health ok with database, 21 sites in three groups, email alerts on, Apollo 11 from saved positions, calendar file, all five tabs and the icons 200. |
+| 2 | polish (checkpoint) | See below. |
+
+## Owner's follow-ups (later on 2026-11-15)
+
+| Item | Result |
+| --- | --- |
+| Unsubscribe | Opening the link only shows a page with a "Stop alerts" button; the button's POST deletes. Mail apps' own unsubscribe works through the `List-Unsubscribe` and `List-Unsubscribe-Post: List-Unsubscribe=One-Click` headers (a POST to the same address). Tested by test and live: opening the link kept the watch, the button deleted it, a one-click POST deleted another with its events. |
+| Artemis III | No empty group in the list; Help and the README say NASA published the nine regions without centre points, so they are not listed. |
+| Phone | The scenario bar shows only date, hour and Now; the seven step buttons open from a More toggle, and the slip "?" sits beside it, not in the grid. |
+| Labels | Pole-map names avoid the rim and the rings as well as each other (and have a dark backing); the Sun and Earth names sit on the outer side of their dots. Sky-view labels avoid the horizon, the allowance line and the frame edges, with a dark halo. |
+
 ## What changed
 
 | Step | Result |
@@ -56,7 +72,7 @@ screen reader.
 
 ## Verified by automated test
 
-- 269 tests pass: 57 core, 140 server, 72 client (`npm test`), plus typecheck,
+- 272 tests pass: 57 core, 140 server, 75 client (`npm test`), plus typecheck,
   lint and build. New tests this session cover: Now uses UTC; seed spans;
   sky label layout never overlaps; the 1960–2100 range at every endpoint;
   the new-period limit (counted once per date, saved dates free, applies to sky,
