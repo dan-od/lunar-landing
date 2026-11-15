@@ -37,7 +37,7 @@ export function WhenFields({ date, hour, onChange, label, disabled, onNow, class
       setError('');
       if (v !== date) onChange({ date: v, hour });
     } else if (v) {
-      setError(`The date must be between ${RANGE_TEXT} (UTC).`);
+      setError(`The date must be from ${RANGE_TEXT} (UTC).`);
     }
   };
 
