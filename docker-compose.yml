@@ -36,7 +36,13 @@ services:
     environment:
       NODE_ENV: production
       PORT: "8080"
-      DATABASE_URL: ${DATABASE_URL}
+      # Separate values, read directly by node-postgres, so the password never
+      # has to be valid inside a URL.
+      PGHOST: moon-db
+      PGPORT: "5432"
+      PGUSER: ${POSTGRES_USER}
+      PGPASSWORD: ${POSTGRES_PASSWORD}
+      PGDATABASE: ${POSTGRES_DB}
       HORIZONS_API_URL: ${HORIZONS_API_URL}
       PUBLIC_SITE_URL: ${PUBLIC_SITE_URL}
     expose:

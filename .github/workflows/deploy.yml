@@ -8,11 +8,10 @@
 #   DEPLOY_USER          SSH user on that host
 #   DEPLOY_SSH_KEY       private ed25519 key for that user
 #   DEPLOY_KNOWN_HOSTS   the host's public key line(s), from `ssh-keyscan -t ed25519 <host>`
-#   MOON_DB_PASSWORD     PostgreSQL password. Letters and digits only: it is also
-#                        written into DATABASE_URL, where other characters would
-#                        need escaping. PostgreSQL only reads it the first time the
-#                        database volume is created; changing it later does not
-#                        change the password of an existing database.
+#   MOON_DB_PASSWORD     PostgreSQL password. It is passed to the server as a
+#                        separate value, never inside a URL. PostgreSQL only reads
+#                        it the first time the database volume is created; changing
+#                        it later does not change the password of an existing database.
 #
 # One-time step on the host, not done by this workflow: copy nginx/moon.conf to
 # /opt/docker-homelab/nginx/sites/moon.conf and reload nginx-proxy.
@@ -55,7 +54,6 @@ jobs:
           POSTGRES_USER=moon
           POSTGRES_DB=moonstatus
           POSTGRES_PASSWORD=${{ secrets.MOON_DB_PASSWORD }}
-          DATABASE_URL=postgres://moon:${{ secrets.MOON_DB_PASSWORD }}@moon-db:5432/moonstatus
           HORIZONS_API_URL=https://ssd.jpl.nasa.gov/api/horizons.api
           PUBLIC_SITE_URL=https://moon.okoro.me
           EOF

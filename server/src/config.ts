@@ -5,7 +5,6 @@ import 'dotenv/config';
 export interface Config {
   port: number;
   nodeEnv: string;
-  databaseUrl: string | undefined;
   horizonsApiUrl: string;
   horizonsTimeoutMs: number;
   horizonsMaxRetries: number;
@@ -18,7 +17,6 @@ export interface Config {
 export const config: Config = {
   port: Number(process.env.PORT ?? 8080),
   nodeEnv: process.env.NODE_ENV ?? 'development',
-  databaseUrl: process.env.DATABASE_URL,
   horizonsApiUrl:
     process.env.HORIZONS_API_URL ?? 'https://ssd.jpl.nasa.gov/api/horizons.api',
   horizonsTimeoutMs: Number(process.env.HORIZONS_TIMEOUT_MS ?? 30_000),

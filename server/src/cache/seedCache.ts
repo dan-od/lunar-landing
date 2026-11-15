@@ -18,7 +18,7 @@ function addDays(date: string, n: number): string {
 
 export async function seedCache(): Promise<{ rows: number; seconds: number }> {
   const pool = getPool();
-  if (!pool) throw new Error('DATABASE_URL is not set; cannot seed the cache.');
+  if (!pool) throw new Error('No database is configured (DATABASE_URL or PGHOST); cannot seed the cache.');
 
   const cache = new PgPositionCache(pool);
   // One shared queue guarantees a single outbound request at a time (F-2).

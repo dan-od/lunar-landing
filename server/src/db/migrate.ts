@@ -11,7 +11,7 @@ const migrationsDir = join(dirname(fileURLToPath(import.meta.url)), 'migrations'
 export async function runMigrations(): Promise<string[]> {
   const pool = getPool();
   if (!pool) {
-    throw new Error('DATABASE_URL is not set; cannot run migrations.');
+    throw new Error('No database is configured (DATABASE_URL or PGHOST); cannot run migrations.');
   }
 
   await pool.query(`

@@ -5,7 +5,7 @@ import { getPool, closePool } from '../db/pool.js';
 
 export async function seedSites(): Promise<number> {
   const pool = getPool();
-  if (!pool) throw new Error('DATABASE_URL is not set; cannot seed sites.');
+  if (!pool) throw new Error('No database is configured (DATABASE_URL or PGHOST); cannot seed sites.');
 
   for (const s of CURATED_SITES) {
     await pool.query(
