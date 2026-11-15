@@ -10,3 +10,7 @@ data
 *.log
 docs
 coverage
+tools
+**/.venv
+.github
+nginx

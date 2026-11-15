@@ -7,7 +7,12 @@ export interface Config {
   nodeEnv: string;
   databaseUrl: string | undefined;
   horizonsApiUrl: string;
+  horizonsTimeoutMs: number;
+  horizonsMaxRetries: number;
+  horizonsRetryBaseMs: number;
   publicSiteUrl: string;
+  rateLimitPerMinute: number;
+  trustProxy: string;
 }
 
 export const config: Config = {
@@ -16,5 +21,10 @@ export const config: Config = {
   databaseUrl: process.env.DATABASE_URL,
   horizonsApiUrl:
     process.env.HORIZONS_API_URL ?? 'https://ssd.jpl.nasa.gov/api/horizons.api',
+  horizonsTimeoutMs: Number(process.env.HORIZONS_TIMEOUT_MS ?? 30_000),
+  horizonsMaxRetries: Number(process.env.HORIZONS_MAX_RETRIES ?? 3),
+  horizonsRetryBaseMs: Number(process.env.HORIZONS_RETRY_BASE_MS ?? 1_000),
   publicSiteUrl: process.env.PUBLIC_SITE_URL ?? 'http://localhost:8080',
+  rateLimitPerMinute: Number(process.env.RATE_LIMIT_PER_MINUTE ?? 120),
+  trustProxy: process.env.TRUST_PROXY ?? 'loopback, linklocal, uniquelocal',
 };

@@ -12,8 +12,10 @@ export default defineConfig({
   server: {
     port: 5173,
     // During dev, send API calls to the Express server.
+    // "/api" alone is the API tab page, so only proxy paths beneath it.
     proxy: {
-      '/api': 'http://localhost:8080',
+      '/api/': 'http://localhost:8080',
+      '/v1/': 'http://localhost:8080',
     },
   },
   test: {

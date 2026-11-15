@@ -74,6 +74,45 @@ Database migrations (needs a running PostgreSQL and `DATABASE_URL`):
 npm run migrate
 ```
 
+Seed the sites and the position cache (needs `DATABASE_URL`; calls NASA Horizons
+one request at a time, Sun then Earth per site):
+
+```bash
+npm run seed --workspace server
+```
+
+```bash
+npm run seed:cache --workspace server
+```
+
+The cache seed fetches 60 days hourly from 2025-02-04 for the five curated sites:
+10 requests, 14,410 rows, about 13 seconds. Change the span with `SEED_START` and
+`SEED_DAYS`. Spans outside the seed are fetched on first use and saved.
+
+## API (version 1)
+
+| Endpoint | Inputs | Returns |
+| --- | --- | --- |
+| `GET /v1/sites` | none | id, name, lat, lon, source, has_terrain |
+| `GET /v1/sky` | `site` or `lat`+`lon`; `date`; `hour` (0), `margin` (2) | Sun and Earth direction and height; state word and symbol |
+| `GET /v1/windows` | `site` or `lat`+`lon`; `start`; `hour` (0); `days` (30, up to 60); `margin` (2) | power and contact windows, uptime, longest gap, next change, hourly series |
+| `GET /v1/windows.csv` | as `/v1/windows` | spreadsheet file: scenario and model in the first lines, then one row per window |
+| `GET /v1/report` | `a_site` (or `a_lat`+`a_lon`), `a_date`, `a_hour` (0); the same for `b_`; `days` (30); `margin` (2) | verdict and five sentences, each marked better, worse or same, plus each side's numbers |
+
+Every reply names the model. Errors name the field at fault and the allowed range
+(400), the unknown site (404), the seconds to wait (429), or say that nothing is
+saved (503). Every endpoint is rate limited per visitor (`RATE_LIMIT_PER_MINUTE`).
+
+The Horizons client times out each request (`HORIZONS_TIMEOUT_MS`) and retries a
+limited number of times with doubling waits (`HORIZONS_MAX_RETRIES`,
+`HORIZONS_RETRY_BASE_MS`); it does not retry 4xx replies other than 429.
+
+## Forcing states in a test build
+
+In `npm run dev:client`, or a build made with `VITE_TEST_BUILD=1`, add
+`force=loading`, `force=down` or `force=empty` to the address to see the loading,
+service-unavailable and empty states. Production builds ignore it.
+
 Copy `.env.example` to `.env` and fill in local values. No real secrets live in
 the repository; production values come from the deployment pipeline.
 
@@ -83,6 +122,20 @@ the repository; production values come from the deployment pipeline.
 client joins the shared `web` proxy network; the database is on an internal
 network only; no ports are published. The server's health check answers at
 `/api/health` on `127.0.0.1`.
+
+## Deploy
+
+`.github/workflows/deploy.yml` deploys production (moon.okoro.me) on a push to
+`main`, or by hand. It syncs the code to the host, writes `.env` from repository
+secrets, builds and restarts the stack, runs the migrations, seeds the sites and
+the position cache, then checks `/api/health` and `/v1/sites`. The secret names
+it expects are listed at the top of that file. The proxy site file is
+`nginx/moon.conf`; copying it to the host is a one-time manual step.
+
+## Credits
+
+Every data source, library, font and asset is listed with its link and licence in
+[CREDITS.md](CREDITS.md).
 
 ## Licence
 

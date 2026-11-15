@@ -21,5 +21,7 @@ COPY client/package.json ./client/package.json
 RUN npm ci --omit=dev
 COPY --from=build /app/core/dist ./core/dist
 COPY --from=build /app/server/dist ./server/dist
+# The migration runner reads its .sql files from beside the compiled runner.
+COPY server/src/db/migrations ./server/dist/db/migrations
 EXPOSE 8080
 CMD ["node", "server/dist/index.js"]
