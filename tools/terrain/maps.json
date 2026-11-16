@@ -26,7 +26,7 @@
       "projection": "polar_stereographic_south",
       "coverage": { "lat_min": -90, "lat_max": -60, "lon_min": 0, "lon_max": 360 },
       "source_url": "https://pds-geosciences.wustl.edu/lro/lro-l-lola-3-rdr-v1/lrolol_1xxx/data/lola_gdr/polar/float_img/ldem_60s_120m_float.img",
-      "byte_size": null,
+      "byte_size": 963481600,
       "version": "GDR-V1"
     },
     {
@@ -39,7 +39,7 @@
       "projection": "polar_stereographic_north",
       "coverage": { "lat_min": 60, "lat_max": 90, "lon_min": 0, "lon_max": 360 },
       "source_url": "https://pds-geosciences.wustl.edu/lro/lro-l-lola-3-rdr-v1/lrolol_1xxx/data/lola_gdr/polar/float_img/ldem_60n_120m_float.img",
-      "byte_size": null,
+      "byte_size": 963481600,
       "version": "GDR-V1"
     },
     {
