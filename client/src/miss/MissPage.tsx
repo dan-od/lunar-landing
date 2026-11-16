@@ -33,7 +33,7 @@ import { offsetWords } from './offsetWords';
 import { usePhone } from '../usePhone';
 import { MissSiteSelect } from './MissSiteSelect';
 import { useTerrainStatus } from './useTerrainStatus';
-import { mapCredit, coarseNote, preparingText } from './terrainCredit';
+import { mapCredit, preparingText } from './terrainCredit';
 
 
 const TAB = tabFor('/miss')!;
@@ -88,7 +88,9 @@ export function MissPage() {
   const hasTerrain = Boolean(site?.has_terrain);
   const key = site ? `${site.id}|${scenario.date}|${scenario.hour}` : '';
   // What the Console shows for the target, so a disagreement can be explained.
-  const one = useMemo(() => (site && hasTerrain ? [site] : []), [site, hasTerrain]);
+  // Always fetch the site's smooth-Moon result, so a point without terrain
+  // (a custom spot) still shows a result instead of an empty screen.
+  const one = useMemo(() => (site ? [site] : []), [site]);
   const consoleData = useSiteData(started ? one : [], scenario.date, scenario.hour, force);
   const consoleSeries = site ? consoleData.data[site.id] : undefined;
   const consoleState = consoleSeries && !consoleSeries.horizon ? resultFor(consoleSeries, scenario.margin).landing : undefined;
@@ -214,32 +216,57 @@ export function MissPage() {
     );
   }
 
-  // No terrain for this site (4-7): say what is missing and offer two exits.
+  // No terrain for this site (4-7): never an empty screen. A custom point shows
+  // its smooth-Moon result and a line that terrain is not prepared for that
+  // spot; a built-in without terrain offers the sites that have it.
   if (!site || !hasTerrain || error?.kind === 'no-terrain') {
     return (
       <main id="content" tabIndex={-1} className="body">
         <div className="main">
           <div className="empty">
-            <h1 className="h2">No terrain prepared for this site yet</h1>
-            <p>
-              The Miss view needs an elevation map around the site so hills and crater shadows can be
-              counted.{' '}
-              {withTerrain.length > 0
-                ? `Terrain is prepared for ${withTerrain.map((t) => t.name).join('; ')}.`
-                : 'No site has terrain prepared yet.'}
-            </p>
-            {site && (
-              <p className="hint">
-                No terrain for {site.name}: {noTerrainReason(site.lat, site.custom)}. No odds are shown for
-                it. Nothing is estimated.
-              </p>
+            {site && site.custom ? (
+              <>
+                <h1 className="h2">{site.name || latLonText(site.lat, site.lon)}</h1>
+                <p className="mono miss-smooth-state">
+                  {consoleState ? `${consoleState.symbol} ${consoleState.word}` : '… WORKING OUT THE RESULT'}
+                  {' · SMOOTH MOON'}
+                </p>
+                <p className="hint">
+                  Terrain is not prepared for this spot, so no shadow map is shown. The result above
+                  uses the smooth-Moon model (a flat horizon with the shadow allowance); hills and
+                  crater shadows are not counted.
+                </p>
+                <div className="miss-none-acts">
+                  <MissSiteSelect sites={sites} value="" terrainOnly onPick={pickSite} />
+                  <Link className="btn2 as-button" to={{ pathname: '/', search }}>
+                    SEE ITS NEXT 30 DAYS
+                  </Link>
+                </div>
+              </>
+            ) : (
+              <>
+                <h1 className="h2">No terrain prepared for this site yet</h1>
+                <p>
+                  The Miss view needs an elevation map around the site so hills and crater shadows
+                  can be counted.{' '}
+                  {withTerrain.length > 0
+                    ? `Terrain is prepared for ${withTerrain.map((t) => t.name).join('; ')}.`
+                    : 'No site has terrain prepared yet.'}
+                </p>
+                {site && (
+                  <p className="hint">
+                    No terrain for {site.name}: {noTerrainReason(site.lat, site.custom)}. No odds are
+                    shown for it. Nothing is estimated.
+                  </p>
+                )}
+                <div className="miss-none-acts">
+                  <MissSiteSelect sites={sites} value="" terrainOnly onPick={pickSite} />
+                  <Link className="btn2 as-button" to={{ pathname: '/', search }}>
+                    BACK TO CONSOLE
+                  </Link>
+                </div>
+              </>
             )}
-            <div className="miss-none-acts">
-              <MissSiteSelect sites={sites} value="" terrainOnly onPick={pickSite} />
-              <Link className="btn2 as-button" to={{ pathname: '/', search }}>
-                BACK TO CONSOLE
-              </Link>
-            </div>
           </div>
         </div>
       </main>
@@ -585,9 +612,8 @@ export function MissPage() {
 
         <p className="pad hint">
           Terrain model. A landing works when the Sun and Earth clear the terrain at touchdown and
-          for at least 90% of the first 10 days. {mapCredit(terrainStatus?.resolution_m)} on a{' '}
-          {current.stepM} m grid out to {current.halfM} m from the target.{' '}
-          {coarseNote(terrainStatus?.resolution_m) ?? 'Craters smaller than the grid are not seen.'}
+          for at least 90% of the first 10 days. {mapCredit(terrainStatus?.map, terrainStatus?.resolution_m)}{' '}
+          On a {current.stepM} m grid out to {current.halfM} m from the target.
         </p>
       </aside>
 

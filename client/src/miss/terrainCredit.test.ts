@@ -1,24 +1,23 @@
 import { describe, it, expect } from 'vitest';
-import { mapCredit, isCoarse, coarseNote, preparingText } from './terrainCredit';
+import { mapCredit, isCoarse, preparingText } from './terrainCredit';
 
 describe('terrain credit', () => {
-  it('names the resolution', () => {
-    expect(mapCredit(80)).toBe('terrain from LOLA 80 m');
-    expect(mapCredit(120)).toBe('terrain from LOLA 120 m');
-    expect(mapCredit(237)).toBe('terrain from LOLA 237 m');
-    expect(mapCredit(null)).toBe('terrain from the LOLA elevation map');
+  it('names the map and resolution', () => {
+    expect(mapCredit('LDEM_80S_80MPP', 80)).toBe('Terrain from LOLA south polar map, 80 m.');
+    expect(mapCredit('LDEM_60S_120M', 120)).toBe('Terrain from LOLA south polar map, 120 m.');
+    expect(mapCredit('LDEM_60N_120M', 120)).toBe('Terrain from LOLA north polar map, 120 m.');
+    expect(mapCredit(null, null)).toBe('Terrain from the LOLA elevation map.');
   });
 
-  it('flags the coarse whole-Moon map', () => {
+  it('flags the coarse whole-Moon map plainly', () => {
     expect(isCoarse(80)).toBe(false);
     expect(isCoarse(120)).toBe(false);
     expect(isCoarse(237)).toBe(true);
-    expect(coarseNote(120)).toBeNull();
-    expect(coarseNote(237)).toContain('coarser than the polar maps');
+    expect(mapCredit('LDEM_128', 237)).toBe('Terrain from LOLA global map, about 240 m: small craters are not seen.');
   });
 
   it('names the map while preparing when known', () => {
     expect(preparingText(null)).toBe('Preparing terrain…');
-    expect(preparingText({ map: 'LDEM_60S_120M' } as never)).toContain('LDEM_60S_120M');
+    expect(preparingText({ map: 'LDEM_128' } as never)).toBe('Preparing lola global map terrain…');
   });
 });
