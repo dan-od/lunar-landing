@@ -32,6 +32,8 @@ import { checkCoordinates } from '../customSites';
 import { offsetWords } from './offsetWords';
 import { usePhone } from '../usePhone';
 import { MissSiteSelect } from './MissSiteSelect';
+import { useTerrainStatus } from './useTerrainStatus';
+import { mapCredit, coarseNote, preparingText } from './terrainCredit';
 
 
 const TAB = tabFor('/miss')!;
@@ -90,6 +92,10 @@ export function MissPage() {
   const consoleData = useSiteData(started ? one : [], scenario.date, scenario.hour, force);
   const consoleSeries = site ? consoleData.data[site.id] : undefined;
   const consoleState = consoleSeries && !consoleSeries.horizon ? resultFor(consoleSeries, scenario.margin).landing : undefined;
+
+  // Terrain-worker status: drives the "Preparing terrain…" state for a site that
+  // has no profiles yet, and names the map (and its resolution) once it is ready.
+  const terrainStatus = useTerrainStatus(site?.id, started && Boolean(site));
 
   useEffect(() => {
     if (!started || !site || !hasTerrain) return;
@@ -183,6 +189,26 @@ export function MissPage() {
           <div className="lbl" role="status">
             LOADING THE SITE LIST
           </div>
+        </div>
+      </main>
+    );
+  }
+
+  // Terrain is being prepared for this site (queued or running): say so and wait.
+  // The status poll turns this into the real map when the worker is done.
+  if (site && !hasTerrain && error?.kind !== 'no-terrain' && terrainStatus?.state === 'preparing') {
+    return (
+      <main id="content" tabIndex={-1} className="body" aria-busy="true">
+        <h1 className="sr">What if we miss?</h1>
+        <div className="main">
+          <div className="lbl" role="status">
+            {preparingText(terrainStatus).toUpperCase()}
+          </div>
+          <p className="hint">
+            The terrain worker is computing horizon profiles around {site.name} from the elevation
+            map. This can take a little while the first time; the terrain map appears here on its own
+            when it is ready. Nothing is estimated in the meantime.
+          </p>
         </div>
       </main>
     );
@@ -559,9 +585,9 @@ export function MissPage() {
 
         <p className="pad hint">
           Terrain model. A landing works when the Sun and Earth clear the terrain at touchdown and
-          for at least 90% of the first 10 days. Terrain is from the LOLA south pole elevation map
-          (80 m per pixel) on a {current.stepM} m grid out to {current.halfM} m from the target;
-          craters smaller than that are not seen.
+          for at least 90% of the first 10 days. {mapCredit(terrainStatus?.resolution_m)} on a{' '}
+          {current.stepM} m grid out to {current.halfM} m from the target.{' '}
+          {coarseNote(terrainStatus?.resolution_m) ?? 'Craters smaller than the grid are not seen.'}
         </p>
       </aside>
 

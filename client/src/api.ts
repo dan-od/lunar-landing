@@ -108,6 +108,25 @@ export function setPlace(q: URLSearchParams, siteId: string, prefix = ''): void 
   }
 }
 
+export interface TerrainStatusReply {
+  site: string;
+  model: string;
+  /** 'ready' has terrain; 'preparing' is queued or running; 'none'/'error' has none. */
+  state: 'none' | 'preparing' | 'ready' | 'error';
+  map: string | null;
+  map_version: string | null;
+  resolution_m: number | null;
+  computed_at: string | null;
+  error?: string;
+}
+
+/** Whether a site's terrain is ready, being prepared, or absent (for the Miss tab). */
+export async function getTerrainStatus(siteId: string, signal?: AbortSignal): Promise<TerrainStatusReply> {
+  const q = new URLSearchParams();
+  setPlace(q, siteId);
+  return getJson<TerrainStatusReply>(`/v1/terrain/status?${q.toString()}`, signal);
+}
+
 function windowsQuery(site: string, start: string, hour: number, days: number, aim?: AimOffset): URLSearchParams {
   const q = new URLSearchParams();
   setPlace(q, site);
