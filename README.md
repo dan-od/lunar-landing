@@ -378,6 +378,23 @@ the position cache, then checks `/api/health` and `/v1/sites`. The secret names
 it expects are listed at the top of that file. The proxy site file is
 `nginx/moon.conf`; copying it to the host is a one-time manual step.
 
+The deploy does **not** download the elevation maps (~6 GB): that can take 45+
+minutes and would hold the job open. Every built-in site has terrain from the
+committed profile files (loaded by `loadTerrain.js` on each deploy), so Miss
+works for all of them straight after a deploy; only custom points need the maps.
+Fill the maps volume once, by hand, on the host — it resumes and size-checks, so
+it is safe to re-run and to interrupt:
+
+```
+cd /opt/docker-homelab/sites/moon && docker compose run -d --no-deps \
+  --name moon-maps-download --entrypoint "" -v moon-status_maps:/dl \
+  terrain-worker python download_maps.py /dl
+```
+
+Follow it with `docker logs -f moon-maps-download`; remove the finished container
+with `docker rm moon-maps-download`. Until a map is complete the worker waits
+("terrain not prepared yet") and retries.
+
 ## What's next
 
 Not built yet; these are the next steps.

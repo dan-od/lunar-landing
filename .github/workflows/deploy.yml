@@ -73,21 +73,21 @@ jobs:
             docker image prune -f
             docker ps --filter name=moon --format 'table {{.Names}}\t{{.Status}}'
           DEPLOY
-      # Fill the maps volume (resumes, size-checks; re-runs are cheap). Mounted at
-      # /dl read-write here; the worker mounts the same volume read-only at /maps.
-      # Non-fatal: until a map is complete the worker just waits and retries.
-      - name: Download elevation maps
-        run: |
-          ssh ${{ secrets.DEPLOY_USER }}@${{ secrets.DEPLOY_HOST }} <<'DEPLOY'
-            set -e
-            cd /opt/docker-homelab/sites/moon
-            docker compose run --rm --no-deps --entrypoint "" \
-              -v moon-status_maps:/dl terrain-worker \
-              python download_maps.py /dl || echo "maps not all complete yet; worker will wait and retry"
-          DEPLOY
+      # The elevation maps (~6 GB) are NOT downloaded here: that can take 45+
+      # minutes and would hold the deploy open. The deploy finishes without them.
+      # Fill the maps volume once, by hand, on the host (resumes, size-checks):
+      #
+      #   cd /opt/docker-homelab/sites/moon && docker compose run -d --no-deps \
+      #     --name moon-maps-download --entrypoint "" -v moon-status_maps:/dl \
+      #     terrain-worker python download_maps.py /dl
+      #
+      # Until a map is complete the worker just waits ("terrain not prepared
+      # yet"); every built-in site already has terrain from the committed files,
+      # so only custom points need the maps.
+      #
       # The server does not create its own tables. Each of these is safe to run
-      # on every deploy: migrations apply once, sites are upserted, the terrain
-      # profiles for the demo site are replaced with the committed file, and the
+      # on every deploy: migrations apply once, sites are upserted, every built-in
+      # site's terrain profiles are (re)loaded from the committed files, and the
       # cache seed asks NASA Horizons (one request at a time) only for hours not saved.
       - name: Migrate and seed
         run: |
