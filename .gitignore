@@ -24,3 +24,19 @@ npm-debug.log*
 coverage/
 tools/terrain/.venv/
 tools/terrain/out/
+
+# Claude Code: only shared config is committed (.claude/settings.json,
+# .claude/launch.json, commands/, agents/, skills/). Never the rest:
+.claude/worktrees/
+.claude/settings.local.json
+.claude/*.local.*
+CLAUDE.local.md
+.claude/memory/
+.claude/projects/
+.claude/todos/
+.claude/history*
+.claude/logs/
+.claude/cache/
+.claude/shell-snapshots/
+.claude/statsig/
+.claude/plans/

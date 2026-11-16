@@ -355,7 +355,10 @@ it. This is what it did, as far as the repository shows:
   calculator, client, terrain tooling, deploy workflow, README, CREDITS and the
   build reports. It also ran the checks recorded in `REPORT.md` (tests, browser
   checks, accessibility scans) and researched sources such as the Apollo 11 Sun
-  angle. Several Claude models were used across sessions.
+  angle. Several Claude models were used across sessions. Its shared project
+  configuration is in the `.claude/` folder: `settings.json` (no attribution
+  lines in commits or pull requests) and `launch.json` (the local client and
+  server). Personal settings, worktrees and session history are not committed.
 - **The product document and flow prototype** (`docs/PRD.md`,
   `docs/prototype/index.html`) were drafted with an AI assistant in chat and
   reviewed by the owner screen by screen.
