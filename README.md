@@ -332,6 +332,19 @@ the position cache, then checks `/api/health` and `/v1/sites`. The secret names
 it expects are listed at the top of that file. The proxy site file is
 `nginx/moon.conf`; copying it to the host is a one-time manual step.
 
+## What's next
+
+Not built yet; these are the next steps.
+
+- **Terrain for any site, on its own.** A background worker on the server will
+  compute the horizon grid for any site as soon as it is added, including a
+  visitor's own coordinates, and keep the result until NASA publishes a newer
+  elevation map. The Miss view then works wherever the map reaches, without a
+  manual build step.
+- **More of the Moon.** Adding NASA's elevation maps for 60 to 70 degrees south and
+  NASA's global map would extend the Miss view to Chandrayaan-3 and the Apollo
+  sites, which are outside today's south-pole map.
+
 ## Use of AI tools
 
 AI assistance was used heavily in this project, and the Space Apps rules allow
