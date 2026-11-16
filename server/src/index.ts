@@ -20,6 +20,27 @@ const stopScheduler = deps.watch
   : undefined;
 console.log(`email alerts: ${deps.watch ? 'on' : 'off'}`);
 
+// Trigger terrain preparation: any built-in site without profiles, and any site
+// whose map has a newer version, gets a job. The worker computes them one at a
+// time. Nothing else recomputes. Failures here never stop the server.
+if (deps.terrainJobs) {
+  void (async () => {
+    try {
+      const sites = (await deps.sitesRepo.list()).map((s) => ({
+        id: s.id,
+        latitude: s.lat,
+        longitude: s.lon,
+        custom: s.custom,
+      }));
+      const built = await deps.terrainJobs!.sweepBuiltins(sites);
+      const versioned = await deps.terrainJobs!.sweepMapVersions(sites);
+      console.log(`terrain jobs queued at startup: ${built} new, ${versioned} for a newer map`);
+    } catch (err) {
+      console.error('terrain sweep failed:', err);
+    }
+  })();
+}
+
 async function shutdown(): Promise<void> {
   stopScheduler?.();
   server.close();

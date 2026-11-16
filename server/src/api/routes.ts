@@ -11,11 +11,14 @@ import { createRateLimiter, type RateLimitOptions } from './rateLimit.js';
 import { createCalc, isoAt, spanTime, type CalcDeps, type WindowsQuery } from './calc.js';
 import { createWatchRouter, type WatchDeps } from '../watch/routes.js';
 import type { HorizonsSpan } from '../horizons/client.js';
+import type { TerrainJobsRepo, TerrainStatus } from '../terrain/jobs.js';
 
 export interface V1Deps extends CalcDeps {
   rateLimit?: RateLimitOptions;
   /** Email alerts (flow 5). Left out, the watch endpoints say they are switched off. */
   watch?: WatchDeps;
+  /** The terrain job queue (worker). Left out when no database is configured. */
+  terrainJobs?: TerrainJobsRepo;
 }
 
 const addDays = (date: string, n: number): string =>
@@ -70,6 +73,30 @@ export function createV1Router(deps: V1Deps): Router {
           ...(s.group ? { group: s.group } : {}),
           ...(s.note ? { note: s.note } : {}),
         })),
+      });
+    } catch (err) {
+      next(err);
+    }
+  });
+
+  // GET /v1/terrain/status?site= — whether a site's terrain is ready, being
+  // prepared, or absent, and which map (and resolution) produced it. The Miss
+  // page polls this to show "Preparing terrain..." then the real map.
+  router.get('/terrain/status', async (req: Request, res, next) => {
+    try {
+      const site = await resolveSite(parsePlace(req.query as Record<string, unknown>), visitorOf(req));
+      const status: TerrainStatus = deps.terrainJobs
+        ? await deps.terrainJobs.status(site.id)
+        : { state: 'none' };
+      res.json({
+        site: site.id,
+        model: 'terrain',
+        state: status.state,
+        map: status.mapName ?? null,
+        map_version: status.mapVersion ?? null,
+        resolution_m: status.resolutionM ?? null,
+        computed_at: status.computedAt ?? null,
+        ...(status.error ? { error: status.error } : {}),
       });
     } catch (err) {
       next(err);

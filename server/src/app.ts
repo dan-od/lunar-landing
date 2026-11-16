@@ -9,6 +9,7 @@ import { apiErrorHandler, serviceUnavailable } from './api/errors.js';
 import { createRateLimiter } from './api/rateLimit.js';
 import { createMcpRouter } from './connector/http.js';
 import { appSeriesProvider, dbSitesRepo, dbTerrainRepo, staticSitesRepo } from './api/providers.js';
+import { dbTerrainJobs } from './terrain/jobs.js';
 import type { WatchDeps } from './watch/routes.js';
 import { pgWatchRepo } from './watch/repo.js';
 import { devLogSender, resendSender } from './watch/sender.js';
@@ -38,6 +39,7 @@ export function defaultDeps(): V1Deps {
       sitesRepo: dbSitesRepo(pool),
       seriesProvider: appSeriesProvider(pool),
       terrainRepo: dbTerrainRepo(pool),
+      terrainJobs: dbTerrainJobs(pool, config.terrainJobsPerHour),
       rateLimit,
       customLimit,
       periodLimit,

@@ -14,6 +14,8 @@ export interface Config {
   customSitesPerHour: number;
   /** Dates not saved yet that one visitor may open per hour (each costs NASA requests). */
   newPeriodsPerHour: number;
+  /** New terrain jobs one visitor may trigger per hour (each is heavy compute). */
+  terrainJobsPerHour: number;
   trustProxy: string;
   /** Key for the email service (Resend). A deployment secret; empty when not set. */
   emailSendingKey: string;
@@ -44,6 +46,7 @@ export const config: Config = {
   rateLimitPerMinute: Number(process.env.RATE_LIMIT_PER_MINUTE ?? 120),
   customSitesPerHour: Number(process.env.CUSTOM_SITES_PER_HOUR ?? 5),
   newPeriodsPerHour: Number(process.env.NEW_PERIODS_PER_HOUR ?? 12),
+  terrainJobsPerHour: Number(process.env.TERRAIN_JOBS_PER_HOUR ?? 5),
   trustProxy: process.env.TRUST_PROXY ?? 'loopback, linklocal, uniquelocal',
   emailSendingKey: process.env.EMAIL_SENDING_KEY ?? '',
   tokenSigningSecret: process.env.TOKEN_SIGNING_SECRET ?? '',

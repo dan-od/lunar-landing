@@ -9,8 +9,16 @@ export interface TerrainFile {
   stepM: number;
   /** The grid reaches this far east and north of the target, metres. */
   halfM: number;
+  /** The map this profile was built from, and its version and resolution. */
+  mapName: string;
+  mapVersion: string;
+  resolutionM: number;
   points: TerrainPoint[];
 }
+
+// The first prepared files predate the map catalogue; they were all built from
+// the 80 m south map, so a file without provenance is read as that map.
+const DEFAULT_MAP = { name: 'LDEM_80S_80MPP', version: 'ADJ-2015', resolutionM: 80 };
 
 const fail = (why: string): never => {
   throw new Error(`Terrain file is not usable: ${why}`);
@@ -54,5 +62,12 @@ export function parseTerrainFile(raw: unknown): TerrainFile {
   if (typeof grid?.count === 'number' && grid.count !== points.length) {
     return fail(`grid.count says ${grid.count} points but the file holds ${points.length}`);
   }
-  return { siteId, stepM, halfM, points };
+
+  const mapName = typeof doc.map_name === 'string' ? doc.map_name : DEFAULT_MAP.name;
+  const mapVersion = typeof doc.map_version === 'string' ? doc.map_version : DEFAULT_MAP.version;
+  const resolutionM = Number.isFinite(Number(doc.resolution_m))
+    ? Number(doc.resolution_m)
+    : DEFAULT_MAP.resolutionM;
+
+  return { siteId, stepM, halfM, mapName, mapVersion, resolutionM, points };
 }

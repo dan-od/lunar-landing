@@ -53,11 +53,21 @@ export async function loadTerrain(pool: pg.Pool, terrain: TerrainFile): Promise<
     await client.query('DELETE FROM horizon_profiles WHERE site_id = $1', [terrain.siteId]);
     for (const p of terrain.points) {
       await client.query(
-        `INSERT INTO horizon_profiles (site_id, offset_east, offset_north, heights_deg)
-         VALUES ($1, $2, $3, $4::double precision[])`,
-        [terrain.siteId, p.east, p.north, p.heights],
+        `INSERT INTO horizon_profiles (site_id, offset_east, offset_north, heights_deg, map_name, map_version)
+         VALUES ($1, $2, $3, $4::double precision[], $5, $6)`,
+        [terrain.siteId, p.east, p.north, p.heights, terrain.mapName, terrain.mapVersion],
       );
     }
+    await client.query(
+      `INSERT INTO terrain_runs (site_id, map_name, map_version, resolution_m, step_m, half_m, point_count)
+       VALUES ($1, $2, $3, $4, $5, $6, $7)
+       ON CONFLICT (site_id) DO UPDATE SET
+         map_name = EXCLUDED.map_name, map_version = EXCLUDED.map_version,
+         resolution_m = EXCLUDED.resolution_m, step_m = EXCLUDED.step_m,
+         half_m = EXCLUDED.half_m, point_count = EXCLUDED.point_count, computed_at = now()`,
+      [terrain.siteId, terrain.mapName, terrain.mapVersion, terrain.resolutionM,
+       terrain.stepM, terrain.halfM, terrain.points.length],
+    );
     await client.query('UPDATE sites SET has_terrain = TRUE WHERE id = $1', [terrain.siteId]);
     await client.query('COMMIT');
     return terrain.points.length;
