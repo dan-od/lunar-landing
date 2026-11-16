@@ -2,7 +2,7 @@
 
 Written 2026-11-15, end of the second unattended session (started about
 06:30 EST). Every step of your list, and both later additions, was done and pushed to
-`staging` after each step. `main` and production were deployed twice with the owner's approval (see Production deploys). The later phone redesign is on `staging` only, not deployed. All commits
+`staging` after each step. `main` and production were deployed with the owner's approval each time; the latest deploy is the final round below (production runs `d0a5451`). All commits
 are dan-od with no tool lines; nothing was force-pushed.
 
 The full requirement-by-requirement result is in
