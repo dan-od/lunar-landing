@@ -31,6 +31,7 @@ import { differsNote, targetWorks } from './differs';
 import { checkCoordinates } from '../customSites';
 import { offsetWords } from './offsetWords';
 import { usePhone } from '../usePhone';
+import { MissSiteSelect } from './MissSiteSelect';
 
 
 const TAB = tabFor('/miss')!;
@@ -142,6 +143,29 @@ export function MissPage() {
     // `site` only changes with the page's site, which resets the aim anyway.
   }, [aim, chosen]);
 
+  // Picking a site re-renders the page (loading, then the new site), so focus
+  // returns to the Site dropdown once it is back.
+  const refocusSite = useRef(false);
+  useEffect(() => {
+    if (!refocusSite.current) return;
+    const el = document.getElementById('miss-site');
+    if (el) {
+      refocusSite.current = false;
+      el.focus();
+    }
+  });
+  const pickSite = (id: string) => {
+    const next = sites.find((s) => s.id === id);
+    if (!next) return;
+    refocusSite.current = true;
+    update({ site: id, t: 0 });
+    say(
+      next.has_terrain && !next.custom
+        ? `Miss now shows ${next.name}. The Console shows it too.`
+        : `${next.name} chosen. It has no terrain prepared, so no odds are shown.`,
+    );
+  };
+
   const moveAim = (next: Aim) => {
     if (!current) return;
     const snapped = clampAim(next, current.stepM, Math.min(MAX_AIM_DISTANCE, current.halfM));
@@ -184,21 +208,12 @@ export function MissPage() {
                 it. Nothing is estimated.
               </p>
             )}
-            <p className="choices">
-              {withTerrain.map((t, i) => (
-                <button
-                  key={t.id}
-                  type="button"
-                  className={i === 0 ? 'btn' : 'btn2'}
-                  onClick={() => update({ site: t.id, t: 0 })}
-                >
-                  SWITCH TO {shortName(t).toUpperCase()}
-                </button>
-              ))}{' '}
+            <div className="miss-none-acts">
+              <MissSiteSelect sites={sites} value="" terrainOnly onPick={pickSite} />
               <Link className="btn2 as-button" to={{ pathname: '/', search }}>
                 BACK TO CONSOLE
               </Link>
-            </p>
+            </div>
           </div>
         </div>
       </main>
@@ -328,6 +343,7 @@ export function MissPage() {
           <h2 className="cap" id="miss-title">
             WHERE SHOULD WE AIM? · {shortName(site).toUpperCase()} · REAL TERRAIN
           </h2>
+          <MissSiteSelect sites={sites} value={site.id} onPick={pickSite} />
           <div className="miss-intro">
             <div className="h2">
               Landers never hit the exact spot <Term id="miss" />
