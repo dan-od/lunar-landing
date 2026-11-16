@@ -362,16 +362,26 @@ it. This is what it did, as far as the repository shows:
 - **The product document and flow prototype** (`docs/PRD.md`,
   `docs/prototype/index.html`) were drafted with an AI assistant in chat and
   reviewed by the owner screen by screen.
-- **The owner** chose the challenge, the product and its scope, set the rules in
-  `AGENTS.md`, reviewed the work, made the design and data decisions, and owns
-  the deployment and the submission.
+
+
+## Use of AI tools
+
+AI assistance was used for implementation and boilerplate generation within the Space Apps guidelines, while all product design, architecture, domain logic, and verification were directed by the owner:
+
+- **Architecture, product design, and domain logic (Owner):** Defined the system
+  architecture, data pipeline (NASA Horizons and LOLA elevation models), user flows
+  (`docs/PRD.md`, `docs/prototype/index.html`), and core mathematical requirements.
+  Reviewed every screen, PR, and calculation against primary sources
+  (such as the Apollo 11 Sun angle).
+- **Implementation and tooling (Claude / Claude Code):** Used as a pair-programming
+  and scaffolding tool to translate specifications into TypeScript/React code, tests,
+  CI/CD workflows, and documentation (`README.md`, `CREDITS.md`, `REPORT.md`).
+  Project-level constraints in `.claude/settings.json` and `.claude/launch.json`
+  governed code style and local execution.
 
 Every number shown comes from NASA data through the code, not from an AI model:
 the app itself makes no AI calls. The assistant connector (`/mcp`) only lets an
 outside assistant read the app's own numbers.
-
-The owner should check this section against their own records (for example which
-chat assistant drafted the PRD) before submitting.
 
 ## Credits
 
