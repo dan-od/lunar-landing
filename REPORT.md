@@ -9,6 +9,44 @@ The full requirement-by-requirement result is in
 [docs/acceptance.md](docs/acceptance.md). Screenshots of each tab on the 2025
 case are in [docs/screens/](docs/screens/).
 
+## Final round (2026-11-15 evening; production deploy approved by the owner)
+
+Production runs `d0a5451` (deploy run 43790362232, green). `staging` is ahead
+of `main` only by the deck and this report.
+
+| Step | Result | Commit |
+| --- | --- | --- |
+| 1. Console fits the window | From 900 px up, the Console page never scrolls: header, scenario bar, panes and status bar fill 100dvh. The site list (title and search pinned above it), the inspector and the timeline area scroll on their own; the polar map fills the rest. The selected site is scrolled into view in the list (only the list moves). Other tabs and the phone layout are unchanged. | `2b55286` |
+| 2. Timeline | Desktop shows only the chosen site; "SHOW ALL 21 SITES" toggles the rest and is remembered (localStorage `moon:timeline-all`). Legend "POWER (Sun up)" / "LINK (Earth in view)" beside the timeline, the phone card's strip and timeline, and each Compare side; the percentage column is labelled "POWER / LINK". | `8d95cac` |
+| 3. Consistency | IM-2 came to rest about 370 m from the target (369.7 m on the map's projection, 368.9 m great circle, from the LROC coordinates −84.78, 29.13 and −84.7906, 29.1957) in How we know it's right, the site note and the README. Site list, inspector and card use "84.7800 S, 29.1300 E". Phone Miss intro: "Tap the map to read a point, then press Move aim here." | `e8d18b5` |
+| 4. Terrain for two more sites | Done inside the time box (builds took about 3 s each). `shk_terrain.json` (Shackleton–de Gerlache ridge, −89.684, 196.739) and `im2a_terrain.json` (IM-2 Athena's resting point, −84.7906, 29.1957): 441 points, 40 m, 400 m, 2 m observer, 150 km rays. **No ray left the map at either site** (the files record `rays_cut_directions_deg: []`). The loader now loads every `<site>_terrain.json`, one transaction each, safe twice; the deploy loaded 1,323 profiles. The aim belongs to the terrain site last chosen (picking another resets it). Sites without terrain say why, per site, in Miss and the API's 409: north of 80° S "outside the south-pole elevation map (it covers 80 to 90 degrees south)", IM-1 "at the edge of the map, so the horizon would be cut off"; "Nothing is estimated" kept; the 409 lists the three terrain sites. | `f70d5dc` |
+| 5. README What's next | Background terrain worker for any site including custom coordinates, kept until NASA publishes a newer map; NASA's 60–70° S and global maps for Chandrayaan-3 and the Apollo sites. | `d0a5451` |
+| 6. Deploy | Tests, lint, typecheck, build, axe; `main` fast-forwarded to `staging` and pushed; run watched to green; live bundle checked for the new code; `/v1/sites` lists im2, shk, im2a with terrain; `/v1/miss?site=shk` 200; `/v1/miss?site=im1` gives the new 409. | — |
+| 7. Deck | Rebuilt from https://moon.okoro.me (screens in `docs/demo/screens/`). `/v1/windows`, 15–22 Nov 2026 from 00:00 UTC: Apollo 11 power 96%, link 100%; Chang'e 4 link 0% all week; Shackleton power 0% (dark), link 38%; IM-2 power 99%, link 86%. The "today" slides use 15 Nov 2026 12:00 UTC. Seven slides, rendered and checked: no overlap or overflow. | `08ab00a` |
+
+### Verified by automated test
+
+- 296 tests pass: 64 core, 141 server, 91 client. Lint, typecheck and build clean.
+- New: no-terrain reasons (map edge, outside, custom); every terrain file is found, parses on the same 441-point grid and is centred on its site's cited coordinates; the three terrain sites are the curated ones with `hasTerrain`.
+- Earlier ones still pass: LOLA projection against the terrain tool, offset wording.
+
+### Verified by hand (scripted Chromium against the dev stack, then the live site)
+
+- Console at 1512×982, 1280×800, 1920×1080 and 900×700: page height equals the window, no sideways scroll, axe clean.
+- At 1512×982 the mouse wheel scrolls the list, inspector and timeline area and never the page. Focusing the last row scrolls it into view; a deep-linked site (Apollo 17) is visible in the list on load.
+- Phone states at 320 and 390 px and the Miss states at 1440 and 320 px: axe clean, no sideways scroll. The one small target is the inline link inside a sentence on the API tab, as before.
+- Phone keyboard checks (chips, tabs, card focus, Back, date sheet) pass.
+- Miss works for Shackleton and IM-2 actual on the dev stack and live. IM-1 and Chandrayaan-3 show their reasons. The loader ran twice locally with the same row counts.
+- Live: the deploy loaded im2, im2a and shk. The bundle has the new layout, toggle and legend. The connector's `slip_impact` answers (its reply is on slide 7).
+
+### Not verified (and why)
+
+- **The PDF is not PowerPoint's export.** Exporting through PowerPoint was refused by this session's permission check. `docs/demo/moon-status-demo.pdf` is made from my own renders of each slide (real Fira Sans, Overpass and Fira Code at the deck's exact positions, 220 dpi images, so its text is not selectable). Line breaks in PowerPoint may differ slightly. To replace it, open the .pptx in PowerPoint and use File › Export › PDF.
+- Real phones, real screen readers, Firefox and Safari: not tried; Chromium only.
+- A shared link to a moved aim does not say which terrain site it belongs to; it opens on the IM-2 target's grid. A fix would need a change to the URL contract, so I left it.
+- The connector's `slip_impact` echoes the site id as `"name"` when one site is asked for (`"name": "im2"`); it is cosmetic and left as is.
+- `docs/PRD.md` still says "about 250 m" in three places. It is the requirements document, so I did not edit it.
+
 ## The two queued additions
 
 Both were received and built (date jumps under C, and the grown site list after
