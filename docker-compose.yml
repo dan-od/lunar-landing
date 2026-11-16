@@ -66,6 +66,30 @@ services:
       timeout: 5s
       retries: 5
 
+  # Terrain worker: computes horizon profiles one site at a time from the maps in
+  # the shared volume, and writes them to Postgres. No ports; reads the maps
+  # read-only; health is a heartbeat file (see tools/terrain/Dockerfile).
+  terrain-worker:
+    container_name: moon-terrain-worker
+    build:
+      context: .
+      dockerfile: tools/terrain/Dockerfile
+    restart: unless-stopped
+    environment:
+      PGHOST: moon-db
+      PGPORT: "5432"
+      PGUSER: ${POSTGRES_USER}
+      PGPASSWORD: ${POSTGRES_PASSWORD}
+      PGDATABASE: ${POSTGRES_DB}
+      TERRAIN_DATA_ROOT: /maps
+    volumes:
+      - maps:/maps:ro
+    networks:
+      - internal
+    depends_on:
+      db:
+        condition: service_healthy
+
   db:
     container_name: moon-db
     image: postgres:16-alpine
@@ -97,3 +121,6 @@ networks:
 
 volumes:
   db-data:
+  # Elevation maps (LOLA GeoTIFF + PDS). Filled once on the host by
+  # tools/terrain/download_maps.py; never in git or an image.
+  maps:

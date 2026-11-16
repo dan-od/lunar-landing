@@ -318,10 +318,35 @@ deployment pipeline's secrets (`MOON_DB_PASSWORD`, `EMAIL_SENDING_KEY`,
 
 ## Full stack
 
-`docker-compose.yml` runs three containers (client, server, database). Only the
-client joins the shared `web` proxy network; the database is on an internal
-network only; no ports are published. The server's health check answers at
-`/api/health` on `127.0.0.1`.
+`docker-compose.yml` runs four containers (client, server, database, terrain
+worker). Only the client joins the shared `web` proxy network; the database and
+the worker are on an internal network only; no ports are published. The server's
+health check answers at `/api/health` on `127.0.0.1`; the worker's is a
+heartbeat file it touches each loop.
+
+## Terrain worker
+
+Any site inside a downloaded elevation map gets a real horizon profile
+automatically, kept until the map version changes. The pieces:
+
+- **Map catalogue** `tools/terrain/maps.json`: the LOLA maps, best-first — 80 m
+  south (GeoTIFF), 120 m south and north (PDS), and the 128 px/deg whole-Moon map
+  (PDS, the equirectangular fallback, seam handled). `tools/terrain/maps.py` reads
+  each map through its GeoTIFF CRS or PDS label, verifying projection and units
+  rather than assuming, and chooses the finest map that covers a point with the
+  full 150 km ray range inside it.
+- **Maps volume**: `tools/terrain/download_maps.py` fills a named Docker volume
+  (`maps`) from the catalogue URLs, resuming and size-checking. Maps are never in
+  git or an image.
+- **Queue + worker**: the server queues a job for any built-in site without
+  terrain, any new custom site (at most 5 per visitor per hour), and any site
+  whose map has a newer version. The `moon-terrain-worker` container computes jobs
+  one at a time, skipping a site/grid/map-version already done, waiting when no
+  downloaded map yet covers the site, and backing off on error. Results go to
+  `horizon_profiles` with the map name and version.
+- **Status**: `GET /v1/terrain/status?site=` reports `none` / `preparing` /
+  `ready` with the map and resolution; the Miss page shows "Preparing terrain…"
+  until it is ready and then names the map ("terrain from LOLA 120 m").
 
 ## Deploy
 

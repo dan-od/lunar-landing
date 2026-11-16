@@ -20,6 +20,7 @@ import maps
 MAX_ATTEMPTS = 5
 WAIT_FOR_MAP_S = 300          # retry delay when no map covers the site yet
 POLL_IDLE_S = 5
+HEARTBEAT = os.environ.get("WORKER_HEARTBEAT", "/tmp/terrain-worker.alive")
 DATA_ROOT = os.environ.get("TERRAIN_DATA_ROOT",
                            os.path.abspath(os.path.join(maps.HERE, "..", "..")))
 
@@ -164,6 +165,10 @@ def main() -> None:
     print(f"terrain worker: data_root={DATA_ROOT}")
     with psycopg.connect(dsn(), row_factory=dict_row, autocommit=False) as conn:
         while True:
+            try:
+                os.utime(HEARTBEAT, None) if os.path.exists(HEARTBEAT) else open(HEARTBEAT, "w").close()
+            except OSError:
+                pass
             try:
                 res = process_one_job(conn, DATA_ROOT, cat)
             except Exception as err:  # keep the loop alive

@@ -73,6 +73,18 @@ jobs:
             docker image prune -f
             docker ps --filter name=moon --format 'table {{.Names}}\t{{.Status}}'
           DEPLOY
+      # Fill the maps volume (resumes, size-checks; re-runs are cheap). Mounted at
+      # /dl read-write here; the worker mounts the same volume read-only at /maps.
+      # Non-fatal: until a map is complete the worker just waits and retries.
+      - name: Download elevation maps
+        run: |
+          ssh ${{ secrets.DEPLOY_USER }}@${{ secrets.DEPLOY_HOST }} <<'DEPLOY'
+            set -e
+            cd /opt/docker-homelab/sites/moon
+            docker compose run --rm --no-deps --entrypoint "" \
+              -v moon-status_maps:/dl terrain-worker \
+              python download_maps.py /dl || echo "maps not all complete yet; worker will wait and retry"
+          DEPLOY
       # The server does not create its own tables. Each of these is safe to run
       # on every deploy: migrations apply once, sites are upserted, the terrain
       # profiles for the demo site are replaced with the committed file, and the
