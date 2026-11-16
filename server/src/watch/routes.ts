@@ -12,7 +12,7 @@ import type { SitesRepo } from '../api/providers.js';
 import { RULES, createEvaluator, isRuleId, modelFor, ruleLabel, type RuleId, type WatchScenario } from './rules.js';
 import type { WatchRepo, WatchRow } from './repo.js';
 import type { EmailSender } from './sender.js';
-import { confirmationEmail, escapeHtml, hasControlChars } from './emails.js';
+import { POSITIONS_LINE, confirmationEmail, escapeHtml, hasControlChars } from './emails.js';
 import { maskEmail } from './mask.js';
 import { hashToken, isUnsubscribeTokenFor, newToken, sameHash, unsubscribeTokenId } from './tokens.js';
 import { CONFIRM_TTL_MS, DAY_MS, checkWatch, emailContext, pastDeleteDate, sendOnce, type CheckDeps } from './service.js';
@@ -141,10 +141,12 @@ function unsubscribePage(message: string, stopAction?: string): string {
     '<meta name="viewport" content="width=device-width, initial-scale=1">',
     '<meta name="robots" content="noindex">',
     '<title>Moon Status alerts</title>',
-    '<style>body{font-family:Arial,Helvetica,sans-serif;font-size:18px;line-height:1.5;margin:0;padding:48px 24px;background:#fff;color:#111}main{max-width:36em;margin:0 auto}button{font:inherit;font-weight:700;min-height:44px;padding:0 20px;background:#07173f;color:#fff;border:0;cursor:pointer}button:focus-visible{outline:3px solid #0042a6;outline-offset:3px}</style>',
+    '<style>body{font-family:Arial,Helvetica,sans-serif;font-size:18px;line-height:1.5;margin:0;padding:24px 12px;background:#e9edf6;color:#07173f}.card{max-width:560px;margin:0 auto;background:#fff}header{background:#07173f;color:#fff;padding:16px 24px;font-weight:700;font-size:16px;letter-spacing:3px;display:flex;align-items:center;gap:10px}header img{display:block}main{padding:28px 24px}h1{font-size:24px;margin:0 0 12px}.chip{display:inline-block;border:2px solid #07173f;padding:6px 12px;font-size:13px;font-weight:700;letter-spacing:2px;margin:0 0 16px}button{font:inherit;font-weight:700;min-height:44px;padding:0 24px;background:#eafe07;color:#07173f;border:2px solid #07173f;cursor:pointer}button:focus-visible{outline:3px solid #0042a6;outline-offset:3px}footer{padding:16px 24px;background:#f4f6fb;border-top:1px solid #d5dbea;font-size:12px;color:#4a5878}</style>',
     '</head>',
     '<body>',
-    `<main><h1>Moon Status alerts</h1><p>${escapeHtml(message)}</p>${form}</main>`,
+    '<div class="card"><header>MOON STATUS</header>',
+    `<main><h1>Moon Status alerts</h1><p class="chip">${stopAction ? '○ NOT STOPPED YET' : '■ ALERT STOPPED'}</p><p>${escapeHtml(message)}</p>${form}</main>`,
+    `<footer>${escapeHtml(POSITIONS_LINE)}</footer></div>`,
     '</body>',
     '</html>',
   ].join('\n');
