@@ -188,30 +188,47 @@ class LoadedMap:
 
     def load_full(self) -> None:
         if self._cache is None:
-            self._cache = self._read_band(0, self.height)
+            self._cache = self._read_window(0, self.height, 0, self.width)
             self._origin = (0, 0)
 
-    def ensure_region(self, lat: float, range_m: float) -> None:
-        """Load the rows needed for a range_m disc at this latitude.
+    def ensure_region(self, lat: float, lon: float, range_m: float) -> None:
+        """Load just the pixels a range_m disc around (lat, lon) needs.
 
-        Equirectangular maps keep every column (so the seam wraps) but only the
-        latitude band around the site, so the whole-Moon map never loads whole.
+        A small map (or any map under the cell cap) loads whole. Otherwise an
+        equirectangular map keeps every column (so the seam wraps) and only the
+        latitude band; a polar map keeps a 2-D box around the projected point.
+        So neither the 4 GB whole-Moon map nor the 1.9 GB 120 m map loads whole.
         """
         if self._cache is not None:
             return
-        if not self.is_equirect or self.height * self.width <= self.FULL_LOAD_MAX_CELLS:
+        if self.height * self.width <= self.FULL_LOAD_MAX_CELLS:
             self.load_full()
             return
-        dlat = math.degrees(range_m / self.radius_m) + 1.0
-        r_top = self._lonlat_to_pixel(0.0, min(90.0, lat + dlat))[1]
-        r_bot = self._lonlat_to_pixel(0.0, max(-90.0, lat - dlat))[1]
-        row0 = max(0, int(math.floor(min(r_top, r_bot))))
-        row1 = min(self.height, int(math.ceil(max(r_top, r_bot))) + 1)
-        self._cache = self._read_band(row0, row1 - row0)
-        self._origin = (row0, 0)
+        if self.is_equirect:
+            dlat = math.degrees(range_m / self.radius_m) + 1.0
+            r_top = self._lonlat_to_pixel(0.0, min(90.0, lat + dlat))[1]
+            r_bot = self._lonlat_to_pixel(0.0, max(-90.0, lat - dlat))[1]
+            row0 = max(0, int(math.floor(min(r_top, r_bot))))
+            row1 = min(self.height, int(math.ceil(max(r_top, r_bot))) + 1)
+            self._cache = self._read_window(row0, row1 - row0, 0, self.width)
+            self._origin = (row0, 0)
+            return
+        # polar: a 2-D box around the projected point, padded by the range
+        ox, oy = self._fwd.transform(lon, lat)
+        pad = range_m + abs(self.transform.a) * 2
+        xs = [ox - pad, ox + pad]
+        ys = [oy - pad, oy + pad]
+        cols = [(x - self.transform.c) / self.transform.a for x in xs]
+        rows = [(y - self.transform.f) / self.transform.e for y in ys]
+        col0 = max(0, int(math.floor(min(cols))))
+        col1 = min(self.width, int(math.ceil(max(cols))) + 1)
+        row0 = max(0, int(math.floor(min(rows))))
+        row1 = min(self.height, int(math.ceil(max(rows))) + 1)
+        self._cache = self._read_window(row0, row1 - row0, col0, col1 - col0)
+        self._origin = (row0, col0)
 
-    def _read_band(self, row0, h) -> np.ndarray:
-        arr = self.ds.read(1, window=((row0, row0 + h), (0, self.width))).astype(np.float64)
+    def _read_window(self, row0, h, col0, w) -> np.ndarray:
+        arr = self.ds.read(1, window=((row0, row0 + h), (col0, col0 + w))).astype(np.float64)
         if self.nodata is not None and not math.isnan(self.nodata):
             arr[arr == self.nodata] = np.nan
         return arr * self._to_m
@@ -222,6 +239,8 @@ class LoadedMap:
             self.load_full()
         col, row = self._lonlat_to_pixel(lon, lat)
         col = np.asarray(col, dtype=np.float64)
+        if not self.is_equirect:
+            col = col - self._origin[1]
         row = np.asarray(row, dtype=np.float64) - self._origin[0]
         ch, cw = self._cache.shape
         c0 = np.floor(col).astype(np.int64); r0 = np.floor(row).astype(np.int64)
@@ -250,7 +269,9 @@ class LoadedMap:
         edge = min(x - b.left, b.right - x, y - b.bottom, b.top - y)
         if edge < range_m:
             return False
-        return bool(np.isfinite(self.sample_bilinear(lon, lat)))
+        # confirm the point is on real data, loading only a small window not the map
+        self.ensure_region(lat, lon, abs(self.transform.a) * 4)
+        return bool(np.isfinite(self.sample_bilinear(np.array([lon]), np.array([lat]))[0]))
 
     def close(self) -> None:
         self.ds.close()
@@ -300,7 +321,7 @@ def _distances(max_range_m: float) -> np.ndarray:
 def horizon_profile(lm: LoadedMap, lat: float, lon: float, max_range_m: float):
     """(horizon[360], reach[360]) walking true geodesics; azimuth clockwise from north."""
     geod = Geod(a=lm.radius_m, f=0.0)
-    lm.ensure_region(lat, max_range_m)
+    lm.ensure_region(lat, lon, max_range_m)
     obs_surf = float(lm.sample_bilinear(np.array([lon]), np.array([lat]))[0])
     if not np.isfinite(obs_surf):
         raise ValueError("observer point has no elevation (off-map/nodata)")

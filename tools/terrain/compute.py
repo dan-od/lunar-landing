@@ -24,7 +24,7 @@ def site_profile(lm: maps.LoadedMap, lon: float, lat: float,
     """Return a terrain-file document (horizon_profiles shape) for one site."""
     geod = Geod(a=radius_m, f=0.0)
     offsets = grid_offsets(half_m, step_m)
-    lm.ensure_region(lat, ray_range_m + math.hypot(half_m, half_m))
+    lm.ensure_region(lat, lon, ray_range_m + math.hypot(half_m, half_m))
 
     points = []
     all_full = True
