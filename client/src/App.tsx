@@ -1,4 +1,4 @@
-import { Routes, Route, Link } from 'react-router-dom';
+import { Routes, Route, Link, useLocation } from 'react-router-dom';
 import { Header, BottomTabs } from './components/Header';
 import { Page } from './components/Page';
 import { SettingsDrawer } from './components/SettingsDrawer';
@@ -14,8 +14,10 @@ import { TABS } from './tabs';
 
 function Shell() {
   const { notices, dismissNotices, toast, search } = useApp();
+  // The Console fits the window like an app on a desktop (each pane scrolls on its own).
+  const fit = useLocation().pathname === '/';
   return (
-    <div className="app">
+    <div className={`app ${fit ? 'fit' : ''}`}>
       <a className="skip" href="#content">
         Skip to content
       </a>

@@ -2553,3 +2553,63 @@ main.main {
 .ptl .tplus {
   flex: 0 0 auto;
 }
+
+/* ---------- desktop Console fits the window like an app (900 px and wider) ----------
+   The page never scrolls: header, scenario bar, panes and status bar fill 100dvh.
+   The site list (under its pinned title and search), the inspector and the
+   timeline area each scroll on their own; the polar map fills what is left. */
+@media (min-width: 900px) {
+  .app.fit {
+    height: 100vh;
+    height: 100dvh;
+    min-height: 0;
+    overflow: hidden;
+  }
+  .app.fit > header,
+  .app.fit > .ban,
+  .app.fit > .ft {
+    flex: none;
+  }
+  .app.fit > .body {
+    flex: 1 1 0;
+    min-height: 0;
+    flex-wrap: nowrap;
+    overflow: hidden;
+  }
+  .app.fit .side,
+  .app.fit .insp {
+    min-height: 0;
+    overflow: hidden;
+  }
+  .app.fit .side-head {
+    flex: none;
+  }
+  .app.fit .side-list,
+  .app.fit .insp {
+    overflow-y: auto;
+    overscroll-behavior: contain;
+  }
+  .app.fit .side-list {
+    flex: 1 1 0;
+    min-height: 0;
+  }
+  .app.fit .main {
+    min-height: 0;
+    overflow: hidden;
+  }
+  .app.fit .main > .ban {
+    flex: none;
+  }
+  .app.fit .mapwrap,
+  .app.fit .mapwrap.fill {
+    flex: 1 1 0;
+    min-height: 240px;
+  }
+  .app.fit .tl-area {
+    flex: 0 1 auto;
+    max-height: 46%;
+    min-height: 0;
+    overflow-y: auto;
+    overscroll-behavior: contain;
+  }
+}

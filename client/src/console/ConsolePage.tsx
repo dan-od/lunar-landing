@@ -47,6 +47,7 @@ export function ConsolePage() {
 
   usePageMeta(TAB.title, TAB.description, TAB.path);
 
+
   // Play: step the marker; with reduced motion, jump in 5-day steps instead.
   useEffect(() => {
     if (!playing) return;
@@ -87,7 +88,21 @@ export function ConsolePage() {
     }
   }, [rows.length, started]);
 
+  // The selected site stays in view in the list, which scrolls on its own on a desktop.
+  // Only the list moves, never the page.
+  const busyNow = rows.length === 0;
+  useEffect(() => {
+    if (phone || busyNow) return;
+    const list = listRef.current?.querySelector<HTMLElement>('.side-list');
+    const row = list?.querySelector<HTMLElement>('button.row[aria-pressed="true"]');
+    if (!list || !row || list.scrollHeight <= list.clientHeight) return;
+    const top = row.getBoundingClientRect().top - list.getBoundingClientRect().top + list.scrollTop;
+    if (top < list.scrollTop) list.scrollTop = top;
+    else if (top + row.offsetHeight > list.scrollTop + list.clientHeight) list.scrollTop = top + row.offsetHeight - list.clientHeight;
+  }, [scenario.site, phone, busyNow]);
+
   // First open: two choices on the page itself (1-1). A shared link skips this.
+
   if (!started) {
     return (
       <main id="content" tabIndex={-1} className="body">
@@ -210,6 +225,8 @@ export function ConsolePage() {
 
   const side = (
     <aside className="side" ref={listRef} aria-labelledby="sites-title">
+      {/* Title and search stay put; the list below scrolls on its own on a desktop. */}
+      <div className="side-head">
       <h2 className="lbl" id="sites-title">
         01 / SITES · {busy ? '…' : `${ready} OF ${rows.length} READY`}
       </h2>
@@ -230,6 +247,8 @@ export function ConsolePage() {
           </span>
         </div>
       )}
+      </div>
+      <div className="side-list">
       {groups.length === 0 && <p className="pad hint">No site matches “{query}”.</p>}
       {groups.map((g) => (
         <section key={g.title} className="site-group" aria-label={g.title}>
@@ -267,6 +286,7 @@ export function ConsolePage() {
         </section>
       ))}
       {!busy && <AddCoordinates disabledReason={down ? addBlocked : null} onAdd={add} />}
+      </div>
     </aside>
   );
 
@@ -311,6 +331,7 @@ export function ConsolePage() {
           onSelect={(id) => update({ site: id, t: 0 })}
           overhead={overhead}
         />
+        <div className="tl-area">
         <Timeline
           rows={rows}
           selectedId={selected?.site.id ?? ''}
@@ -324,6 +345,7 @@ export function ConsolePage() {
           landingIso={landingIso}
           onPick={(id, t) => update({ site: id, t: Math.min(DISPLAY_DAYS, Math.round(t * 2) / 2) })}
         />
+        </div>
       </div>
       <Tour ready={rows.length > 0} />
       {selected && (
