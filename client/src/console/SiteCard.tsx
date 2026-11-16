@@ -7,7 +7,7 @@ import { DISPLAY_DAYS, DISPLAY_HOURS, fmtDeg, fmtDuration, overheadLongitudes, r
 import { Term } from '../help/Term';
 import { PoleMap } from './PoleMap';
 import { SkyView, compass } from './SkyView';
-import { Track } from './Timeline';
+import { Track, TrackLegend } from './Timeline';
 import { cardTime, nextAcross, nextChange, reasonFor } from './phoneBoard';
 import { NO_DATA, type SiteRow } from './types';
 
@@ -156,6 +156,7 @@ export function SiteCard(props: Props) {
               {result.power.uptimePct}% POWER <Term id="power" /> · {result.contact.uptimePct}% LINK <Term id="link" />
             </span>
           </div>
+          <TrackLegend className="pstrip-legend" />
           <div
             className="pstrip-bars"
             role="img"
@@ -198,6 +199,7 @@ export function SiteCard(props: Props) {
               <span className="ph" style={{ left: `${(t / DISPLAY_DAYS) * 100}%` }} />
             </div>
           )}
+          {result && <TrackLegend className="pstrip-legend" />}
           <div className="mono hint cmp-axis">
             <span>LANDING</span>
             <span>+30 D</span>

@@ -1,6 +1,7 @@
 // 30-day power and contact timeline for every site. Bars are drawn straight from
 // the calculator's windows (1-3); the white line is the time marker (1-4).
 import { useState } from 'react';
+import { useStoredFlag } from '../useStoredFlag';
 import type { Window } from '@moon/core';
 import { DISPLAY_DAYS, DISPLAY_HOURS } from '../siteData';
 import type { SiteRow } from './types';
@@ -28,8 +29,21 @@ export function Track({ windows, landingMs, kind }: { windows: Window[]; landing
 
 const sheetTime = (iso: string) => iso.slice(0, 16).replace('T', ' ');
 
+/** What the two bar colours mean; shown beside every pair of tracks. */
+export function TrackLegend({ className = '' }: { className?: string }) {
+  return (
+    <span className={`tl-keys ${className}`}>
+      <span className="key sun" aria-hidden="true" /> POWER (Sun up) <span className="key earth" aria-hidden="true" /> LINK
+      (Earth in view)
+    </span>
+  );
+}
+
 export function Timeline({ rows, selectedId, t, playing, onScrub, onPlay }: Props) {
   const [asTable, setAsTable] = useState(false);
+  // Only the chosen site by default; "Show all" is remembered in this browser.
+  const [showAll, setShowAll] = useStoredFlag('moon:timeline-all', false);
+  const shown = showAll || !rows.some((r) => r.site.id === selectedId) ? rows : rows.filter((r) => r.site.id === selectedId);
   const selected = rows.find((r) => r.site.id === selectedId);
   const windows = selected?.result
     ? [
@@ -42,10 +56,11 @@ export function Timeline({ rows, selectedId, t, playing, onScrub, onPlay }: Prop
     <section className="tl" aria-labelledby="tl-title">
       <div className="lbl tl-head">
         <h2 id="tl-title">03 / TIMELINE · 30 D</h2>
-        <span className="tl-keys" aria-hidden="true">
-          <span className="key sun" /> SUN <span className="key earth" /> EARTH <span className="key out" /> OUT
-        </span>
-        <button type="button" className="tl-toggle" aria-pressed={asTable} onClick={() => setAsTable((v) => !v)}>
+        <TrackLegend />
+        <button type="button" className="tl-toggle" aria-pressed={showAll} onClick={() => setShowAll(!showAll)}>
+          SHOW ALL {rows.length} SITES
+        </button>
+        <button type="button" className="tl-toggle tl-toggle-2" aria-pressed={asTable} onClick={() => setAsTable((v) => !v)}>
           SHOW AS TABLE
         </button>
       </div>
@@ -68,7 +83,12 @@ export function Timeline({ rows, selectedId, t, playing, onScrub, onPlay }: Prop
         />
         <span className="mono tplus">T+{t.toFixed(1)} d</span>
       </div>
-      {rows.map((r) => {
+      <div className="trk trk-h mono" aria-hidden="true">
+        <span className="n">SITE</span>
+        <span className="b" />
+        <span className="pct">POWER / LINK</span>
+      </div>
+      {shown.map((r) => {
         const landingMs = r.series?.sun[0] ? Date.parse(r.series.sun[0].time) : 0;
         const label = r.result
           ? `${r.short}: sunlight ${r.result.power.uptimePct} percent of the 30 days, Earth in view ${r.result.contact.uptimePct} percent`

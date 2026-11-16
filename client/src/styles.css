@@ -685,6 +685,37 @@ table.t th {
   text-align: right;
   font-size: 11px;
 }
+/* Column labels above the tracks: whose row, and which percentage is which. */
+.trk.trk-h {
+  padding-top: 2px;
+  padding-bottom: 0;
+  color: var(--mut);
+}
+.trk.trk-h .n,
+.trk.trk-h .pct {
+  font-size: 10px;
+  font-weight: 400;
+  letter-spacing: 0.08em;
+}
+.tl-keys {
+  display: inline-flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 4px 6px;
+}
+.tl-keys .key.earth {
+  margin-left: 8px;
+}
+.tl-toggle-2 {
+  margin-left: 0;
+}
+.pstrip-legend,
+.cmp-legend {
+  margin-top: 6px;
+  font: 400 11px 'Fira Code', monospace;
+  letter-spacing: 0.04em;
+  color: var(--mut);
+}
 
 /* A track is 30 days wide; lit segments are the calculator's windows. The
    repeating gradient draws the 12-hour cell gaps on top. */

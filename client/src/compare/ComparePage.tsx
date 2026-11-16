@@ -15,7 +15,7 @@ import { WhenFields, hh } from '../components/WhenFields';
 import { Term } from '../help/Term';
 import { groupSites } from '../console/siteGroups';
 import { fmtDeg, resultFor, type SiteSeries } from '../siteData';
-import { Track } from '../console/Timeline';
+import { Track, TrackLegend } from '../console/Timeline';
 import { NO_DATA } from '../console/types';
 import { QUICK_SETUPS, sideA, sideB } from './sides';
 import { useCase, type CaseData, type CaseSource } from './useCase';
@@ -136,6 +136,7 @@ function SidePane({ letter, side, sites, data, result, onChange }: PaneProps) {
               <span>LANDING</span>
               <span>+30 D</span>
             </div>
+            <TrackLegend className="cmp-legend" />
           </>
         ) : (
           <p className="hint">{data.loading ? 'Asking for positions…' : 'No saved positions for this case.'}</p>
