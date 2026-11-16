@@ -2,6 +2,7 @@
 // one-sentence reason, Sun and Earth, the next change, the 30-day strip, then
 // sections that open in place: Map (zoomed on the site), Timeline, Sky, All
 // sites and Download. ‹ › step through the sites the board is showing.
+import { latLonText } from '@moon/core';
 import { useEffect, useId, useRef, useState, type ReactNode } from 'react';
 import { DISPLAY_DAYS, DISPLAY_HOURS, fmtDeg, fmtDuration, overheadLongitudes, readoutAt } from '../siteData';
 import { Term } from '../help/Term';
@@ -184,7 +185,7 @@ export function SiteCard(props: Props) {
           />
         ) : (
           <p className="pad hint">
-            {site.name} is at {site.lat.toFixed(2)}, {site.lon.toFixed(2)}, north of 65° S, so it is not on the south
+            {site.name} is at {latLonText(site.lat, site.lon)}, north of 65° S, so it is not on the south
             pole map.
           </p>
         )}
@@ -270,7 +271,7 @@ export function SiteCard(props: Props) {
 
       <div className="pad pcard-src">
         <div className="mono hint">
-          {site.lat.toFixed(2)}, {site.lon.toFixed(2)}
+          {latLonText(site.lat, site.lon)}
           {src.url ? '' : ` · SOURCE ${src.label}`}
         </div>
         {src.url && (

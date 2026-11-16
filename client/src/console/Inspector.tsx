@@ -1,5 +1,6 @@
 // Inspector: the selected site at the time marker. State word and symbol, Sun and
 // Earth height, the sky view, shares of the 30 days, and the next change.
+import { latLonText } from '@moon/core';
 import { Link } from 'react-router-dom';
 import { fmtDeg, fmtDuration } from '../siteData';
 import { SkyView } from './SkyView';
@@ -42,7 +43,7 @@ export function Inspector({ row, fetching, t, marginDeg, search, csvHref }: Prop
           {state ? `${state.symbol} ${state.word}` : fetching ? '… FETCHING' : `${NO_DATA.symbol} ${NO_DATA.word}`}
         </span>
         <div className="mono coords">
-          {row.site.lat.toFixed(2)}, {row.site.lon.toFixed(2)}
+          {latLonText(row.site.lat, row.site.lon)}
           {src.url ? '' : ` · SOURCE ${src.label}`}
         </div>
         {src.url && (

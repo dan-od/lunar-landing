@@ -61,8 +61,8 @@ export function HowWeKnow() {
           <dt>The 2025 IM-2 landing</dt>
           <dd>
             At the target at 2025-03-06 00:00 UTC the Sun is 1.7° up, under the 2° allowance, so it reads
-            No power; by 17:00 it reads Ready. The real lander came down about 250 m away in a crater and
-            lost power. Our terrain map, at 80 m per pixel, is too coarse to show that crater, and we say
+            No power; by 17:00 it reads Ready. The real lander came to rest about 370 m from the target (computed
+            from the LROC coordinates of both points), in a small crater, and lost power. Our terrain map, at 80 m per pixel, is too coarse to show that crater, and we say
             so instead of tuning numbers to match.
           </dd>
         </div>

@@ -1,5 +1,6 @@
 // Flow 1: check a site. One page, three panes: site list, map + timeline,
 // inspector. Behaviour follows the flow prototype.
+import { latLonText } from '@moon/core';
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { TABS } from '../tabs';
 import { usePageMeta } from '../meta';
@@ -272,7 +273,7 @@ export function ConsolePage() {
                 <span className="grow">
                   <b>{r.site.name}</b>
                   <small>
-                    {r.site.lat.toFixed(2)}, {r.site.lon.toFixed(2)} · {sourceLabel(r.site.source)}
+                    {latLonText(r.site.lat, r.site.lon)} · {sourceLabel(r.site.source)}
                     {r.site.custom ? ' · yours' : ''}
                   </small>
                   {refused && !r.series && (refused.kind === 'rate' || refused.kind === 'bad') && (

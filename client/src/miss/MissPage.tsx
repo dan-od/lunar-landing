@@ -29,6 +29,7 @@ import { hh } from '../components/WhenFields';
 import { differsNote, targetWorks } from './differs';
 import { checkCoordinates } from '../customSites';
 import { offsetWords } from './offsetWords';
+import { usePhone } from '../usePhone';
 
 
 const TAB = tabFor('/miss')!;
@@ -49,6 +50,9 @@ interface Terrain {
 export function MissPage() {
   const { scenario, update, started, start, sites, terrainSite, sitesStatus, search, say, force, addCustomSite } = useApp();
   const navigate = useNavigate();
+  // On a phone or touch screen a tap shows the point first; the wording says so.
+  const phone = usePhone();
+  const touch = phone || (typeof window !== 'undefined' && window.matchMedia?.('(pointer: coarse)').matches);
   const [terrain, setTerrain] = useState<Terrain | null>(null);
   const [failure, setFailure] = useState<{ key: string; error: ApiFailure } | null>(null);
   const [announce, setAnnounce] = useState('');
@@ -322,7 +326,9 @@ export function MissPage() {
             </div>
             <p>
               Light ground works. Dark ground is in shadow.{' '}
-              <span className="c-sun">Click the map to move the aim.</span>
+              <span className="c-sun">
+                {touch ? 'Tap the map to read a point, then press Move aim here.' : 'Click the map to move the aim.'}
+              </span>
             </p>
           </div>
           <MissMap

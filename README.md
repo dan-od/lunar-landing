@@ -125,8 +125,8 @@ was not checked against a second source.
 
 ### 3. The 2025 landing case
 
-In March 2025 the IM-2 lander came down about 250 m from its target near Mons
-Mouton, in a crater, got no sunlight on its panels, and its mission ended within
+In March 2025 the IM-2 lander came to rest about 370 m from its target near Mons
+Mouton (computed from the LROC coordinates of the target and of the resting point), in a crater, got no sunlight on its panels, and its mission ended within
 a day. The app opens on that target and date (2025-03-06 00:00 UTC). With real
 positions and real terrain it shows:
 
