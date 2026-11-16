@@ -97,13 +97,16 @@ export function Header() {
             <span className="sr"> date steps (days, months, years)</span>
             <span aria-hidden="true"> {moreOpen ? '▲' : '▼'}</span>
           </button>
-          <span className="sp-more-term">
-            SLIP <Term id="slip" />
-          </span>
+          {/* Once the steps are open, SLIP and its "?" sit inside their group instead. */}
+          {!moreOpen && (
+            <span className="sp-more-term">
+              SLIP <Term id="slip" />
+            </span>
+          )}
         </span>
         <span className={`sp ${moreOpen ? 'open' : ''}`} id="slip-buttons">
           <span className="sp-term">
-            <span className="lead">SLIP </span>
+            <span className="sp-lead">SLIP</span>
             <Term id="slip" />
           </span>
           {SLIPS.map((s) => (

@@ -195,7 +195,7 @@ p {
 .scn .sp {
   flex-wrap: wrap;
 }
-.scn .sp button {
+.scn .sp > button {
   min-width: 52px;
   border: 1px solid var(--line);
   margin-left: -1px;
@@ -1364,6 +1364,64 @@ table.t th {
 .miss-aim {
   font-size: 15px;
 }
+.miss-aim-at {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+.miss-aim-at p {
+  flex: 1;
+  min-width: 0;
+}
+.app .miss-copy {
+  flex: none;
+  min-height: 44px;
+  padding: 0 14px;
+}
+.miss-pending {
+  fill: none;
+  stroke: var(--white);
+  stroke-width: 4;
+  stroke-dasharray: 6 5;
+  pointer-events: none;
+}
+/* Coordinates under the pointer, or of a tapped point waiting to become the aim. */
+.miss-point {
+  margin-top: 10px;
+  min-height: 44px;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: center;
+  gap: 8px 14px;
+  font-size: 12px;
+  letter-spacing: 0.04em;
+  text-align: center;
+}
+.miss-point .hint {
+  font-family: Overpass, system-ui, sans-serif;
+  letter-spacing: 0;
+}
+.miss-point-acts {
+  display: flex;
+  gap: 8px;
+}
+.miss-point-acts button {
+  min-height: 44px;
+  padding: 0 14px;
+}
+.miss-goto {
+  display: grid;
+  gap: 10px;
+}
+.miss-goto .hint {
+  margin-top: 4px;
+}
+.miss-goto [aria-live] > button {
+  margin-top: 8px;
+  min-height: 44px;
+  width: 100%;
+}
 .miss-row.mine {
   background: var(--sel);
 }
@@ -1630,10 +1688,17 @@ main.main {
   left: auto;
   right: -8px;
 }
+/* SLIP and its "?" are the first cell of the step group, inside its border. */
 .sp-term {
   display: inline-flex;
   align-items: center;
-  padding: 0 10px 0 0;
+  justify-content: center;
+  gap: 8px;
+  min-height: 44px;
+  padding: 0 12px;
+  border: 1px solid var(--line);
+  color: var(--white);
+  letter-spacing: 0.06em;
 }
 
 /* ---------- help panel ---------- */
@@ -1843,15 +1908,9 @@ main.main {
     display: grid;
     grid-template-columns: repeat(4, 1fr);
   }
-  .scn .sp .sp-term {
-    display: none;
-  }
-  .scn .sp button {
-    margin-left: 0;
-    border-right-width: 0;
-  }
-  .scn .sp button:last-child {
-    border-right-width: 1px;
+  .scn .sp > button,
+  .scn .sp > .sp-term {
+    margin: 0 -1px -1px 0;
   }
   .ft {
     padding-bottom: 10px;

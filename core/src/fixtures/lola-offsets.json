@@ -1,0 +1,89 @@
+{
+  "source": "tools/terrain/miss_coords.py (pyproj, the elevation map's own projection)",
+  "projection": "+proj=stere +lat_0=-90 +lat_ts=-90 +lon_0=0 +x_0=0 +y_0=0 +R=1737400 +units=m +no_defs +type=crs",
+  "radius_m": 1737400.0,
+  "target": {
+    "lat": -84.78,
+    "lon_east": 29.13
+  },
+  "points": [
+    {
+      "east": 0,
+      "north": 0,
+      "lat": -84.78,
+      "lon_east": 29.13
+    },
+    {
+      "east": 40,
+      "north": -120,
+      "lat": -84.7839489801,
+      "lon_east": 29.144479832
+    },
+    {
+      "east": -160,
+      "north": 120,
+      "lat": -84.7760482086,
+      "lon_east": 29.072168382
+    },
+    {
+      "east": 300,
+      "north": 0,
+      "lat": -84.7799906506,
+      "lon_east": 29.2385163394
+    },
+    {
+      "east": 0,
+      "north": 300,
+      "lat": -84.7701271883,
+      "lon_east": 29.13
+    },
+    {
+      "east": -300,
+      "north": 0,
+      "lat": -84.7799906506,
+      "lon_east": 29.0214836606
+    },
+    {
+      "east": 0,
+      "north": -300,
+      "lat": -84.7898728892,
+      "lon_east": 29.13
+    },
+    {
+      "east": 400,
+      "north": 400,
+      "lat": -84.7668196892,
+      "lon_east": 29.2743238595
+    },
+    {
+      "east": -400,
+      "north": -400,
+      "lat": -84.7931472061,
+      "lon_east": 28.9849453781
+    },
+    {
+      "east": 400,
+      "north": -400,
+      "lat": -84.7931472061,
+      "lon_east": 29.2750546219
+    },
+    {
+      "east": -400,
+      "north": 400,
+      "lat": -84.7668196892,
+      "lon_east": 28.9856761405
+    },
+    {
+      "east": 12.5,
+      "north": -7.25,
+      "lat": -84.7802385777,
+      "lon_east": 29.1345217265
+    },
+    {
+      "east": 1000,
+      "north": 2500,
+      "lat": -84.6976266918,
+      "lon_east": 29.4860966051
+    }
+  ]
+}

@@ -1,12 +1,16 @@
 // Flow 4: test a missed landing. A round terrain map on the left, odds on the
 // right. Only prepared terrain is shown; a site without it gets an explanation
 // and two exits. Behaviour and wording follow the flow prototype.
-import { useEffect, useMemo, useRef, useState } from 'react';
+import { useEffect, useMemo, useRef, useState, type FormEvent } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import {
   MAX_AIM_DISTANCE,
   aimText,
   clampAim,
+  latLonPlain,
+  latLonText,
+  latLonToOffset,
+  offsetToLatLon,
   outOfTen,
   ringOdds,
   safestAim,
@@ -23,6 +27,9 @@ import { useSiteData } from '../useSiteData';
 import { resultFor } from '../siteData';
 import { hh } from '../components/WhenFields';
 import { differsNote, targetWorks } from './differs';
+import { checkCoordinates } from '../customSites';
+import { offsetWords } from './offsetWords';
+
 
 const TAB = tabFor('/miss')!;
 
@@ -40,7 +47,7 @@ interface Terrain {
 }
 
 export function MissPage() {
-  const { scenario, update, started, start, sites, terrainSite, sitesStatus, search, say, force } = useApp();
+  const { scenario, update, started, start, sites, terrainSite, sitesStatus, search, say, force, addCustomSite } = useApp();
   const navigate = useNavigate();
   const [terrain, setTerrain] = useState<Terrain | null>(null);
   const [failure, setFailure] = useState<{ key: string; error: ApiFailure } | null>(null);
@@ -48,6 +55,18 @@ export function MissPage() {
   const moved = useRef(false);
   // "Safest place" is only claimed once Move to the safest spot has been pressed.
   const [tookBest, setTookBest] = useState(false);
+  // The point under the mouse, and a tapped point waiting to become the aim.
+  const [hover, setHover] = useState<Aim | null>(null);
+  const [pending, setPending] = useState<Aim | null>(null);
+  // Go to coordinates: what was typed, and the result.
+  const [goLat, setGoLat] = useState('');
+  const [goLon, setGoLon] = useState('');
+  const [goError, setGoError] = useState<{ field: 'lat' | 'lon'; message: string } | null>(null);
+  const [goResult, setGoResult] = useState<
+    { kind: 'moved'; text: string } | { kind: 'outside'; lat: number; lon: number; km: number } | null
+  >(null);
+  const goLatRef = useRef<HTMLInputElement>(null);
+  const goLonRef = useRef<HTMLInputElement>(null);
 
   usePageMeta(TAB.title, TAB.description, TAB.path);
   useEffect(() => {
@@ -110,16 +129,20 @@ export function MissPage() {
   useEffect(() => {
     if (!moved.current || !chosen) return;
     moved.current = false;
+    const where = site ? offsetToLatLon(site, aim.east, aim.north) : null;
     setAnnounce(
-      `Aim ${aimText(aim)}. ${outOfTen(chosen.share)} out of 10 landings would work for a lander that lands within ${chosen.radius} metres.`,
+      `Aim ${where ? `${latLonText(where.lat, where.lon)}, ` : ''}${aimText(aim)}. ${outOfTen(chosen.share)} out of 10 landings would work for a lander that lands within ${chosen.radius} metres.`,
     );
+    // `site` only changes with the page's site, which resets the aim anyway.
   }, [aim, chosen]);
 
   const moveAim = (next: Aim) => {
     if (!current) return;
     const snapped = clampAim(next, current.stepM, Math.min(MAX_AIM_DISTANCE, current.halfM));
     moved.current = true;
+    setPending(null);
     update({ aim: snapped });
+    return snapped;
   };
 
   if (sitesStatus === 'loading' || !started) {
@@ -218,6 +241,61 @@ export function MissPage() {
     { de: current.stepM, dn: 0, arrow: '▶', word: 'east' },
   ];
 
+  const coords = (p: Aim) => {
+    const g = offsetToLatLon(site, p.east, p.north);
+    return { ...g, text: latLonText(g.lat, g.lon) };
+  };
+  const aimAt = coords(aim);
+  const aimLine = `Aim: ${aimAt.text} (${offsetWords(aim)})`;
+
+  const copyAim = () => {
+    const text = latLonPlain(aimAt.lat, aimAt.lon);
+    const done = () => say(`Copied ${text} (latitude, east longitude)`);
+    if (navigator.clipboard?.writeText) navigator.clipboard.writeText(text).then(done, () => say(`Copy failed. The aim is ${text}.`));
+    else say(`Copy is not available here. The aim is ${text}.`);
+  };
+
+  const saveAim = () => {
+    const name = `${shortName(site)} aim, ${offsetWords(aim).replace(' of the target', '')}`;
+    const r4 = (v: number) => Math.round(v * 10_000) / 10_000;
+    addCustomSite(onTarget ? `${shortName(site)} target` : name, r4(aimAt.lat), r4(aimAt.lon));
+    say(`Saved as a site: ${aimAt.text}. It is in the site list with the smooth-Moon model.`);
+  };
+
+  const goTo = (e: FormEvent) => {
+    e.preventDefault();
+    const check = checkCoordinates(goLat, goLon);
+    if (!check.ok) {
+      setGoError({ field: check.field, message: check.message });
+      setGoResult(null);
+      (check.field === 'lat' ? goLatRef : goLonRef).current?.focus();
+      return;
+    }
+    setGoError(null);
+    const off = latLonToOffset(site, { lat: check.lat, lon: check.lon });
+    const distance = Math.hypot(off.east, off.north);
+    if (distance > current.halfM) {
+      setGoResult({ kind: 'outside', lat: check.lat, lon: check.lon, km: distance / 1000 });
+      return;
+    }
+    const snapped = moveAim(off);
+    const gap = snapped ? Math.hypot(snapped.east - off.east, snapped.north - off.north) : 0;
+    setGoResult({
+      kind: 'moved',
+      text:
+        gap < 5
+          ? 'Aim moved to that point.'
+          : `Aim moved to the nearest place it can go, ${Math.round(gap)} m from that point: the aim snaps to the ${current.stepM} m terrain grid and stays within ${Math.min(MAX_AIM_DISTANCE, current.halfM)} m of the target.`,
+    });
+  };
+
+  const checkOnConsole = (lat: number, lon: number) => {
+    const id = addCustomSite('', lat, lon);
+    update({ site: id, t: 0 });
+    say(`Added ${latLonText(lat, lon)} as a site. Checked with the smooth-Moon model.`);
+    navigate({ pathname: '/', search: window.location.search });
+  };
+
   const carry = (to: 'console' | 'compare') => {
     if (to === 'console') {
       update({ site: onTarget ? site.id : AIM_SITE_ID, t: 0 });
@@ -254,7 +332,33 @@ export function MissPage() {
             aim={aim}
             accuracy={scenario.accuracy}
             onAim={moveAim}
+            onHover={setHover}
+            onTap={setPending}
+            pending={pending}
           />
+          <div className="miss-point mono" aria-live="polite">
+            {pending ? (
+              <>
+                <span>
+                  TAPPED: {coords(pending).text} · {offsetWords(pending).toUpperCase()}
+                </span>
+                <span className="miss-point-acts">
+                  <button type="button" className="btn" onClick={() => moveAim(pending)}>
+                    MOVE AIM HERE
+                  </button>
+                  <button type="button" className="btn2" onClick={() => setPending(null)}>
+                    CANCEL
+                  </button>
+                </span>
+              </>
+            ) : hover ? (
+              <span>
+                POINTER: {coords(hover).text} · {offsetWords(hover).toUpperCase()}
+              </span>
+            ) : (
+              <span className="hint">Point at the map to read its coordinates.</span>
+            )}
+          </div>
           <p className="mono miss-caption">
             THE VIEW IS {view.toFixed(2)} KM ACROSS · NORTH IS UP · THE SOLID RING IS YOUR LANDING ACCURACY (
             {scenario.accuracy} M)
@@ -266,9 +370,12 @@ export function MissPage() {
         <h2 className="lbl" id="aim-title">
           IF WE AIM HERE
         </h2>
-        <p className="pad line miss-aim">
-          {onTarget ? 'You are aiming at the original target.' : `You are aiming ${aimText(aim)}.`}
-        </p>
+        <div className="pad line miss-aim miss-aim-at">
+          <p>{aimLine}</p>
+          <button type="button" className="btn2 miss-copy" onClick={copyAim}>
+            COPY<span className="sr"> the aim's coordinates</span>
+          </button>
+        </div>
         {differs && (
           <p className="pad line miss-differs" role="note">
             <b>Why this differs from the Console.</b> {differs}
@@ -303,7 +410,7 @@ export function MissPage() {
 
         <p className="pad line miss-aim">
           {safer
-            ? `There is a safer place to aim: ${aimText(best)}. There, ${outOfTen(best.share)} out of 10 landings would work.`
+            ? `There is a safer place to aim: ${coords(best).text} (${offsetWords(best)}). There, ${outOfTen(best.share)} out of 10 landings would work.`
             : atBest
               ? 'This is the safest place to aim that keeps the whole ring inside the prepared terrain.'
               : `No nearby aim is clearly safer. The safest spot gives ${outOfTen(best.share)} out of 10.`}
@@ -342,7 +449,71 @@ export function MissPage() {
           ))}
         </div>
 
+        <h3 className="lbl" id="goto-title">
+          GO TO COORDINATES
+        </h3>
+        <form className="pad line miss-goto" noValidate aria-labelledby="goto-title" onSubmit={goTo}>
+          {goError?.field === 'lat' && (
+            <p className="err" role="alert" id="goto-lat-err">
+              {goError.message}
+            </p>
+          )}
+          <label className="fld">
+            <span>LATITUDE, −90 TO 90 (SOUTH IS NEGATIVE)</span>
+            <input
+              ref={goLatRef}
+              value={goLat}
+              inputMode="decimal"
+              autoComplete="off"
+              placeholder="-84.7839"
+              aria-invalid={goError?.field === 'lat' ? true : undefined}
+              aria-describedby={goError?.field === 'lat' ? 'goto-lat-err' : undefined}
+              onChange={(e) => setGoLat(e.target.value)}
+            />
+          </label>
+          {goError?.field === 'lon' && (
+            <p className="err" role="alert" id="goto-lon-err">
+              {goError.message}
+            </p>
+          )}
+          <label className="fld">
+            <span>LONGITUDE, −180 TO 360 (EAST IS POSITIVE)</span>
+            <input
+              ref={goLonRef}
+              value={goLon}
+              inputMode="decimal"
+              autoComplete="off"
+              placeholder="29.1445"
+              aria-invalid={goError?.field === 'lon' ? true : undefined}
+              aria-describedby={goError?.field === 'lon' ? 'goto-lon-err' : undefined}
+              onChange={(e) => setGoLon(e.target.value)}
+            />
+          </label>
+          <button type="submit" className="btn">
+            GO TO COORDINATES
+          </button>
+          <div aria-live="polite">
+            {goResult?.kind === 'moved' && <p className="hint">{goResult.text}</p>}
+            {goResult?.kind === 'outside' && (
+              <>
+                <p className="hint">
+                  ▲ {latLonText(goResult.lat, goResult.lon)} is {goResult.km.toFixed(1)} km from the target.
+                  Terrain is prepared only around the {shortName(site)} target, within {current.halfM} m of it,
+                  so the aim cannot go there.
+                </p>
+                <button type="button" className="btn2" onClick={() => checkOnConsole(goResult.lat, goResult.lon)}>
+                  CHECK THIS POINT ON THE CONSOLE
+                </button>
+              </>
+            )}
+          </div>
+        </form>
+
         <h3 className="lbl">USE THIS AIM IN ANOTHER TAB</h3>
+        <button type="button" className="row" onClick={saveAim}>
+          <span className="grow miss-use">SAVE THIS AIM AS A SITE</span>
+          <span className="mono hint">Site list ＋</span>
+        </button>
         <button type="button" className="row" onClick={() => carry('console')}>
           <span className="grow miss-use">SEE ITS NEXT 30 DAYS</span>
           <span className="mono hint">Console →</span>

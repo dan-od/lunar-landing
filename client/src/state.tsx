@@ -2,7 +2,7 @@
 // first-open, notices and the short status message.
 import { createContext, useCallback, useContext, useEffect, useMemo, useRef, useState, type ReactNode } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
-import { aimText, getCuratedSite } from '@moon/core';
+import { aimText, getCuratedSite, offsetToLatLon } from '@moon/core';
 import { ApiFailure, getSites, type ApiSite } from './api';
 import {
   cleanName,
@@ -89,13 +89,11 @@ function customAsSite(c: CustomSite): ApiSite {
   };
 }
 
-const MOON_RADIUS_M = 1_737_400;
-
 /** The aim as a site: the terrain site's name plus where the aim sits, at its own coordinates. */
 function aimSite(base: ApiSite, east: number, north: number): ApiSite {
   const where = aimText({ east, north }).replace(' of the original target', '').replace(' and ', ', ');
-  const lat = base.lat + (north / MOON_RADIUS_M) * (180 / Math.PI);
-  const lon = base.lon + (east / (MOON_RADIUS_M * Math.cos((base.lat * Math.PI) / 180))) * (180 / Math.PI);
+  // The elevation map's own projection, as the terrain grid places the point.
+  const { lat, lon } = offsetToLatLon(base, east, north);
   return {
     id: AIM_SITE_ID,
     name: `${short(base.id, base.name)} aim, ${where}`,

@@ -2,7 +2,7 @@
 // works and dark where it is in shadow, with three rings around the aim. North
 // is up. Clicking moves the aim; the arrow buttons beside the map do the same
 // from the keyboard.
-import type { MouseEvent } from 'react';
+import { useRef, type MouseEvent, type PointerEvent } from 'react';
 import { MISS_RADII, type Aim, type GridPoint } from '@moon/core';
 import { missLabelSpots, type LabelSpot } from './missLabels';
 
@@ -13,19 +13,38 @@ interface Props {
   aim: Aim;
   accuracy: number;
   onAim: (aim: Aim) => void;
+  /** The point under a mouse pointer, or null when it leaves the map. */
+  onHover?: (point: Aim | null) => void;
+  /** A tap on a touch screen: shown first, the aim moves only when confirmed. */
+  onTap?: (point: Aim) => void;
+  /** A tapped point waiting to be confirmed. */
+  pending?: Aim | null;
 }
 
-export function MissMap({ grid, stepM, halfM, aim, accuracy, onAim }: Props) {
+export function MissMap({ grid, stepM, halfM, aim, accuracy, onAim, onHover, onTap, pending }: Props) {
   // Map units are metres; y is flipped so north is up.
   const reach = halfM + stepM / 2;
   const size = reach * 2;
   const working = grid.filter((p) => p.works).length;
 
-  const click = (e: MouseEvent<SVGSVGElement>) => {
+  const lastPointer = useRef<string>('mouse');
+  const at = (e: MouseEvent<SVGSVGElement>): Aim => {
     const box = e.currentTarget.getBoundingClientRect();
     const east = ((e.clientX - box.left) / box.width - 0.5) * size;
     const north = (0.5 - (e.clientY - box.top) / box.height) * size;
-    onAim({ east, north });
+    return { east, north };
+  };
+  const click = (e: MouseEvent<SVGSVGElement>) => {
+    const point = at(e);
+    if (lastPointer.current === 'touch' && onTap) onTap(point);
+    else onAim(point);
+  };
+  const move = (e: PointerEvent<SVGSVGElement>) => {
+    lastPointer.current = e.pointerType;
+    if (e.pointerType === 'mouse' && onHover) {
+      const p = at(e);
+      onHover(Math.hypot(p.east, p.north) <= reach ? p : null);
+    }
   };
 
   // The two labels are placed together so AIM never covers ORIGINAL TARGET.
@@ -50,6 +69,9 @@ export function MissMap({ grid, stepM, halfM, aim, accuracy, onAim }: Props) {
         'Click to move the aim, or use the arrow buttons.'
       }
       onClick={click}
+      onPointerDown={(e) => (lastPointer.current = e.pointerType)}
+      onPointerMove={move}
+      onPointerLeave={() => onHover?.(null)}
     >
       <defs>
         <clipPath id="miss-clip">
@@ -90,6 +112,9 @@ export function MissMap({ grid, stepM, halfM, aim, accuracy, onAim }: Props) {
       <line className="miss-cross" x1={aim.east - 22} x2={aim.east + 22} y1={-aim.north} y2={-aim.north} />
       <line className="miss-cross" x1={aim.east} x2={aim.east} y1={-aim.north - 22} y2={-aim.north + 22} />
       {label(spots.aim, 'AIM', 'miss-label aim')}
+
+      {/* a tapped point waiting for "Move aim here" */}
+      {pending && <circle className="miss-pending" cx={pending.east} cy={-pending.north} r={14} />}
     </svg>
   );
 }

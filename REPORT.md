@@ -49,6 +49,19 @@ screen reader.
 | Phone | The scenario bar shows only date, hour and Now; the seven step buttons open from a More toggle, and the slip "?" sits beside it, not in the grid. |
 | Labels | Pole-map names avoid the rim and the rings as well as each other (and have a dark backing); the Sun and Earth names sit on the outer side of their dots. Sky-view labels avoid the horizon, the allowance line and the frame edges, with a dark halo. |
 
+## Miss coordinates and the slip group (on staging, not deployed)
+
+Screenshots: `docs/screens/miss-coords.png`, `miss-coords-phone.png`, `slip-group.png`, `slip-group-narrow.png`.
+
+| Part | Result |
+| --- | --- |
+| Projection | `core/src/lunarMap.ts`: the LOLA map's own south polar stereographic (lat_0 = lat_ts = −90, lon_0 = 0, R = 1,737,400 m), forward and inverse, stepping from the target along the local east and north map vectors exactly as `tools/terrain/grid.py` does. Tested against `core/src/fixtures/lola-offsets.json`, written by `tools/terrain/miss_coords.py` with pyproj: every offset agrees to 1e-9°, round-trips to under 1 mm, and the target returns −84.78, 29.13. The Miss aim site in the site list now uses it too (it was a flat approximation). |
+| Aim readout | "Aim: 84.7839 S, 29.1445 E (40 m east, 120 m south of the target)" in the panel, in the safer-place sentence and in the spoken announcement. Degrees, four decimals, N/S, east longitude 0–360. COPY copies "-84.7839, 29.1445" (signed latitude, east longitude), ready to paste into a coordinates field. |
+| Pointer | Mouse: "POINTER: …" under the map while hovering. Touch: a tap shows a dashed marker and "TAPPED: …" with MOVE AIM HERE and CANCEL; the aim moves only on Move. The readout is a polite live region. |
+| Go to coordinates | Latitude and longitude fields, labelled with their ranges; bad values show the same messages as Add coordinates above the field and focus moves to it. Within 400 m of the target the aim moves there (snapped to the 40 m grid and kept within 300 m, as before; it says so if that moves it more than 5 m) and the odds update. Further away it says terrain is prepared only around the IM-2 target and offers CHECK THIS POINT ON THE CONSOLE, which adds a custom site (smooth model) through the same `addCustomSite` as Add coordinates and opens the Console on it. |
+| Save this aim as a site | Adds the aim point as a custom site named "IM-2 aim, 40 m east, 120 m south" at four decimals; it then works on the Console, Compare and Watch like any custom site (smooth model, no terrain). |
+| Slip group | SLIP and its "?" are now the first cell inside the bordered step group, the same height as the steps, on wide screens and in the 600–899 px More grid. On phones the steps live in the date sheet, so there is no separate group. |
+
 ## Phone redesign (on staging, not deployed)
 
 Built from "Moon Status: phone redesign": direction B as the Console front

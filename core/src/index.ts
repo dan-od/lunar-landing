@@ -9,5 +9,6 @@ export * from './report.js';
 export * from './miss.js';
 export * from './changes.js';
 export * from './ics.js';
+export * from './lunarMap.js';
 
 export const CORE_VERSION = '0.1.0';
