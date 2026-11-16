@@ -1,0 +1,60 @@
+{
+  "_comment": "Elevation map catalogue for the terrain worker. One entry per map. 'order' lists maps best-first for a point (finest resolution first). Byte sizes and projections are verified from the files/labels by maps.py; a null byte_size means the file was not present when this entry was written and must be filled from its label on download. Never assume a projection or unit: maps.py reads it from the GeoTIFF CRS or the PDS label.",
+  "radius_m": 1737400,
+  "ray_range_m": 150000,
+  "maps": [
+    {
+      "name": "LDEM_80S_80MPP",
+      "file": "LDEM_80S_80MPP_ADJ.TIF",
+      "dir": "data",
+      "format": "geotiff",
+      "label": null,
+      "resolution_m": 80,
+      "projection": "polar_stereographic_south",
+      "coverage": { "lat_min": -90, "lat_max": -80, "lon_min": 0, "lon_max": 360 },
+      "source_url": "https://pgda.gsfc.nasa.gov/products/78",
+      "byte_size": 189158392,
+      "version": "ADJ-2015"
+    },
+    {
+      "name": "LDEM_60S_120M",
+      "file": "ldem_60s_120m_float.img",
+      "dir": "data/lola_pds",
+      "format": "pds_img",
+      "label": "ldem_60s_120m_float.lbl",
+      "resolution_m": 120,
+      "projection": "polar_stereographic_south",
+      "coverage": { "lat_min": -90, "lat_max": -60, "lon_min": 0, "lon_max": 360 },
+      "source_url": "https://pds-geosciences.wustl.edu/lro/lro-l-lola-3-rdr-v1/lrolol_1xxx/data/lola_gdr/polar/float_img/ldem_60s_120m_float.img",
+      "byte_size": null,
+      "version": "GDR-V1"
+    },
+    {
+      "name": "LDEM_60N_120M",
+      "file": "ldem_60n_120m_float.img",
+      "dir": "data/lola_pds",
+      "format": "pds_img",
+      "label": "ldem_60n_120m_float.lbl",
+      "resolution_m": 120,
+      "projection": "polar_stereographic_north",
+      "coverage": { "lat_min": 60, "lat_max": 90, "lon_min": 0, "lon_max": 360 },
+      "source_url": "https://pds-geosciences.wustl.edu/lro/lro-l-lola-3-rdr-v1/lrolol_1xxx/data/lola_gdr/polar/float_img/ldem_60n_120m_float.img",
+      "byte_size": null,
+      "version": "GDR-V1"
+    },
+    {
+      "name": "LDEM_128",
+      "file": "ldem_128_float.img",
+      "dir": "data/lola_pds",
+      "format": "pds_img",
+      "label": "ldem_128_float.lbl",
+      "resolution_m": 237,
+      "projection": "equirectangular",
+      "coverage": { "lat_min": -90, "lat_max": 90, "lon_min": 0, "lon_max": 360 },
+      "source_url": "https://pds-geosciences.wustl.edu/lro/lro-l-lola-4-gdr-v1/lrolol_1xxx/data/lola_gdr/cylindrical/float_img/ldem_128_float.img",
+      "byte_size": 4246732800,
+      "version": "GDR-V3"
+    }
+  ],
+  "order": ["LDEM_80S_80MPP", "LDEM_60S_120M", "LDEM_60N_120M", "LDEM_128"]
+}
