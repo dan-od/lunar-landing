@@ -2,8 +2,9 @@
 import { describe, it, expect } from 'vitest';
 import { readFileSync } from 'node:fs';
 import { fileURLToPath } from 'node:url';
+import { getCuratedSite } from '@moon/core';
 import { parseTerrainFile } from '../src/terrain/file.js';
-import { terrainFilePath } from '../src/terrain/loadTerrain.js';
+import { readTerrainFile, terrainFilePath, terrainFilePaths } from '../src/terrain/loadTerrain.js';
 
 const realPath = fileURLToPath(new URL('../../tools/terrain/im2_terrain.json', import.meta.url));
 const real = () => JSON.parse(readFileSync(realPath, 'utf8')) as Record<string, unknown>;
@@ -43,6 +44,25 @@ describe('the committed IM-2 terrain file', () => {
 
   it('is found by the loader from the repository', () => {
     expect(terrainFilePath()).toMatch(/im2_terrain\.json$/);
+  });
+
+  it('every prepared site file is found and parses on the same grid', async () => {
+    const paths = terrainFilePaths();
+    const files = await Promise.all(paths.map((p) => readTerrainFile(p)));
+    expect(files.map((f) => f.siteId).sort()).toEqual(expect.arrayContaining(['im2', 'im2a', 'shk']));
+    for (const f of files) {
+      expect(f.points).toHaveLength(441);
+      expect(f.stepM).toBe(40);
+      expect(f.halfM).toBe(400);
+      expect(f.points.every((p) => p.heights.length === 360)).toBe(true);
+    }
+    // Each grid is centred on the site's cited coordinates.
+    for (const p of paths) {
+      const raw = JSON.parse(readFileSync(p, 'utf8')) as { site_id: string; target: { lat: number; lon_east: number } };
+      const site = getCuratedSite(raw.site_id)!;
+      expect(raw.target.lat).toBe(site.lat);
+      expect(((raw.target.lon_east - site.lon) % 360 + 360) % 360).toBeCloseTo(0, 9);
+    }
   });
 });
 

@@ -72,3 +72,18 @@ export function latLonPlain(lat: number, lon: number): string {
   const east = ((lon % 360) + 360) % 360;
   return `${lat.toFixed(4)}, ${(Number(east.toFixed(4)) % 360).toFixed(4)}`;
 }
+
+/** The LOLA south-pole elevation map covers 80 to 90 degrees south. */
+export const LOLA_MAP_EDGE_LAT = -80;
+
+/**
+ * Why a place has no prepared terrain, as the end of a sentence
+ * ("No terrain for X: <reason>."). Nothing is estimated in its place.
+ */
+export function noTerrainReason(lat: number, custom = false): string {
+  if (lat > LOLA_MAP_EDGE_LAT) return 'it is outside the south-pole elevation map (it covers 80 to 90 degrees south)';
+  if (lat > LOLA_MAP_EDGE_LAT - 1) return 'it is at the edge of the map, so the horizon would be cut off';
+  return custom
+    ? 'terrain is prepared only for listed sites, not yet for your own coordinates'
+    : 'it is inside the map, but its terrain has not been prepared yet';
+}

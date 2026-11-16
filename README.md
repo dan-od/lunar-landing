@@ -30,10 +30,16 @@ bar at the bottom.
 - By default the app uses a **smooth-Moon model**: the reference sphere plus a
   *shadow allowance* that stands in for hills the smooth model cannot see.
 - **Real terrain** is used on the **Miss** view and for an aim point carried from
-  it, for the one demo site where horizon profiles are prepared from the LOLA
-  elevation map: 441 points on a 40 m grid reaching 400 m from the target. The map
-  is 80 m per pixel, so craters smaller than that are not seen. Odds count only
-  prepared points, and the screen says when a ring reaches past them.
+  it, for the three sites where horizon profiles are prepared from the LOLA
+  south-pole elevation map: the **IM-2 target** (Mons Mouton), **IM-2 Athena where
+  it came to rest**, and the **Shackleton–de Gerlache ridge**. Each has 441 points
+  on a 40 m grid reaching 400 m from the site, seen by a 2 m observer with rays out
+  to 150 km; every ray stayed on the map. The map is 80 m per pixel, so craters
+  smaller than that are not seen. Odds count only prepared points, and the screen
+  says when a ring reaches past them.
+- **Sites without terrain** say why, and nothing is estimated: sites north of 80° S
+  are outside the south-pole elevation map (it covers 80 to 90 degrees south); IM-1
+  is at the edge of the map, so the horizon would be cut off.
 - Every reply and exported file names the model it used (smooth Moon or terrain).
 - Not modelled: radio link quality, thermal/battery behaviour, disc size of the
   Sun or Earth (centre of body only).
@@ -218,8 +224,10 @@ npm run seed --workspace server
 npm run seed:cache --workspace server
 ```
 
-Load the prepared terrain profiles for the demo site into the database (safe to
-repeat; it replaces that site's profiles with the committed file):
+Load every prepared terrain profile file (`tools/terrain/<site>_terrain.json`)
+into the database (safe to repeat; it replaces each site's profiles with its
+committed file; the deploy runs it after seeding the sites). To build a file:
+`cd tools/terrain && .venv/bin/python build_profile.py <im2|im2a|shk>`.
 
 ```bash
 npm run load:terrain --workspace server

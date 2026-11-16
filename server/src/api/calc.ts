@@ -8,6 +8,7 @@ import {
   MISS_RADII,
   computeResult,
   missGrid,
+  noTerrainReason,
   outOfTen,
   ringOdds,
   safestAim,
@@ -177,7 +178,7 @@ export function createCalc(deps: CalcDeps) {
       .filter((s) => s.hasTerrain)
       .map((s) => `${s.name} (${s.id})`);
     throw conflict(
-      `No terrain is prepared for ${site.name}. ` +
+      `No terrain is prepared for ${site.name}: ${noTerrainReason(site.lat, site.custom)}. Nothing is estimated. ` +
         (withTerrain.length > 0
           ? `Terrain is prepared for: ${withTerrain.join('; ')}.`
           : 'No site has terrain prepared yet.'),

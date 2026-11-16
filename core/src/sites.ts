@@ -38,7 +38,7 @@ export const CURATED_SITES: Site[] = [
     lon: 196.739,
     heightKm: 0,
     source: 'LROC, https://www.lroc.asu.edu/images/1247',
-    hasTerrain: false,
+    hasTerrain: true,
   },
   {
     id: 'ch3',
@@ -82,9 +82,9 @@ export const CURATED_SITES: Site[] = [
     lon: 29.1957,
     heightKm: 0,
     source: 'LROC, https://www.lroc.asu.edu/images/1408',
-    hasTerrain: false,
+    hasTerrain: true,
     group: 'South pole',
-    note: "Where the lander came to rest on its side in a small crater, about 370 m from the target. No terrain is prepared at this exact point.",
+    note: "Where the lander came to rest on its side in a small crater, about 370 m from the target (computed from the LROC coordinates of both points). Terrain is prepared around this point; the 80 m map is too coarse to show the small crater itself.",
   },
   {
     id: 'a12',

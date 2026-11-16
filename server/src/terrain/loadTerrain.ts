@@ -1,7 +1,8 @@
-// Loads a prepared terrain file into horizon_profiles. Safe to run on every
-// deploy: inside one transaction it replaces the site's profiles with exactly
-// the file's points, so running it twice leaves the same rows.
-import { existsSync } from 'node:fs';
+// Loads every prepared terrain file (<site>_terrain.json) into horizon_profiles.
+// Safe to run on every deploy: inside one transaction per file it replaces that
+// site's profiles with exactly the file's points, so running it twice leaves
+// the same rows.
+import { existsSync, readdirSync } from 'node:fs';
 import { readFile } from 'node:fs/promises';
 import { dirname, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
@@ -11,16 +12,30 @@ import { parseTerrainFile, type TerrainFile } from './file.js';
 
 const here = dirname(fileURLToPath(import.meta.url));
 
-/** Where the terrain file is: set explicitly, beside the compiled loader, or in the repository. */
+const TERRAIN_FILE_RE = /^[a-z0-9-]+_terrain\.json$/;
+
+/**
+ * Every prepared terrain file: from TERRAIN_DIR if set, else beside the compiled
+ * loader (the image), else in the repository. Sorted so the order is stable.
+ */
+export function terrainFilePaths(): string[] {
+  const dirs = [process.env.TERRAIN_DIR, here, join(here, '../../../tools/terrain')].filter(
+    (p): p is string => Boolean(p),
+  );
+  for (const dir of dirs) {
+    if (!existsSync(dir)) continue;
+    const files = readdirSync(dir)
+      .filter((f) => TERRAIN_FILE_RE.test(f))
+      .sort()
+      .map((f) => join(dir, f));
+    if (files.length > 0) return files;
+  }
+  throw new Error(`No terrain files (<site>_terrain.json) found. Looked in: ${dirs.join(', ')}`);
+}
+
+/** The first terrain file (the IM-2 demo site's, by name order). */
 export function terrainFilePath(): string {
-  const candidates = [
-    process.env.TERRAIN_FILE,
-    join(here, 'im2_terrain.json'),
-    join(here, '../../../tools/terrain/im2_terrain.json'),
-  ].filter((p): p is string => Boolean(p));
-  const found = candidates.find((p) => existsSync(p));
-  if (!found) throw new Error(`Terrain file not found. Looked in: ${candidates.join(', ')}`);
-  return found;
+  return terrainFilePaths().find((p) => p.endsWith('im2_terrain.json')) ?? terrainFilePaths()[0]!;
 }
 
 export async function readTerrainFile(path = terrainFilePath()): Promise<TerrainFile> {
@@ -60,9 +75,11 @@ if (invokedDirectly) {
   (async () => {
     const pool = getPool();
     if (!pool) throw new Error('No database is configured (DATABASE_URL or PGHOST); cannot load terrain.');
-    const terrain = await readTerrainFile();
-    const count = await loadTerrain(pool, terrain);
-    console.log(`Loaded ${count} terrain profiles for ${terrain.siteId} (${terrain.stepM} m grid, ±${terrain.halfM} m).`);
+    for (const path of terrainFilePaths()) {
+      const terrain = await readTerrainFile(path);
+      const count = await loadTerrain(pool, terrain);
+      console.log(`Loaded ${count} terrain profiles for ${terrain.siteId} (${terrain.stepM} m grid, ±${terrain.halfM} m).`);
+    }
   })()
     .then(() => closePool())
     .catch(async (err) => {

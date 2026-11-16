@@ -124,7 +124,21 @@ export function AppProvider({ children }: { children: ReactNode }) {
   const [sitesFailure, setSitesFailure] = useState<ApiFailure | null>(null);
   const [sitesAttempt, setSitesAttempt] = useState(0);
 
-  const terrainSite = useMemo(() => fetchedSites.find((x) => x.has_terrain), [fetchedSites]);
+  // Several sites have terrain. The aim belongs to the terrain site last chosen
+  // (the IM-2 target until another is picked); picking a different one resets the aim.
+  const [aimBaseId, setAimBaseId] = useState<string | null>(null);
+  const terrainSite = useMemo(
+    () => fetchedSites.find((x) => x.id === aimBaseId && x.has_terrain) ?? fetchedSites.find((x) => x.has_terrain),
+    [fetchedSites, aimBaseId],
+  );
+  useEffect(() => {
+    const picked = fetchedSites.find((x) => x.id === scenario.site && x.has_terrain);
+    if (!picked || picked.id === terrainSite?.id) return;
+    setAimBaseId(picked.id);
+    if (terrainSite && (scenario.aim.east !== 0 || scenario.aim.north !== 0)) {
+      setScenario((sc) => ({ ...sc, aim: { east: 0, north: 0 } }));
+    }
+  }, [fetchedSites, scenario.site, scenario.aim, terrainSite]);
   const aimEast = scenario.aim.east;
   const aimNorth = scenario.aim.north;
   const [customs, setCustoms] = useState<CustomSite[]>(() => loadCustomSites());

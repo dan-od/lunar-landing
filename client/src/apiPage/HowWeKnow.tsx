@@ -67,6 +67,16 @@ export function HowWeKnow() {
           </dd>
         </div>
         <div>
+          <dt>Where terrain is prepared</dt>
+          <dd>
+            Real terrain is prepared for the IM-2 target, IM-2 Athena where it came to rest, and the
+            Shackleton–de Gerlache ridge: 441 points each, 40 m apart, out to 400 m, with every ray
+            reaching 150 km on the map. Sites north of 80° S are outside the south-pole elevation map (it
+            covers 80 to 90 degrees south), and IM-1 is at its edge, so its horizon would be cut off. For
+            those, nothing is estimated.
+          </dd>
+        </div>
+        <div>
           <dt>Apollo 11, 1969-07-20 20:17 UTC</dt>
           <dd>
             {at2017 !== null && apollo ? (

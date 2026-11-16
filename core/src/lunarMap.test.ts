@@ -7,6 +7,7 @@ import {
   latLonToOffset,
   lolaForward,
   lolaInverse,
+  noTerrainReason,
   offsetToLatLon,
 } from './lunarMap.js';
 
@@ -56,5 +57,14 @@ describe('LOLA south polar stereographic', () => {
     expect(latLonPlain(p.lat, p.lon)).toBe('-84.7839, 29.1445');
     expect(latLonText(12.5, -10)).toBe('12.5000 N, 350.0000 E');
     expect(latLonText(-1, 359.99999)).toBe('1.0000 S, 0.0000 E');
+  });
+});
+
+describe('noTerrainReason', () => {
+  it('names the map edge and the cut-off horizon', () => {
+    expect(noTerrainReason(-69.37)).toMatch(/outside the south-pole elevation map \(it covers 80 to 90 degrees south\)/);
+    expect(noTerrainReason(0.67)).toMatch(/outside/);
+    expect(noTerrainReason(-80.13)).toBe('it is at the edge of the map, so the horizon would be cut off');
+    expect(noTerrainReason(-86, true)).toMatch(/your own coordinates/);
   });
 });

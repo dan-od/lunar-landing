@@ -24,9 +24,10 @@ describe('curated site list (F-5)', () => {
     }
   });
 
-  it('marks exactly the demo site as having terrain', () => {
-    const withTerrain = CURATED_SITES.filter((s) => s.hasTerrain).map((s) => s.id);
-    expect(withTerrain).toEqual(['im2']);
+  it('marks the three prepared sites as having terrain, all inside the 80 S map', () => {
+    const withTerrain = CURATED_SITES.filter((s) => s.hasTerrain);
+    expect(withTerrain.map((s) => s.id).sort()).toEqual(['im2', 'im2a', 'shk']);
+    expect(withTerrain.every((s) => s.lat <= -81)).toBe(true);
   });
 
   it('looks up by id', () => {
@@ -50,7 +51,8 @@ describe('grown site list (grouped, every site cited)', () => {
     }
   });
 
-  it('keeps terrain for the IM-2 target only', () => {
-    expect(getCuratedSite('im2a')?.hasTerrain).toBe(false);
+  it('has no terrain for IM-1 (map edge) or sites north of 80 S', () => {
+    expect(getCuratedSite('im1')?.hasTerrain).toBe(false);
+    expect(getCuratedSite('ch3')?.hasTerrain).toBe(false);
   });
 });

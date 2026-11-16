@@ -10,6 +10,7 @@ import {
   latLonPlain,
   latLonText,
   latLonToOffset,
+  noTerrainReason,
   offsetToLatLon,
   outOfTen,
   ringOdds,
@@ -80,6 +81,7 @@ export function MissPage() {
   // The place being tested: a site with terrain, or the aim point that belongs to one.
   const selected = sites.find((s) => s.id === scenario.site);
   const site = selected?.aim ? terrainSite : selected;
+  const withTerrain = sites.filter((s) => s.has_terrain && !s.aim && !s.custom);
   const hasTerrain = Boolean(site?.has_terrain);
   const key = site ? `${site.id}|${scenario.date}|${scenario.hour}` : '';
   // What the Console shows for the target, so a disagreement can be explained.
@@ -170,23 +172,29 @@ export function MissPage() {
           <div className="empty">
             <h1 className="h2">No terrain prepared for this site yet</h1>
             <p>
-              The Miss view needs an elevation map around the target so hills and crater shadows can
-              be counted.{' '}
-              {terrainSite
-                ? `It is ready for the ${shortName(terrainSite)} target only.`
+              The Miss view needs an elevation map around the site so hills and crater shadows can be
+              counted.{' '}
+              {withTerrain.length > 0
+                ? `Terrain is prepared for ${withTerrain.map((t) => t.name).join('; ')}.`
                 : 'No site has terrain prepared yet.'}
             </p>
             {site && (
               <p className="hint">
-                {site.name} has no prepared terrain, so no odds are shown for it. Nothing is estimated.
+                No terrain for {site.name}: {noTerrainReason(site.lat, site.custom)}. No odds are shown for
+                it. Nothing is estimated.
               </p>
             )}
             <p className="choices">
-              {terrainSite && (
-                <button type="button" className="btn" onClick={() => update({ site: terrainSite.id, t: 0 })}>
-                  SWITCH TO {shortName(terrainSite).toUpperCase()} TARGET
+              {withTerrain.map((t, i) => (
+                <button
+                  key={t.id}
+                  type="button"
+                  className={i === 0 ? 'btn' : 'btn2'}
+                  onClick={() => update({ site: t.id, t: 0 })}
+                >
+                  SWITCH TO {shortName(t).toUpperCase()}
                 </button>
-              )}{' '}
+              ))}{' '}
               <Link className="btn2 as-button" to={{ pathname: '/', search }}>
                 BACK TO CONSOLE
               </Link>
@@ -471,7 +479,7 @@ export function MissPage() {
               value={goLat}
               inputMode="decimal"
               autoComplete="off"
-              placeholder="-84.7839"
+              placeholder={site.lat.toFixed(4)}
               aria-invalid={goError?.field === 'lat' ? true : undefined}
               aria-describedby={goError?.field === 'lat' ? 'goto-lat-err' : undefined}
               onChange={(e) => setGoLat(e.target.value)}
@@ -489,7 +497,7 @@ export function MissPage() {
               value={goLon}
               inputMode="decimal"
               autoComplete="off"
-              placeholder="29.1445"
+              placeholder={(((site.lon % 360) + 360) % 360).toFixed(4)}
               aria-invalid={goError?.field === 'lon' ? true : undefined}
               aria-describedby={goError?.field === 'lon' ? 'goto-lon-err' : undefined}
               onChange={(e) => setGoLon(e.target.value)}
