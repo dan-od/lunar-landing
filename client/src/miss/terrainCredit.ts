@@ -24,6 +24,15 @@ export function isCoarse(resolutionM: number | null | undefined): boolean {
 }
 
 /**
+ * Any map coarser than the 80 m south-pole map (the 120 m polar maps or the
+ * whole-Moon map) gets a plain caution under the odds: it was validated against
+ * the 80 m map and differs by up to a few degrees on sharp rims.
+ */
+export function needsCoarseCaution(resolutionM: number | null | undefined): boolean {
+  return resolutionM != null && resolutionM > 80;
+}
+
+/**
  * "Terrain from LOLA global map, about 240 m: small craters are not seen" — the
  * map, its resolution, and (for the coarse global map) what that costs.
  */

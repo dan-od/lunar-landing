@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { mapCredit, isCoarse, preparingText } from './terrainCredit';
+import { mapCredit, isCoarse, needsCoarseCaution, preparingText } from './terrainCredit';
 
 describe('terrain credit', () => {
   it('names the map and resolution', () => {
@@ -14,6 +14,14 @@ describe('terrain credit', () => {
     expect(isCoarse(120)).toBe(false);
     expect(isCoarse(237)).toBe(true);
     expect(mapCredit('LDEM_128', 237)).toBe('Terrain from LOLA global map, about 240 m: small craters are not seen.');
+  });
+
+  it('cautions for any map coarser than the 80 m base map', () => {
+    expect(needsCoarseCaution(80)).toBe(false); // the fine south-pole map: no caution
+    expect(needsCoarseCaution(120)).toBe(true); // 120 m polar maps
+    expect(needsCoarseCaution(237)).toBe(true); // whole-Moon map
+    expect(needsCoarseCaution(null)).toBe(false);
+    expect(needsCoarseCaution(undefined)).toBe(false);
   });
 
   it('names the map while preparing when known', () => {

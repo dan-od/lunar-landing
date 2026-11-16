@@ -176,6 +176,27 @@ our value between the hours is a straight-line reading, not a separate request.
 What this does not prove: anything about terrain. Apollo 11 landed on the open
 mare, where a flat horizon is a fair model.
 
+### 5. Coarser maps checked against the 80 m map
+
+Some sites fall outside the 80 m south-pole map, so their terrain is prepared
+from the 120 m polar maps or the ~240 m whole-Moon map. To see what that costs,
+the three sites that have 80 m profiles (IM-2 target, IM-2 Athena, and the
+Shackleton–de Gerlache ridge) were recomputed from the 120 m south map and the
+horizons compared around the full 360° circle:
+
+| Site | Largest difference | Average |
+| --- | --- | --- |
+| IM-2 target | 1.67° | 0.03° |
+| IM-2 Athena (resting point) | 1.78° | 0.05° |
+| Shackleton–de Gerlache ridge | 6.93° | 0.66° |
+
+On ordinary ground the two maps agree to a fraction of a degree. The large
+numbers are confined to Shackleton's sharp crater rim, where a horizon set by a
+single ridge is sensitive to the pixel size — up to about 7°. Because of this,
+odds computed from the 120 m and whole-Moon maps are shown with a plain caution
+in the Miss tab and treated as approximate. Regenerate with
+`tools/terrain/validate_120m.py`.
+
 ## Layout
 
 ```

@@ -17,7 +17,7 @@ Moon Status breaks into eight flows on one shared foundation, and four of them (
 
 Mission planners re-check landing sites every time a launch date moves, using tools that are accurate but slow to read, and none of those tools warns them when a change turns a good site bad.
 
-**The evidence.** NASA's challenge statement says existing tools (Quickmap, Moon Trek, Horizons) have complicated interfaces, and that hardware delays and launch slips force planners to reconsider dates and sites. In March 2025 the IM-2 lander came down about 250 m from its target inside a crater, got no sunlight on its panels, and its mission ended in about 13 hours.
+**The evidence.** NASA's challenge statement says existing tools (Quickmap, Moon Trek, Horizons) have complicated interfaces, and that hardware delays and launch slips force planners to reconsider dates and sites. In March 2025 the IM-2 lander came down about 370 m from its target inside a crater, got no sunlight on its panels, and its mission ended in about 13 hours.
 
 | User | What they need | How Moon Status serves them |
 | --- | --- | --- |
@@ -146,7 +146,7 @@ Five sites ship in the starter list, each with a cited coordinate source (F-5). 
 
 Re-check note (IM-2): the LROC image page at the cited URL now redirects to an interactive OpenLayers map viewer (`lroc.im-ldi.com`) that carries no coordinates as static text, so the digits could not be re-read programmatically. The owner-specified values (84.78 S, 29.13 E) are used; correct them if an interactive read of the viewer differs.
 
-The actual 2025 touchdown point (about 250 m from the target) still needs a sourced position before it is drawn on the Miss map.
+The actual 2025 touchdown point (about 370 m from the target) still needs a sourced position before it is drawn on the Miss map.
 
 ## Design rules
 
@@ -720,9 +720,9 @@ The schedule is in work blocks, not clock times, because the submission deadline
 
 ## Demo script
 
-The demo tells one true story in under two minutes: a real lander died 250 m from its target, and this tool shows why and what to do about it.
+The demo tells one true story in under two minutes: a real lander died about 370 m from its target, and this tool shows why and what to do about it.
 
-1. **The problem (15 seconds).** March 2025: a lander reached the Moon's south pole, came down 250 m off target in a crater, and lost power within a day.
+1. **The problem (15 seconds).** March 2025: a lander reached the Moon's south pole, came down about 370 m off target in a crater, and lost power within a day.
 2. **Console (20 seconds).** Open on that site and date. On a smooth Moon it looks ready. Scrub the timeline to show sunlight and Earth contact over 30 days.
 3. **Miss (30 seconds).** Open Miss. The dark crater sits inside the yellow ring. Read the odds at 250 m. Press "Move to the safest spot" and watch the number rise.
 4. **Compare (15 seconds).** Target against the new aim: the report says in plain words what improves.

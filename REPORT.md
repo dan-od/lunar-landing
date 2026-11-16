@@ -45,7 +45,7 @@ of `main` only by the deck and this report.
 - Real phones, real screen readers, Firefox and Safari: not tried; Chromium only.
 - A shared link to a moved aim does not say which terrain site it belongs to; it opens on the IM-2 target's grid. A fix would need a change to the URL contract, so I left it.
 - The connector's `slip_impact` echoes the site id as `"name"` when one site is asked for (`"name": "im2"`); it is cosmetic and left as is.
-- `docs/PRD.md` still says "about 250 m" in three places. It is the requirements document, so I did not edit it.
+- `docs/PRD.md` previously said "about 250 m" for the IM-2 miss distance in several places; these were updated to the computed ~370 m. The `250` that remains in the PRD is the landing-accuracy radius (100 / 250 / 320 m), which is a different quantity and unchanged.
 
 ## The two queued additions
 

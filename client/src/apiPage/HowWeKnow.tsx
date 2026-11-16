@@ -77,6 +77,44 @@ export function HowWeKnow() {
           </dd>
         </div>
         <div>
+          <dt>Coarser maps checked against the 80 m map</dt>
+          <dd>
+            Some sites fall outside the 80 m south-pole map, so their terrain comes from the 120 m
+            polar maps or the ~240 m whole-Moon map. We recomputed the three 80 m sites from the
+            120 m map and compared horizons around the full circle:
+            <table className="t">
+              <caption className="sr">120 m map versus the 80 m map</caption>
+              <thead>
+                <tr>
+                  <th scope="col">SITE</th>
+                  <th scope="col">LARGEST DIFFERENCE</th>
+                  <th scope="col">AVERAGE</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr>
+                  <td>IM-2 target</td>
+                  <td className="mono">1.67°</td>
+                  <td className="mono">0.03°</td>
+                </tr>
+                <tr>
+                  <td>IM-2 Athena (resting point)</td>
+                  <td className="mono">1.78°</td>
+                  <td className="mono">0.05°</td>
+                </tr>
+                <tr>
+                  <td>Shackleton–de Gerlache ridge</td>
+                  <td className="mono">6.93°</td>
+                  <td className="mono">0.66°</td>
+                </tr>
+              </tbody>
+            </table>
+            On ordinary ground the two maps agree to a fraction of a degree; only on
+            Shackleton&apos;s sharp crater rim does the coarser map differ by up to about 7°. So
+            odds from the 120 m and whole-Moon maps carry a caution and are treated as approximate.
+          </dd>
+        </div>
+        <div>
           <dt>Apollo 11, 1969-07-20 20:17 UTC</dt>
           <dd>
             {at2017 !== null && apollo ? (

@@ -33,7 +33,7 @@ import { offsetWords } from './offsetWords';
 import { usePhone } from '../usePhone';
 import { MissSiteSelect } from './MissSiteSelect';
 import { useTerrainStatus } from './useTerrainStatus';
-import { mapCredit, preparingText } from './terrainCredit';
+import { mapCredit, needsCoarseCaution, preparingText } from './terrainCredit';
 
 
 const TAB = tabFor('/miss')!;
@@ -490,6 +490,14 @@ export function MissPage() {
             </div>
           );
         })}
+
+        {needsCoarseCaution(terrainStatus?.resolution_m) && (
+          <p className="pad line miss-caution" role="note">
+            ▲ Lower-detail terrain (120 m / about 240 m). Checked against the 80 m map at three
+            south-pole sites, horizons differed by up to 1.8 degrees, and up to 7 degrees on
+            Shackleton&apos;s crater rim, so treat these odds as approximate.
+          </p>
+        )}
 
         <p className="pad line miss-aim">
           {safer
